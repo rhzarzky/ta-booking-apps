@@ -9,20 +9,23 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
+Use Illuminate\Http\JsonResponse;
 
 use Exception;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         $dataValidation = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|string|exists:roles,name',
-            'permission' => 'nullable|array',
-            'permission.*' => 'string|exists:permissions,name',
+            'role' => 'nullable|string|exists:roles,name', 
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:permissions,name',
             'status' => 'nullable|string|in:active,inactive',
         ]);
 
@@ -41,27 +44,30 @@ class AuthController extends Controller
                 'status' => $request->status ?? 'active',
             ]);
 
-            $role = Role::where('name', $request->role)->first();
+            $roleName = $request->role ?? 'user';
+            $role = Role::where('name', $roleName)->first();
+
             if ($role) {
                 $user->assignRole($role);
             }
 
-            if($request->has('permissions')) {
+            if ($request->has('permissions')) {
                 $permissions = Permission::whereIn('name', $request->permissions)->get();
                 $user->givePermissionTo($permissions);
             }
 
             return response()->json([
-               'status' =>'success',
-               'message' => 'User registered successfully',
+                'status' => 'success',
+                'message' => 'User registered successfully',
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $user->role,
+                    'role' => $user->getRoleNames(),
                     'status' => $user->status,
                 ],
             ], 201);
+
         } catch (Exception $e) {
             Log::error('Registration Error: ' . $e->getMessage());
             return response()->json([
@@ -69,9 +75,9 @@ class AuthController extends Controller
             ], 500);
         }
     } 
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
-        $credentials = $request->request->validate([
+        $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required']
         ]);
@@ -100,16 +106,40 @@ class AuthController extends Controller
                 ], 403);
             }
 
-            if (!$token = JWTAuth::fromUser($user)) {
-                return response()->json([
-                    'status' => 'error',
-                    'error' => 'Failed to generate JWT Token',
-                ], 500);
-            }
+            $token = JWTAuth::fromUser($user);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Login successful',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->getRoleNames(),
+                    'status' => $user->status,
+                ],
+                'token' => $token,
+            ], 200);
+
         } catch (JWTException $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error JWT Token',
+                'error' => 'Could not create token',
+            ], 500);
+        }
+    } 
+    public function logout(Request $request): JsonResponse
+    {
+        try {
+            JWTAuth::invalidate(JWTAuth::getToken());
+            return response()->json([
+               'status' => 'success',
+               'message' => 'Logged out successfully',
+            ], 200);
+        } catch (JWTException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Could not log out',
             ], 500);
         }
     }
