@@ -9,6 +9,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware([JwtMiddleware::class])->group(function () {
     Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        Route::get('/users', [UserController::class, 'index']); // Fetch all users
         Route::post('/roles', [RoleController::class, 'store']);  // Create Role
         Route::get('/roles', [RoleController::class, 'index']);   // List Roles
         Route::post('/roles/{role}/permissions', [RoleController::class, 'assignPermissions']); // Assign Permissions to Role
