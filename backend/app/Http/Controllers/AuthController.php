@@ -75,6 +75,7 @@ class AuthController extends Controller
             ], 500);
         }
     } 
+
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
@@ -88,7 +89,7 @@ class AuthController extends Controller
             if (!$user) {
                 return response()->json([
                     'status' => 'error',
-                    'error' => 'User not found',
+                    'error' => 'Invalid credentials',
                 ], 401);
             }
 
@@ -128,6 +129,7 @@ class AuthController extends Controller
             ], 500);
         }
     } 
+    
     public function logout(Request $request): JsonResponse
     {
         try {

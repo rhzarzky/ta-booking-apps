@@ -10,14 +10,25 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $roles = Role::with('permissions')->get();
+        $roles = Role::select('id', 'name')->get();
         return response()->json($roles);
     }
 
     public function store(Request $request)
     {
-        $request->validate(['name' => 'required|unique:roles,name']);
-        $role = Role::create(['name' => $request->name]);
+        $validated = $request->validate([
+            'name' => 'required|unique:roles,name'
+        ]);
+
+        if (Role::where('name',  $validated['name'])->exists()) {
+            return response()->json([
+                'status' => 'error',
+               'message' => 'Role already exists',
+            ], 400);
+        }
+        
+        $role = Role::create(['name' => $validated['name']]);
+
         return response()->json([
             'message' => 'Role created successfully', 
             'role' => $role
