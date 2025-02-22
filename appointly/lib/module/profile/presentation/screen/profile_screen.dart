@@ -1,0 +1,178 @@
+import 'package:appointly/core/theme/color_pallete.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final List<Map<String, dynamic>> settingsItems = [
+    {
+      'iconPath': 'assets/icons/icon-profile.svg',
+      'title': 'Personal Information',
+      'onTap': () {},
+      'titleColor': null,
+    },
+    {
+      'iconPath': 'assets/icons/icon-security.svg',
+      'title': 'Change Password',
+      'onTap': () {},
+      'titleColor': null,
+    },
+    {
+      'iconPath': 'assets/icons/icon-logout.svg',
+      'title': 'Logout Account',
+      'onTap': () {},
+      'titleColor': ColorPallete.redCinnabar,
+    },
+    // Add more items as needed
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ColorPallete.backgroundBody,
+      appBar: _buildAppBar(),
+      body: ListView(
+        children: [
+          _buildProfileHeader(),
+          _buildAccountSettings(),
+        ],
+      ),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.white,
+      title: Text(
+        'My Profile',
+        style: GoogleFonts.sourceSans3(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: ColorPallete.darkBlack,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileHeader() {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          height: 200,
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/image/Gradient-BG.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Positioned(
+          left: 24,
+          bottom: 40,
+          child: Row(
+            children: [
+              const CircleAvatar(
+                backgroundImage: AssetImage('assets/image/avatar.png'),
+                radius: 64,
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'John Doe',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'JohnDoe@gmail.com',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAccountSettings() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Text(
+              'Account Settings',
+              style: GoogleFonts.ubuntu(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: ColorPallete.darkBlack,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: settingsItems.length,
+            itemBuilder: (context, index) {
+              final item = settingsItems[index];
+              return _buildSettingItem(
+                iconPath: item['iconPath'],
+                title: item['title'],
+                onTap: item['onTap'],
+                titleColor: item['titleColor'],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingItem({
+    required String iconPath,
+    required String title,
+    required VoidCallback onTap,
+    Color? titleColor,
+  }) {
+    return ListTile(
+      leading: SvgPicture.asset(iconPath),
+      title: Text(
+        title,
+        style: GoogleFonts.ubuntu(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          color: titleColor ?? ColorPallete.darkBlack,
+        ),
+      ),
+      trailing: const Icon(
+        Icons.arrow_outward_sharp,
+        color: ColorPallete.greySilverChalice,
+      ),
+      onTap: onTap,
+    );
+  }
+}
