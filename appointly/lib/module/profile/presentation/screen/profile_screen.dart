@@ -1,4 +1,7 @@
 import 'package:appointly/core/theme/color_pallete.dart';
+import 'package:appointly/module/onboarding/presentation/screen/onboarding_screen.dart';
+import 'package:appointly/module/profile/presentation/screen/change_password_screen.dart';
+import 'package:appointly/module/profile/presentation/screen/personal_info_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -11,27 +14,31 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  bool showOnboarding = true;
+
   final List<Map<String, dynamic>> settingsItems = [
     {
       'iconPath': 'assets/icons/icon-profile.svg',
       'title': 'Personal Information',
-      'onTap': () {},
       'titleColor': null,
     },
     {
       'iconPath': 'assets/icons/icon-security.svg',
       'title': 'Change Password',
-      'onTap': () {},
       'titleColor': null,
     },
     {
       'iconPath': 'assets/icons/icon-logout.svg',
       'title': 'Logout Account',
-      'onTap': () {},
       'titleColor': ColorPallete.redCinnabar,
     },
-    // Add more items as needed
   ];
+
+  void completeOnboarding() {
+    setState(() {
+      showOnboarding = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               'Account Settings',
               style: GoogleFonts.ubuntu(
@@ -142,7 +149,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
               return _buildSettingItem(
                 iconPath: item['iconPath'],
                 title: item['title'],
-                onTap: item['onTap'],
+                onTap: () {
+                  if (index == 0) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PersonalInfoScreen(),
+                      ),
+                    );
+                  } else if (index == 1) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ChangePasswordScreen(),
+                      ),
+                    );
+                  } else if (index == 2) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OnboardingScreen(
+                          onComplete: completeOnboarding,
+                        ),
+                      ),
+                    );
+                  }
+                },
                 titleColor: item['titleColor'],
               );
             },
