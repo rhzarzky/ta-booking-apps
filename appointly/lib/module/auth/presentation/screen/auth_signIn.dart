@@ -1,3 +1,5 @@
+// ignore_for_file: file_names, depend_on_referenced_packages
+
 import 'package:appointly/core/common/main_tab_screen.dart';
 import 'package:appointly/module/auth/presentation/screen/auth_register.dart';
 import 'package:appointly/module/auth/presentation/widget/auth_button.dart';

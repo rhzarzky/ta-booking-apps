@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:appointly/core/theme/color_pallete.dart';
 import 'package:appointly/module/notification/presentation/widget/empt_state.dart';
 import 'package:flutter/material.dart';

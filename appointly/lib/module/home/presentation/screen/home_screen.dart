@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:appointly/module/home/presentation/widget/chart_status.dart';
 import 'package:appointly/module/home/presentation/widget/tab_bar.dart';
 import 'package:flutter/material.dart';

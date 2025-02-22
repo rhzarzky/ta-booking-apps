@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:appointly/module/auth/presentation/screen/auth_register.dart';
 import 'package:appointly/module/auth/presentation/screen/auth_signIn.dart';
 import 'package:flutter/material.dart';

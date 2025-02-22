@@ -1,3 +1,5 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:appointly/core/theme/color_pallete.dart';
 import 'package:appointly/module/onboarding/presentation/screen/onboarding_screen.dart';
 import 'package:appointly/module/profile/presentation/screen/change_password_screen.dart';
