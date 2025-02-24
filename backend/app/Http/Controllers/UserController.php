@@ -20,25 +20,73 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'roles' => $user->roles->pluck('name')->toArray(),
+                    'status' => $user->status,
+                    'role' => $user->roles->pluck('name')->toArray(),  
                 ];
             }),
         ], 200);
     }
     public function assignRole(Request $request, $id)
     {
-        $request->validate([
-            'role' => 'required|exists:roles,name'
-        ]);
+        try {
+            $request->validate([
+                'role' => 'required|exists:roles,name'
+            ]);
 
-        $user = User::findOrFail($id);
+            $user = User::findOrFail($id);
 
-        // Sync role (removes old roles and assigns the new one)
-        $user->syncRoles([$request->role]);
+            $role = Role::where('name', $request->role)->first();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => "Role '{$request->role}' assigned to {$user->name}."
-        ], 200);
+            // Sync role (removes old roles and assigns the new one)
+            $user->syncRoles([$role->name]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => "Role assigned successfully.",
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $role->name
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    public function assignPermissions(Request $request, $id)
+    {
+        try{
+            $request->validate([
+                'permissions' => 'required|array',
+                'permissions.*' => 'string|exists:permissions,name'
+            ]);
+
+            $user = User::findOrFail($id);
+
+            $permissions = Permission::whereIn('name', $request->permissions)->get();
+
+            // Assign permissions to user
+            $user->syncPermissions($permissions);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Permissions assigned successfully',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'permissions' => $user->permissions->pluck('name')
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

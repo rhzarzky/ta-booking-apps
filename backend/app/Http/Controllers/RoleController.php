@@ -16,41 +16,30 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|unique:roles,name'
-        ]);
+        try{
+            $validated = $request->validate([
+                'name' => 'required|unique:roles,name'
+            ]);
+            
+            $role = Role::create(['name' => $validated['name']]);
 
-        if (Role::where('name',  $validated['name'])->exists()) {
+            return response()->json([
+                'message' => 'Role created successfully', 
+                'role' => [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                ]
+            ], 200);
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-               'message' => 'Role already exists',
-            ], 400);
+                'message' => $e->getMessage()
+            ], 500);
         }
-        
-        $role = Role::create(['name' => $validated['name']]);
-
-        return response()->json([
-            'message' => 'Role created successfully', 
-            'role' => $role
-        ], 200);
     }
 
     public function permissions()
     {
         return response()->json(Permission::all(), 200);
-    }
-
-    public function assignPermissions(Request $request, Role $role)
-    {
-        $request->validate(['permissions' => 'required|array']);
-
-        $permissions = Permission::whereIn('name', $request->permissions)->get();
-
-        $role->syncPermissions($permissions);
-
-        return response()->json([
-           'message' => 'Permissions assigned successfully',
-            'role' => $role
-        ], 200);
     }
 }
