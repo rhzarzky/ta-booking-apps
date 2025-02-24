@@ -4,8 +4,10 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,7 +16,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // Create roles if they don't exist
+        $permissions = [
+            'show user', 'show permission', 'show role', 'create role',
+            'assign role', 'assign permission',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'api']);
+            Log::info("Permission '{$permission}' created or already exists");
+        }
+
         Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'user']);
 
@@ -29,5 +40,7 @@ class DatabaseSeeder extends Seeder
 
         // Assign the 'admin' role to the admin user
         $adminUser->assignRole('admin');
+        $adminUser->syncPermissions($permissions); // Assign all permissions
+        Log::info("Admin user created.");
     }
 }

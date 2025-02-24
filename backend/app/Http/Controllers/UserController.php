@@ -22,6 +22,7 @@ class UserController extends Controller
                     'email' => $user->email,
                     'status' => $user->status,
                     'role' => $user->roles->pluck('name')->toArray(),  
+                    'permission' => $user->permissions->pluck('name')->toArray(), 
                 ];
             }),
         ], 200);
@@ -57,7 +58,7 @@ class UserController extends Controller
             ], 500);
         }
     }
-    public function assignPermissions(Request $request, $id)
+    public function assignPermission(Request $request, $id)
     {
         try{
             $request->validate([
@@ -79,7 +80,7 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'permissions' => $user->permissions->pluck('name')
+                    'permission' => $user->permissions->pluck('name')
                 ]
             ], 200);
         } catch (\Exception $e) {

@@ -38,8 +38,8 @@ class RoleController extends Controller
         }
     }
 
-    public function permissions()
+    public function permission()
     {
-        return response()->json(Permission::all(), 200);
+        return response()->json(Permission::select('id', 'name')->get());
     }
 }
