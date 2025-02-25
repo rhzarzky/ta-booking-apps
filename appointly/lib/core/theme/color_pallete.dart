@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class ColorPallete {
   static const Color backgroundBody = Color(0xFFF1F3F2);
   static const Color concreteWhite = Color(0xFFF2F2F2);
+  static const Color concrete50 = Color(0xFFF8F8F8);
   static const Color greySilverChalice950 = Color(0xff545454);
   static const Color greySilverChalice = Color(0xFFB5B5B5);
   static const Color darkGreySilver = Color(0xffA0A0A0);

@@ -2,6 +2,7 @@
 
 import 'package:appointly/core/theme/color_pallete.dart';
 import 'package:appointly/module/meetings/presentation/screen/detail_meeting_screen.dart';
+import 'package:appointly/module/meetings/presentation/screen/history_meeting.dart';
 import 'package:appointly/module/meetings/presentation/widget/card_service.dart';
 import 'package:appointly/module/meetings/presentation/widget/search_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,6 +34,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
       backgroundColor: ColorPallete.backgroundBody,
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        foregroundColor: Colors.white,
         backgroundColor: Colors.white,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -47,9 +49,16 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
               ),
             ),
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HistoryMeetings(),
+                  ),
+                );
+              },
               icon: SvgPicture.asset('assets/icons/icon-history.svg'),
-            ),  
+            ),
           ],
         ),
       ),

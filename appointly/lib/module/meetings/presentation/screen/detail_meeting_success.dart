@@ -1,17 +1,18 @@
 import 'package:appointly/core/theme/color_pallete.dart';
+import 'package:appointly/module/home/presentation/screen/home_screen.dart';
 import 'package:appointly/module/meetings/presentation/widget/success_state.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class DetailMeetingScreen extends StatefulWidget {
-  const DetailMeetingScreen({super.key});
+class DetailMeetingSuccess extends StatefulWidget {
+  const DetailMeetingSuccess({super.key});
 
   @override
-  State<DetailMeetingScreen> createState() => _DetailMeetingScreenState();
+  State<DetailMeetingSuccess> createState() => _DetailMeetingSuccessState();
 }
 
-class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
+class _DetailMeetingSuccessState extends State<DetailMeetingSuccess> {
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
 
@@ -56,7 +57,6 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
           Stack(
             children: [
               _buildBackgroundImage(),
-              _buildBackButton(),
             ],
           ),
           _buildContent(),
@@ -72,23 +72,6 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
         image: DecorationImage(
           image: AssetImage('assets/image/service_dummy_card.png'),
           fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBackButton() {
-    return Positioned(
-      left: 12,
-      top: 12,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back_rounded),
         ),
       ),
     );
@@ -372,7 +355,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
       ),
       child: TextButton(
         child: Text(
-          'Book Appointment Now',
+          'Back to Home',
           style: GoogleFonts.ubuntu(
             color: Colors.white,
             fontSize: 16,
@@ -380,11 +363,10 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
           ),
         ),
         onPressed: () {
-          Navigator.push(
+          Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(
-              builder: (context) => SuccessState(),
-            ),
+            MaterialPageRoute(builder: (context) => HomeScreen()),
+            (route) => false, // Removes all previous routes
           );
         },
       ),

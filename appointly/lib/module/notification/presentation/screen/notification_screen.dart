@@ -17,25 +17,27 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorPallete.backgroundBody,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.white,
-        title: Column(
-          children: [
-            Text(
-              'Your Notifications',
-              style: GoogleFonts.sourceSans3(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: ColorPallete.darkBlack),
-            )
-          ],
-        ),
-      ),
+      appBar: _buildAppBar(),
       body: Column(
         children: [
           EmptyState(),
         ],
+      ),
+    );
+  }
+
+  
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.white,
+      title: Text(
+        'Your Notifications',
+        style: GoogleFonts.sourceSans3(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: ColorPallete.darkBlack),
       ),
     );
   }
