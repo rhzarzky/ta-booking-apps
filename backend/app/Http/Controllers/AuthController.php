@@ -56,6 +56,8 @@ class AuthController extends Controller
                 $user->givePermissionTo($permissions);
             }
 
+            $token = JWTAuth::fromUser($user);
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'User registered successfully',
@@ -66,6 +68,7 @@ class AuthController extends Controller
                     'role' => $user->getRoleNames(),
                     'status' => $user->status,
                 ],
+                'token' => $token
             ], 201);
 
         } catch (Exception $e) {
