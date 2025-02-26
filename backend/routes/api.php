@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{AuthController, RoleController, UserController};
+use App\Http\Controllers\{AuthController, RoleController, ServiceController, UserController};
 use App\Http\Middleware\JwtMiddleware;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -27,6 +27,9 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::middleware(['permission:assign permission'])->group(function () {
         Route::post('/users/{id}/assign-permission', [UserController::class, 'assignPermission']);
     });
+
+    Route::get('/service', [ServiceController::class, 'index']);
+    Route::post('/service', [ServiceController::class, 'store']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });
