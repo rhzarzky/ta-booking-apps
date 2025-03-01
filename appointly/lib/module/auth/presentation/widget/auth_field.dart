@@ -1,10 +1,8 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:flutter/material.dart';
 import 'package:appointly/core/theme/color_pallete.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class AuthField extends StatelessWidget {
+class AuthField extends StatefulWidget {
   final String hintText;
   final bool isPassword;
   final TextEditingController controller;
@@ -19,24 +17,32 @@ class AuthField extends StatelessWidget {
   });
 
   @override
+  _AuthFieldState createState() => _AuthFieldState();
+}
+
+class _AuthFieldState extends State<AuthField> {
+  bool isPasswordVisible = false;
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          labelText,
+          widget.labelText,
           style: GoogleFonts.ubuntu(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: ColorPallete.darkBlack,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextFormField(
-          controller: controller,
+          controller: widget.controller,
+          obscureText: widget.isPassword && !isPasswordVisible,
           decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: TextStyle(
+            hintText: widget.hintText,
+            hintStyle: const TextStyle(
               color: ColorPallete.darkGreySilver,
               fontSize: 14,
             ),
@@ -52,20 +58,34 @@ class AuthField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: ColorPallete.primary50,
                 width: 2,
               ),
             ),
-            contentPadding: EdgeInsets.symmetric(
+            contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
+            suffixIcon: widget.isPassword
+                ? IconButton(
+                    icon: Icon(
+                      isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: ColorPallete.darkGreySilver,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        isPasswordVisible = !isPasswordVisible;
+                      });
+                    },
+                  )
+                : null,
           ),
-          obscureText: isPassword,
           validator: (value) {
             if (value!.isEmpty) {
-              return '$labelText is required';
+              return '${widget.labelText} is required';
             }
             return null;
           },

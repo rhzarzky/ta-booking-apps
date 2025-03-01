@@ -5,9 +5,11 @@ import 'package:appointly/module/auth/presentation/screen/auth_signin.dart';
 import 'package:appointly/module/auth/presentation/widget/auth_button.dart';
 import 'package:appointly/module/auth/presentation/widget/auth_field.dart';
 import 'package:appointly/module/auth/presentation/widget/link_button.dart';
+import 'package:appointly/module/auth/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:appointly/core/theme/color_pallete.dart';
+import 'package:provider/provider.dart';
 
 class AuthRegister extends StatefulWidget {
   const AuthRegister({super.key});
@@ -21,9 +23,26 @@ class _AuthRegisterState extends State<AuthRegister> {
   final fullNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    AuthProvider authProvider = Provider.of<AuthProvider>(context);
+
+    handleRegister() async {
+      if (await authProvider.register(
+        name: fullNameController.text,
+        email: emailController.text,
+        password: passwordController.text,
+        confirmPassword: confirmPasswordController.text,
+      )) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => MainTabScreen()),
+        );
+      }
+    }
+
     Widget header() {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -77,16 +96,19 @@ class _AuthRegisterState extends State<AuthRegister> {
               controller: passwordController,
               hintText: 'Max. 8 Characters',
               labelText: 'Password',
+              isPassword: true,
+            ),
+            SizedBox(height: 16),
+            AuthField(
+              controller: confirmPasswordController,
+              hintText: 'Max. 8 Characters',
+              labelText: 'Confirm Passwrod',
+              isPassword: true,
             ),
             SizedBox(height: 24),
             AuthButton(
               text: 'Get Started',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => MainTabScreen()),
-                );
-              },
+              onTap: () => handleRegister(),
             ),
             SizedBox(height: 24),
             Row(

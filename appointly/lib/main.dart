@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:appointly/core/common/main_tab_screen.dart';
 import 'package:appointly/module/onboarding/presentation/screen/onboarding_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:appointly/module/auth/providers/auth_provider.dart';
 
 void main() {
   runApp(const MainApp());
@@ -24,11 +26,16 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: showOnboarding
-          ? OnboardingScreen(onComplete: completeOnboarding)
-          : const MainTabScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: showOnboarding
+            ? OnboardingScreen(onComplete: completeOnboarding)
+            : const MainTabScreen(),
+      ),
     );
   }
 }

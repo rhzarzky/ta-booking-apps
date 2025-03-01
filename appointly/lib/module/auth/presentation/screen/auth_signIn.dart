@@ -75,6 +75,7 @@ class _AuthSigninState extends State<AuthSignin> {
               controller: passwordController,
               hintText: 'Max. 8 Characters',
               labelText: 'Password',
+              isPassword: true,
             ),
             SizedBox(height: 24),
             AuthButton(
