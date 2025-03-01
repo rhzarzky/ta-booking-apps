@@ -17,4 +17,16 @@ class RegisterUser extends AuthEvent {
   });
 }
 
-class CheckAuthStatus extends AuthEvent{}
+class LoginUser extends AuthEvent {
+  final String email;
+  final String password;
+
+  LoginUser({
+    required this.email,
+    required this.password,
+  });
+}
+
+class LogoutUser extends AuthEvent {}
+
+class CheckAuthStatus extends AuthEvent {}

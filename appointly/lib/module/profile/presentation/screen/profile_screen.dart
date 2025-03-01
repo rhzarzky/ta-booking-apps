@@ -7,6 +7,9 @@ import 'package:appointly/module/profile/presentation/screen/personal_info_scree
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:appointly/module/auth/presentation/bloc/auth_bloc.dart';
+import 'package:appointly/module/auth/repository/auth_repository.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -42,16 +45,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Logout',
+            style: GoogleFonts.sourceSans3(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: ColorPallete.darkBlack,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to logout?',
+            style: GoogleFonts.ubuntu(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: ColorPallete.darkGreySilver,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Tutup dialog
+              },
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: ColorPallete.darkBlack,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Tutup dialog
+                context.read<AuthBloc>().add(LogoutUser()); // Trigger logout
+              },
+              child: Text(
+                'Logout',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: ColorPallete.redCinnabar,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColorPallete.backgroundBody,
-      appBar: _buildAppBar(),
-      body: ListView(
-        children: [
-          _buildProfileHeader(),
-          _buildAccountSettings(),
-        ],
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OnboardingScreen(
+                onComplete: completeOnboarding,
+              ),
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: ColorPallete.backgroundBody,
+        appBar: _buildAppBar(),
+        body: ListView(
+          children: [
+            _buildProfileHeader(),
+            _buildAccountSettings(),
+          ],
+        ),
       ),
     );
   }
@@ -167,14 +239,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     );
                   } else if (index == 2) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OnboardingScreen(
-                          onComplete: completeOnboarding,
-                        ),
-                      ),
-                    );
+                    _showLogoutConfirmationDialog(
+                        context); // Tampilkan dialog konfirmasi
                   }
                 },
                 titleColor: item['titleColor'],

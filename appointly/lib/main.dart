@@ -1,5 +1,6 @@
 import 'package:appointly/module/auth/presentation/bloc/auth_bloc.dart';
 import 'package:appointly/module/auth/repository/auth_repository.dart';
+import 'package:appointly/module/onboarding/repository/onboarding_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:appointly/core/common/main_tab_screen.dart';
@@ -20,7 +21,23 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   bool showOnboarding = true;
 
-  void completeOnboarding() {
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboardingStatus();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    final onBoardingRepo = OnboardingRepository();
+    final isOnboardingComplete = await onBoardingRepo.isOnboardingComplete();
+    setState(() {
+      showOnboarding = !isOnboardingComplete;
+    });
+  }
+
+  void completeOnboarding() async {
+    final onboardingRepo = OnboardingRepository();
+    await onboardingRepo.completeOnboarding();
     setState(() {
       showOnboarding = false;
     });
