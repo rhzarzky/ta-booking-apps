@@ -24,46 +24,75 @@ class ServiceController extends Controller
     public function storeService(Request $request)
     {
         $validated = $request->validate([
-            'image' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', 
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:255',
             'option' => 'required|string|in:offline,online',
             'start_date' => 'required|date',
         ]);
 
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('services', 'public'); 
+            $validated['image'] = $imagePath;
+        }
+
         $service = Service::create($validated);
+
         return response()->json([
             'status' => 'success',
-            'message' => 'service service created successfully',
+            'message' => 'Service created successfully',
             'service' => [
                 'id' => $service->id,
-                'image' => $service->image,
+                'image' => $service->image ? asset('storage/' . $service->image) : null, // Full URL for frontend
                 'title' => $service->title,
                 'description' => $service->description,
                 'option' => $service->option,
                 'start_date' => $service->start_date,
             ],
-        ], 200);
+        ], 201);
     }
     public function editService(Request $request, $id)
     {
-        $validated = $request->validate([
-            'image' => 'sometimes|string',
+        $validator = Validator::make($request->all(), [
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string|max:255',
             'option' => 'sometimes|string|in:offline,online',
-            'start_date' => 'sometimes|date',
+            'start_date' => 'sometimes|date'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
         try {
             $service = Service::findOrFail($id);
+            $validated = $validator->validated();
+
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('images', 'public');
+                $validated['image'] = $imagePath;
+            } else {
+                unset($validated['image']); // Don't update image if none is uploaded
+            }
 
             $service->update($validated);
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Service updated successfully',
-                'service' => $service,
+                'service' => [
+                    'id' => $service->id,
+                    'image' => $service->image ? asset('storage/' . $service->image) : null, // Return full URL
+                    'title' => $service->title,
+                    'description' => $service->description,
+                    'option' => $service->option,
+                    'start_date' => $service->start_date,
+                ],
             ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([

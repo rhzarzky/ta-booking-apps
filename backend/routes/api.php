@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{AuthController, RoleController, ServiceController, UserController};
+use App\Http\Controllers\{AuthController, RoleController, ServiceController, UserController, BookingController};
 use App\Http\Middleware\JwtMiddleware;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -31,6 +31,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::get('/service', [ServiceController::class, 'showService']);
     Route::post('/service', [ServiceController::class, 'storeService']);
     Route::put('/service/{id}', [ServiceController::class, 'editService']);
+    Route::post('/service/{id}/book', [BookingController::class, 'bookService']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });
