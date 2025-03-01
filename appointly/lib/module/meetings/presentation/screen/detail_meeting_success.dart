@@ -1,6 +1,5 @@
 import 'package:appointly/core/theme/color_pallete.dart';
 import 'package:appointly/module/home/presentation/screen/home_screen.dart';
-import 'package:appointly/module/meetings/presentation/widget/success_state.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';

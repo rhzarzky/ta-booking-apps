@@ -29,7 +29,7 @@ class AuthService {
     if (response.statusCode == 201) {
       var data = jsonDecode(response.body)['data'];
       UsersModel user = UsersModel.fromJson(data['user']);
-      user.token = data['token'];
+      //user.token = data['token'];
 
       return user;
     } else {
