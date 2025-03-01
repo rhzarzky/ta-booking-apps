@@ -1,7 +1,6 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'package:appointly/core/theme/color_pallete.dart';
-import 'package:appointly/module/meetings/presentation/screen/meetings_screen.dart';
 import 'package:appointly/module/meetings/presentation/widget/card_appointment.dart';
 import 'package:appointly/module/meetings/presentation/widget/filter_bottomsheet.dart';
 import 'package:flutter/material.dart';

@@ -1,27 +1,41 @@
 class UsersModel {
   final int id;
+  final String name;
   final String email;
-  final String password;
+  final String role;
+  final String status;
   final String token;
 
   UsersModel({
     required this.id,
+    required this.name,
     required this.email,
-    required this.password,
+    this.role = "",
+    this.status = "",
     required this.token,
   });
 
-  UsersModel.fromJson(Map<String, dynamic> json)
-      : id = json['id'],
-        email = json['email'],
-        password = json['password'],
-        token = json['token'];
+  factory UsersModel.fromJson(Map<String, dynamic> json) {
+    // Handle the nested 'user' object structure
+    final userData = json['user'] as Map<String, dynamic>;
+    
+    return UsersModel(
+      id: userData['id'],
+      name: userData['name'],
+      email: userData['email'],
+      role: userData['role']?.toString() ?? "",
+      status: userData['status']?.toString() ?? "",
+      token: json['token'],
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'name': name,
       'email': email,
-      'password': password,
+      'role': role,
+      'status': status,
       'token': token,
     };
   }

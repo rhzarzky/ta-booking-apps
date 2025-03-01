@@ -3,14 +3,18 @@ part of 'auth_bloc.dart';
 @immutable
 sealed class AuthEvent {}
 
-final class AuthRegister extends AuthEvent {
+class RegisterUser extends AuthEvent {
   final String name;
   final String email;
   final String password;
+  final String confirmPassword;
 
-  AuthRegister({
+  RegisterUser({
     required this.name,
     required this.email,
     required this.password,
+    required this.confirmPassword,
   });
 }
+
+class CheckAuthStatus extends AuthEvent{}
