@@ -3,10 +3,15 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthRepository {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'http://127.0.0.1:8000/v1',
-    validateStatus: (status) => status! < 500,
-  ));
+  final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: 'http://192.168.100.18:8000/v1', 
+      headers: {'Content-Type': 'application/json'},
+      validateStatus: (status) => status! < 500,
+      connectTimeout: Duration(seconds: 30), 
+      receiveTimeout: Duration(seconds: 30), 
+    ),
+  );
 
   // Register user
   Future<UsersModel> register({
@@ -20,19 +25,14 @@ class AuthRepository {
         'name': name,
         'email': email,
         'password': password,
-        'password_confirmation': confirmPassword
+        'password_confirmation': confirmPassword,
       });
 
       if (res.statusCode == 201) {
-        // Create user model from the response
         UsersModel user = UsersModel.fromJson(res.data);
-
-        // Save token from the response
         await _saveToken(res.data['token']);
-
         return user;
       } else {
-        // Extract error message from response
         String errorMessage = 'Registration failed';
         if (res.data is Map && res.data.containsKey('message')) {
           errorMessage = res.data['message'];
@@ -40,8 +40,11 @@ class AuthRepository {
         throw Exception(errorMessage);
       }
     } on DioException catch (e) {
-      // Handle Dio specific errors
-      if (e.response != null && e.response!.data is Map) {
+      if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('Connection timeout. Please check your internet connection.');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Server took too long to respond. Please try again.');
+      } else if (e.response != null && e.response!.data is Map) {
         if (e.response!.data.containsKey('message')) {
           throw Exception(e.response!.data['message']);
         }
@@ -52,6 +55,7 @@ class AuthRepository {
     }
   }
 
+  // Login user
   Future<UsersModel> login({
     required String email,
     required String password,
@@ -64,13 +68,24 @@ class AuthRepository {
 
       if (res.statusCode == 200) {
         UsersModel user = UsersModel.fromJson(res.data);
-        await _saveToken(res.data['token']); //
+        await _saveToken(res.data['token']);
         return user;
       } else {
         throw Exception(res.data['message']);
       }
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('Connection timeout. Please check your internet connection.');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Server took too long to respond. Please try again.');
+      } else if (e.response != null && e.response!.data is Map) {
+        if (e.response!.data.containsKey('message')) {
+          throw Exception(e.response!.data['message']);
+        }
+      }
+      throw Exception('Network error: ${e.message}');
     } catch (e) {
-      throw Exception(e.toString());
+      throw Exception('Login error: ${e.toString()}');
     }
   }
 

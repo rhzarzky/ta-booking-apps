@@ -35,48 +35,54 @@ class _AuthRegisterState extends State<AuthRegister> {
             children: [
               header(),
               SizedBox(height: 8),
-              Text(
-                'Join Us Today!',
-                style: GoogleFonts.sourceSans3(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: ColorPallete.darkBlack,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Create an account and unlock your next great scheduling.',
-                style: GoogleFonts.ubuntu(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: ColorPallete.darkGreySilver,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Join Us Today!',
+                    style: GoogleFonts.sourceSans3(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: ColorPallete.darkBlack,
+                    ),
+                  ),
+                  Text(
+                    'Create an account and unlock your next great scheduling.',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: ColorPallete.darkGreySilver,
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 24),
-              AuthField(
-                controller: fullNameController,
-                hintText: 'John Doe',
-                labelText: 'Full Name',
-              ),
-              SizedBox(height: 16),
-              AuthField(
-                controller: emailController,
-                hintText: 'johndoe@gmail.com',
-                labelText: 'Email Address',
-              ),
-              SizedBox(height: 16),
-              AuthField(
-                controller: passwordController,
-                hintText: 'Max. 8 Characters',
-                labelText: 'Password',
-                isPassword: true,
-              ),
-              SizedBox(height: 16),
-              AuthField(
-                controller: confirmPasswordController,
-                hintText: 'Max. 8 Characters',
-                labelText: 'Confirm Password',
-                isPassword: true,
+              Column(
+                spacing: 16.0,
+                children: [
+                  AuthField(
+                    controller: fullNameController,
+                    hintText: 'John Doe',
+                    labelText: 'Full Name',
+                  ),
+                  AuthField(
+                    controller: emailController,
+                    hintText: 'johndoe@gmail.com',
+                    labelText: 'Email Address',
+                  ),
+                  AuthField(
+                    controller: passwordController,
+                    hintText: 'Max. 8 Characters',
+                    labelText: 'Password',
+                    isPassword: true,
+                  ),
+                  AuthField(
+                    controller: confirmPasswordController,
+                    hintText: 'Max. 8 Characters',
+                    labelText: 'Confirm Password',
+                    isPassword: true,
+                  ),
+                ],
               ),
               SizedBox(height: 24),
               BlocConsumer<AuthBloc, AuthState>(
@@ -85,9 +91,12 @@ class _AuthRegisterState extends State<AuthRegister> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Registered successfully!')),
                     );
-                    Navigator.pushReplacement(
+                    Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => MainTabScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => MainTabScreen(),
+                      ),
+                      (route) => false,
                     );
                   } else if (state is AuthFailure) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -111,7 +120,7 @@ class _AuthRegisterState extends State<AuthRegister> {
                   );
                 },
               ),
-              SizedBox(height: 24),
+              SizedBox(height: 4.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -123,7 +132,7 @@ class _AuthRegisterState extends State<AuthRegister> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(width: 4),
+                  SizedBox(width: 4.0),
                   LinkButton(
                     onTap: () {
                       Navigator.push(
@@ -135,7 +144,6 @@ class _AuthRegisterState extends State<AuthRegister> {
                   ),
                 ],
               ),
-              SizedBox(height: 16),
             ],
           ),
         ),

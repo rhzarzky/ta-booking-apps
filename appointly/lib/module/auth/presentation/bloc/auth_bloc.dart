@@ -1,5 +1,6 @@
 import 'package:appointly/module/auth/model/users_model.dart';
 import 'package:appointly/module/auth/repository/auth_repository.dart';
+import 'package:appointly/module/onboarding/repository/onboarding_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -25,14 +26,38 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     });
 
-    on<CheckAuthStatus>((event, emit)async{
+    on<LoginUser>(
+      (event, emit) async {
+        emit(AuthLoading());
+        try {
+          final user = await _authRepository.login(
+            email: event.email,
+            password: event.password,
+          );
+          emit(AuthSuccess(user));
+        } catch (e) {
+          emit(AuthFailure(e.toString()));
+        }
+      },
+    );
+
+    on<CheckAuthStatus>((event, emit) async {
       emit(AuthLoading());
       final isAuthenticated = await _authRepository.isLoggedIn();
-       if (isAuthenticated) {
+      if (isAuthenticated) {
         emit(AuthAuthenticated());
       } else {
         emit(AuthUnauthenticated());
       }
     });
+
+    on<LogoutUser>(
+      (event, emit) async {
+        _authRepository.logout();
+        final onboardingRepo = OnboardingRepository();
+        await onboardingRepo.completeOnboarding();
+        emit(AuthUnauthenticated());
+      },
+    );
   }
 }
