@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ServiceController extends Controller
 {
-    public function index()
+    public function showService()
     {
         $service = Service::select(
             'id', 
@@ -21,7 +21,7 @@ class ServiceController extends Controller
         )->get();
         return response()->json($service);
     }
-    public function store(Request $request)
+    public function storeService(Request $request)
     {
         $validated = $request->validate([
             'image' => 'nullable|string',
@@ -45,31 +45,37 @@ class ServiceController extends Controller
             ],
         ], 200);
     }
-    public function edit(Request $request)
+    public function editService(Request $request, $id)
     {
-        $validate = Validator::make($request->all(), [
+        $validated = $request->validate([
             'image' => 'sometimes|string',
-            'title' => 'sometimes|string|max: 255',
-            'description' => 'sometimes|string|max: 255',
+            'title' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string|max:255',
             'option' => 'sometimes|string|in:offline,online',
-            'start_date' => 'sometimes|date'
+            'start_date' => 'sometimes|date',
         ]);
 
-        if ($validate->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'error' => $validate->errors(),
-            ], 422);
-        }
-
         try {
-            $service = Service::findOrFail();
-            
+            $service = Service::findOrFail($id);
+
+            $service->update($validated);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Service updated successfully',
+                'service' => $service,
+            ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Service not found',
             ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while updating the service.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
     }
 }

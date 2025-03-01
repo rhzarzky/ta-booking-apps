@@ -7,6 +7,7 @@ use Spatie\Permission\Exceptions\UnauthorizedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Http\Middleware\HandleCors;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'v1/*',
         ]);
+
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
         
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,

@@ -10,16 +10,16 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware([JwtMiddleware::class])->group(function () {
 
     Route::middleware(['permission:show user'])->group(function () {
-        Route::get('/user', [UserController::class, 'index']);
+        Route::get('/user', [UserController::class, 'showUser']);
     });
     Route::middleware(['permission:create role'])->group(function () {
-        Route::post('/role', [RoleController::class, 'store']);
+        Route::post('/role', [RoleController::class, 'storeRole']);
     });
     Route::middleware(['permission:show role'])->group(function () {
-        Route::get('/role', [RoleController::class, 'index']); 
+        Route::get('/role', [RoleController::class, 'showRole']); 
     });
     Route::middleware(['permission:show permission'])->group(function () {
-        Route::get('/permission', [RoleController::class, 'permission']);
+        Route::get('/permission', [RoleController::class, 'showPermission']);
     });
     Route::middleware(['permission:assign role'])->group(function () {
         Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
@@ -28,8 +28,9 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('/users/{id}/assign-permission', [UserController::class, 'assignPermission']);
     });
 
-    Route::get('/service', [ServiceController::class, 'index']);
-    Route::post('/service', [ServiceController::class, 'store']);
+    Route::get('/service', [ServiceController::class, 'showService']);
+    Route::post('/service', [ServiceController::class, 'storeService']);
+    Route::put('/service/{id}', [ServiceController::class, 'editService']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });

@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Permission;
 
 class UserController extends Controller
 {
-    public function index()
+    public function showUser()
     {
         $users = User::with('roles')->get();
 

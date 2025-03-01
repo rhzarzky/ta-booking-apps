@@ -8,13 +8,13 @@ use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
-    public function index()
+    public function showRole()
     {
         $roles = Role::select('id', 'name')->get();
         return response()->json($roles);
     }
 
-    public function store(Request $request)
+    public function storeRole(Request $request)
     {
         try{
             $validated = $request->validate([
@@ -38,7 +38,7 @@ class RoleController extends Controller
         }
     }
 
-    public function permission()
+    public function showPermission()
     {
         return response()->json(Permission::select('id', 'name')->get());
     }
