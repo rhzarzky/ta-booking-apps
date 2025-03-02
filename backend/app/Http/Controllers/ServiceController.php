@@ -69,7 +69,8 @@ class ServiceController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string|max:255',
-            'option' => 'sometimes|string|in:offline,online',
+            'option' => 'sometimes|array', 
+            'option.*' => 'in:offline,online', 
             'start_date' => 'sometimes|date'
         ]);
 
@@ -86,10 +87,12 @@ class ServiceController extends Controller
             $validated = $validator->validated();
 
             if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('images', 'public');
+                $imagePath = $request->file('image')->store('services', 'public'); // Store in storage/app/public/services
                 $validated['image'] = $imagePath;
-            } else {
-                unset($validated['image']); // Don't update image if none is uploaded
+            }
+
+            if (isset($validated['option'])) {
+                $validated['option'] = json_encode($validated['option']);
             }
 
             $service->update($validated);
@@ -99,10 +102,10 @@ class ServiceController extends Controller
                 'message' => 'Service updated successfully',
                 'service' => [
                     'id' => $service->id,
-                    'image' => $service->image ? asset('storage/' . $service->image) : null, // Return full URL
+                    'image' => $service->image ? asset('storage/' . $service->image) : null, 
                     'title' => $service->title,
                     'description' => $service->description,
-                    'option' => $service->option,
+                    'option' => json_decode($service->option), 
                     'start_date' => $service->start_date,
                 ],
             ], 200);
