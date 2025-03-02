@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('services', function (Blueprint $table) {
+       Schema::create('services', function (Blueprint $table) {
             $table->id();
             $table->string('image')->nullable();
             $table->string('title');
-            $table->string('description');
-            $table->json('option');
+            $table->text('description');
+            $table->json('option'); 
+            $table->json('days'); 
             $table->date('start_date');
+            $table->date('end_date')->nullable(); 
             $table->timestamps();
         });
     }

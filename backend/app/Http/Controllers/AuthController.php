@@ -26,7 +26,7 @@ class AuthController extends Controller
             'role' => 'nullable|string|exists:roles,name', 
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|exists:permissions,name',
-            'status' => 'nullable|string|in:active,inactive',
+            'status' => 'nullable|string|in:Active,Inactive',
         ]);
 
         if ($dataValidation->fails()) {
@@ -41,7 +41,7 @@ class AuthController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'status' => $request->status ?? 'active',
+                'status' => $request->status ?? 'Active',
             ]);
 
             $roleName = $request->role ?? 'user';
@@ -103,7 +103,7 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            if ($user->status !== 'active') {
+            if ($user->status !== 'Active') {
                 return response()->json([
                     'status' => 'error',
                     'error' => 'Your account is inactive. Please contact support.',

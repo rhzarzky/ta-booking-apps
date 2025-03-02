@@ -10,6 +10,34 @@ use App\Models\Service;
 
 class BookingController extends Controller
 {
+    public function index()
+    {
+        $bookings = Booking::with('user', 'service')
+        ->get()
+        ->map(function ($booking) {
+            return [
+                'id' => $booking->id,
+                'user' => [
+                    'id' => $booking->user->id,
+                    'email' => $booking->user->email,
+                    'name' => $booking->user->name,
+                ],
+                'service' => [
+                    'id' => $booking->service->id,
+                    'title' => $booking->service->title,
+                    'description' => $booking->service->description,
+                ],
+                'option' => $booking->option,
+                'time' => $booking->time,
+                'status' => $booking->status,
+            ];
+        });
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Booking retrieved successfully',
+            'services' => $bookings,
+        ], 200);
+    }
    public function bookService(Request $request, $id)
     {
         $user = Auth::user();
@@ -34,7 +62,7 @@ class BookingController extends Controller
             'user_id' => $user->id,
             'option' => $validated['option'],
             'time' => $validated['time'],
-            'status' => 'pending',
+            'status' => 'Pending',
         ]);
 
         return response()->json([

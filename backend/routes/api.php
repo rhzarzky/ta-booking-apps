@@ -27,11 +27,13 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::middleware(['permission:assign permission'])->group(function () {
         Route::post('/users/{id}/assign-permission', [UserController::class, 'assignPermission']);
     });
-
+    
     Route::get('/service', [ServiceController::class, 'showService']);
     Route::post('/service', [ServiceController::class, 'storeService']);
     Route::put('/service/{id}', [ServiceController::class, 'editService']);
     Route::post('/service/{id}/book', [BookingController::class, 'bookService']);
+
+    Route::get('/booking', [BookingController::class, 'index']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });
