@@ -11,7 +11,9 @@ class Booking extends Model {
     protected $fillable = [
         'service_id', 
         'user_id', 
-        'status'
+        'status',
+        'option',
+        'time'
     ];
 
     public function service() {

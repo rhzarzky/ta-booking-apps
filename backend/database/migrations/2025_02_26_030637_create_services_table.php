@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('title');
             $table->string('description');
-            $table->enum('option', ['offline', 'online']);
+            $table->json('option');
             $table->date('start_date');
             $table->timestamps();
         });

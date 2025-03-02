@@ -11,30 +11,42 @@ class ServiceController extends Controller
 {
     public function showService()
     {
-        $service = Service::select(
-            'id', 
-            'image',
-            'title', 
-            'description', 
-            'option', 
-            'start_date',
-        )->get();
-        return response()->json($service);
+        $services = Service::select('id', 'image', 'title', 'description', 'option', 'start_date')
+            ->get()
+            ->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'image' => $service->image ? asset('storage/' . $service->image) : null,
+                    'title' => $service->title,
+                    'description' => $service->description,
+                    'option' => json_decode($service->option), 
+                    'start_date' => $service->start_date,
+                ];
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Services retrieved successfully',
+            'services' => $services,
+        ], 200);
     }
     public function storeService(Request $request)
     {
         $validated = $request->validate([
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', 
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:255',
-            'option' => 'required|string|in:offline,online',
+            'option' => 'required|array', 
+            'option.*' => 'in:offline,online', 
             'start_date' => 'required|date',
         ]);
 
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('services', 'public'); 
+            $imagePath = $request->file('image')->store('services', 'public');
             $validated['image'] = $imagePath;
         }
+
+        $validated['option'] = json_encode($validated['option']); 
 
         $service = Service::create($validated);
 
@@ -43,10 +55,10 @@ class ServiceController extends Controller
             'message' => 'Service created successfully',
             'service' => [
                 'id' => $service->id,
-                'image' => $service->image ? asset('storage/' . $service->image) : null, // Full URL for frontend
+                'image' => $service->image ? asset('storage/' . $service->image) : null,
                 'title' => $service->title,
                 'description' => $service->description,
-                'option' => $service->option,
+                'option' => json_decode($service->option), 
                 'start_date' => $service->start_date,
             ],
         ], 201);

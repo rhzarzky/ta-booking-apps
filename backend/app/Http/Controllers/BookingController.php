@@ -10,11 +10,17 @@ use App\Models\Service;
 
 class BookingController extends Controller
 {
-    public function bookService(Request $request, $id) 
+   public function bookService(Request $request, $id)
     {
         $user = Auth::user();
-
         $service = Service::findOrFail($id);
+
+        $availableOptions = json_decode($service->option, true);
+
+        $validated = $request->validate([
+            'time' => 'required|date_format:H:i',
+            'option' => 'required|string|in:' . implode(',', $availableOptions), // Only allow options set by admin
+        ]);
 
         if (Booking::where('service_id', $service->id)->where('user_id', $user->id)->exists()) {
             return response()->json([
@@ -24,9 +30,11 @@ class BookingController extends Controller
         }
 
         $booking = Booking::create([
-            'service_id' => $service->id,  
-            'user_id' => $user->id,        
-            'status' => 'pending',         
+            'service_id' => $service->id,
+            'user_id' => $user->id,
+            'option' => $validated['option'],
+            'time' => $validated['time'],
+            'status' => 'pending',
         ]);
 
         return response()->json([
@@ -34,11 +42,14 @@ class BookingController extends Controller
             'message' => 'Service booked successfully, awaiting approval.',
             'booking' => [
                 'id' => $booking->id,
+                'option' => $booking->option,
+                'time' => $booking->time,
+                'status' => $booking->status,
                 'service' => [
                     'id' => $service->id,
                     'title' => $service->title,
                     'description' => $service->description,
-                    'option' => $service->option,
+                    'option' => json_decode($service->option),
                     'start_date' => $service->start_date,
                 ],
                 'user' => [
@@ -46,7 +57,6 @@ class BookingController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                 ],
-                'status' => $booking->status,
             ],
         ], 201);
     }
