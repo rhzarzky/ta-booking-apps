@@ -1,6 +1,7 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'package:appointly/core/theme/color_pallete.dart';
+import 'package:appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:appointly/module/meetings/presentation/screen/detail_meeting_screen.dart';
 import 'package:appointly/module/meetings/presentation/screen/history_meeting.dart';
 import 'package:appointly/module/meetings/presentation/widget/card_service.dart';
@@ -8,6 +9,7 @@ import 'package:appointly/module/meetings/presentation/widget/search_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MeetingsScreen extends StatefulWidget {
   const MeetingsScreen({super.key});
@@ -17,16 +19,11 @@ class MeetingsScreen extends StatefulWidget {
 }
 
 class _MeetingsScreenState extends State<MeetingsScreen> {
-  final List<Map<String, dynamic>> serviceList = List.generate(
-    5,
-    (index) => {
-      "imageService": 'assets/image/service_dummy_card.png',
-      "headService": 'Service Electric 24/7 Available',
-      "descService":
-          'Offering electrical services for your home, large city, and everything in between.',
-      "timeService": 'Fri 07 Feb, 2025',
-    },
-  );
+  @override
+  void initState() {
+    super.initState();
+    context.read<ServiceBloc>().add(GetServiceEvent());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,28 +67,40 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
             CustomSearchBar(),
             SizedBox(height: 24),
             Expanded(
-              child: ListView.separated(
-                itemCount: serviceList.length,
-                itemBuilder: (context, index) {
-                  final service = serviceList[index];
-                  return CardService(
-                    imageService: service['imageService'],
-                    headService: service['headService'],
-                    descService: service['descService'],
-                    timeService: service['timeService'],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DetailMeetingScreen(),
-                        ),
-                      );
-                    },
-                  );
+              child: BlocBuilder<ServiceBloc, ServiceState>(
+                builder: (context, state) {
+                  if (state is ServiceLoading) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (state is ServiceFailure) {
+                    return Center(child: Text('Error: ${state.failure}'));
+                  } else if (state is ServiceLoaded) {
+                    return ListView.separated(
+                      itemCount: state.services.length,
+                      itemBuilder: (context, index) {
+                        final service = state.services[index];
+                        return CardService(
+                          imageService: service.image ??
+                              'assets/image/service_dummy_card.png',
+                          headService: service.title,
+                          descService: service.description,
+                          timeService:
+                              '${service.startDate} - ${service.endDate}',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DetailMeetingScreen(),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      separatorBuilder: (context, index) =>
+                          SizedBox(height: 24),
+                    );
+                  }
+                  return Center(child: Text('No Data Available'));
                 },
-                separatorBuilder: (context, index) => SizedBox(
-                  height: 24,
-                ),
               ),
             ),
           ],

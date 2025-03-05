@@ -1,6 +1,8 @@
 import 'package:appointly/module/auth/presentation/bloc/auth_bloc.dart';
 import 'package:appointly/module/auth/repository/auth_repository.dart';
 import 'package:appointly/module/onboarding/repository/onboarding_repository.dart';
+import 'package:appointly/module/meetings/repository/service_repository.dart'; // Import ServiceRepository
+import 'package:appointly/module/meetings/presentation/bloc/service_bloc.dart'; // Import ServiceBloc
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:appointly/core/common/main_tab_screen.dart';
@@ -45,8 +47,19 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthBloc(AuthRepository())..add(CheckAuthStatus()),
+    return MultiBlocProvider(
+      providers: [
+        // Provide AuthBloc
+        BlocProvider(
+          create: (context) =>
+              AuthBloc(AuthRepository())..add(CheckAuthStatus()),
+        ),
+        // Provide ServiceBloc
+        BlocProvider(
+          create: (context) =>
+              ServiceBloc(serviceRepository: ServiceRepository()),
+        ),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         home: BlocBuilder<AuthBloc, AuthState>(
