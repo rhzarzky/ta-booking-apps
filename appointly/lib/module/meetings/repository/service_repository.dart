@@ -39,7 +39,7 @@ class ServiceRepository {
         }
       }
 
-      print('Headers before request: ${_dio.options.headers}');
+      print('Headers dd before request: ${_dio.options.headers}');
       final response = await _dio.get('/service');
       print('Response status: ${response.statusCode}');
 
