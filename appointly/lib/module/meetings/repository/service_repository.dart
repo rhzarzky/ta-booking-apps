@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:appointly/module/meetings/model/service_model.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
