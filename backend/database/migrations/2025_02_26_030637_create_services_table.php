@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('description');
             $table->json('option'); 
             $table->json('days'); 
-            $table->date('start_date');
+            $table->json('date');
             $table->date('end_date')->nullable(); 
             $table->timestamps();
         });

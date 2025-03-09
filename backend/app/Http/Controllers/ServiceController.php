@@ -12,7 +12,7 @@ class ServiceController extends Controller
 {
     public function showService()
     {
-        $services = Service::select('id', 'image', 'title', 'description', 'option', 'days', 'start_date', 'end_date')
+        $services = Service::select('id', 'image', 'title', 'description', 'option', 'days', 'date', 'end_date')
             ->get()
             ->map(function ($service) {
                 return [
@@ -22,7 +22,7 @@ class ServiceController extends Controller
                     'description' => $service->description,
                     'option' => json_decode($service->option, true),
                     'days' => is_string($service->days) ? json_decode($service->days) : $service->days,
-                    'start_date' => $service->start_date,
+                    'date' => json_decode($service->date, true),
                     'end_date' => $service->end_date,
                 ];
             });
@@ -52,16 +52,17 @@ class ServiceController extends Controller
         }
 
         $validated['option'] = json_encode($validated['option']);
+        $validated['days'] = json_encode($validated['days']); 
 
-        // Auto-generate service start dates
-        $days = $validated['days'];
+        // Auto-generate service date
+        $days = $request->days;
         $endDate = isset($validated['end_date']) ? Carbon::parse($validated['end_date']) : Carbon::now()->addYear(); // Default: 1 year ahead
         $today = Carbon::now();
-        $startDates = [];
+        $date = [];
 
         while ($today->lte($endDate)) {
             if (in_array($today->format('l'), $days)) {
-                $startDates[] = [
+                $date[] = [
                     'date' => $today->format('Y-m-d'),
                     'day' => $today->format('l'),
                 ];
@@ -69,8 +70,7 @@ class ServiceController extends Controller
             $today->addDay();
         }
 
-        // Store the first start date
-        $validated['start_date'] = count($startDates) > 0 ? $startDates[0]['date'] : null;
+        $validated['date'] = json_encode($date);
 
         $service = Service::create($validated);
 
@@ -83,7 +83,9 @@ class ServiceController extends Controller
                 'title' => $service->title,
                 'description' => $service->description,
                 'option' => json_decode($service->option),
-                'start_dates' => $startDates, 
+                'days' => json_decode($service->days),
+                'date' => json_decode($service->date),
+                'end_date' => $service->end_date,
             ],
         ], 201);
     }
@@ -97,7 +99,7 @@ class ServiceController extends Controller
             'option.*' => 'in:Offline,Online',
             'days' => 'sometimes|array',
             'days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
-            'start_date' => 'sometimes|date',
+            'date' => 'sometimes|array',
             'end_date' => 'sometimes|date|after_or_equal:start_date', 
         ]);
 
@@ -138,7 +140,7 @@ class ServiceController extends Controller
                     'description' => $service->description,
                     'option' => json_decode($service->option, true),
                     'days' => json_decode($service->days, true),
-                    'start_date' => $service->start_date,
+                    'date' => json_decode($service->date, true),
                     'end_date' => $service->end_date,
                 ],
             ], 200);
