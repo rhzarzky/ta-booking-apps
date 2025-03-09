@@ -1,0 +1,374 @@
+import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/home/presentation/screen/home_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
+class DetailMeetingSuccess extends StatefulWidget {
+  const DetailMeetingSuccess({super.key});
+
+  @override
+  State<DetailMeetingSuccess> createState() => _DetailMeetingSuccessState();
+}
+
+class _DetailMeetingSuccessState extends State<DetailMeetingSuccess> {
+  DateTime? selectedDate;
+  TimeOfDay? selectedTime;
+
+  Future<void> _selectDate() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+
+    if (pickedDate != null && pickedDate != selectedDate) {
+      setState(() {
+        selectedDate = pickedDate;
+      });
+    }
+  }
+
+  Future<void> _selectTime() async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (pickedTime != null && pickedTime != selectedTime) {
+      setState(() {
+        selectedTime = pickedTime;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        toolbarHeight: 8.0,
+      ),
+      backgroundColor: ColorPallete.backgroundBody,
+      body: ListView(
+        children: [
+          Stack(
+            children: [
+              _buildBackgroundImage(),
+            ],
+          ),
+          _buildContent(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBackgroundImage() {
+    return Container(
+      height: 300,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/image/service_dummy_card.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTitleSection(),
+            SizedBox(height: 16),
+            _buildScheduleSection(),
+            SizedBox(height: 16),
+            _buildLocationSection(),
+            SizedBox(height: 16),
+            _buildNoteSection(),
+            SizedBox(height: 16),
+            _buildButtonSend()
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Service Electric 24/7 Available',
+          style: GoogleFonts.ubuntu(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: ColorPallete.darkBlack,
+          ),
+        ),
+        SizedBox(height: 4.0),
+        Text(
+          'Service Electric 24/7 Available description.',
+          style: GoogleFonts.ubuntu(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            color: ColorPallete.darkGreySilver,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScheduleSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Schedule',
+          style: GoogleFonts.ubuntu(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: ColorPallete.darkBlack,
+          ),
+        ),
+        SizedBox(height: 8.0),
+        Container(
+          padding: EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4.0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Time & Date',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: ColorPallete.darkBlack,
+                ),
+              ),
+              SizedBox(height: 8.0),
+              _buildDatePicker(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDatePicker() {
+    return Row(
+      children: [
+        _buildPickerButton(
+          onTap: _selectDate,
+          iconPath: 'assets/icons/icon-calendar.svg',
+          text: selectedDate != null
+              ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+              : 'Select Date',
+        ),
+        SizedBox(width: 8.0),
+        _buildPickerButton(
+          onTap: _selectTime,
+          iconPath: 'assets/icons/icon-clock.svg',
+          text: selectedTime != null
+              ? '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}'
+              : 'Select Time',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPickerButton({
+    required VoidCallback onTap,
+    required String iconPath,
+    required String text,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(width: 2, color: ColorPallete.backgroundBody),
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        child: Row(
+          children: [
+            SvgPicture.asset(iconPath, height: 20),
+            SizedBox(width: 8.0),
+            Text(
+              text,
+              style: GoogleFonts.ubuntu(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: ColorPallete.darkBlack,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Location',
+          style: GoogleFonts.ubuntu(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: ColorPallete.darkBlack,
+          ),
+        ),
+        SizedBox(height: 8.0),
+        Container(
+          padding: EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4.0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 14.0, vertical: 8.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(
+                              width: 2, color: ColorPallete.backgroundBody),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Row(
+                          children: [
+                            SvgPicture.asset('assets/icons/icon-location.svg',
+                                height: 20),
+                            SizedBox(width: 8.0),
+                            Text(
+                              'In-person meeting',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: ColorPallete.darkBlack,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8.0,
+                      ),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 14.0, vertical: 8.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(
+                              width: 2, color: ColorPallete.backgroundBody),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Row(
+                          children: [
+                            SvgPicture.asset('assets/icons/icon-video.svg',
+                                height: 20),
+                            SizedBox(width: 8.0),
+                            Text(
+                              'Zoom',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: ColorPallete.darkBlack,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              )
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoteSection() {
+    return Container(
+      padding: EdgeInsets.all(8.0),
+      decoration: BoxDecoration(color: Colors.white),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Note',
+            style: GoogleFonts.ubuntu(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: ColorPallete.darkBlack,
+            ),
+          ),
+          SizedBox(height: 8.0),
+          Container(
+              height: 90,
+              width: double.infinity,
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: ColorPallete.concrete50,
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: TextField(
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Optional Notes')))
+        ],
+      ),
+    );
+  }
+
+  Widget _buildButtonSend() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: 24,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: ColorPallete.primaryColor,
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: TextButton(
+        child: Text(
+          'Back to Home',
+          style: GoogleFonts.ubuntu(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        onPressed: () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen()),
+            (route) => false, // Removes all previous routes
+          );
+        },
+      ),
+    );
+  }
+}
