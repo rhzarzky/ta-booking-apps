@@ -16,13 +16,14 @@ class Service extends Model
         'title',
         'description',
         'option', 
-        'start_date', 
+        'date', 
         'days', 
         'end_date', 
     ];
 
     protected $casts = [
         'option' => 'array', 
-        'days' => 'array',   
+        'days' => 'array',
+        'date' => 'array',   
     ];
 }
