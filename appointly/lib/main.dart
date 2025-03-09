@@ -9,7 +9,7 @@ import 'package:appointly/core/common/main_tab_screen.dart';
 import 'package:appointly/module/onboarding/presentation/screen/onboarding_screen.dart';
 import 'package:appointly/module/auth/presentation/screen/auth_signin.dart';
 
-void main() {
+void main() async {
   runApp(const MainApp());
 }
 
@@ -22,6 +22,7 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   bool showOnboarding = true;
+  String? token;
 
   @override
   void initState() {
@@ -49,15 +50,16 @@ class _MainAppState extends State<MainApp> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        // Provide AuthBloc
         BlocProvider(
-          create: (context) =>
-              AuthBloc(AuthRepository())..add(CheckAuthStatus()),
+          create: (context) => ServiceBloc(
+            serviceRepository: ServiceRepository(),
+          ),
         ),
-        // Provide ServiceBloc
         BlocProvider(
-          create: (context) =>
-              ServiceBloc(serviceRepository: ServiceRepository()),
+          create: (context) => AuthBloc(
+            AuthRepository(),
+            context.read<ServiceBloc>(), // Pastikan ServiceBloc sudah ada
+          )..add(CheckAuthStatus()),
         ),
       ],
       child: MaterialApp(

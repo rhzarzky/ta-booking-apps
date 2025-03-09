@@ -4,3 +4,9 @@ part of 'service_bloc.dart';
 sealed class ServiceEvent {}
 
 class GetServiceEvent extends ServiceEvent {}
+
+class UpdateTokenEvent extends ServiceEvent {
+  final String? token;
+
+  UpdateTokenEvent(this.token);
+}

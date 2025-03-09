@@ -5,11 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthRepository {
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://192.168.5.231:8000/v1', 
+      baseUrl: 'http://192.168.100.18:8000/v1',
       headers: {'Content-Type': 'application/json'},
       validateStatus: (status) => status! < 500,
-      connectTimeout: Duration(seconds: 30), 
-      receiveTimeout: Duration(seconds: 30), 
+      connectTimeout: Duration(seconds: 30),
+      receiveTimeout: Duration(seconds: 30),
     ),
   );
 
@@ -30,7 +30,7 @@ class AuthRepository {
 
       if (res.statusCode == 201) {
         UsersModel user = UsersModel.fromJson(res.data);
-        await _saveToken(res.data['token']);
+        await _saveToken(user.token);
         return user;
       } else {
         String errorMessage = 'Registration failed';
@@ -41,7 +41,8 @@ class AuthRepository {
       }
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout) {
-        throw Exception('Connection timeout. Please check your internet connection.');
+        throw Exception(
+            'Connection timeout. Please check your internet connection.');
       } else if (e.type == DioExceptionType.receiveTimeout) {
         throw Exception('Server took too long to respond. Please try again.');
       } else if (e.response != null && e.response!.data is Map) {
@@ -68,14 +69,15 @@ class AuthRepository {
 
       if (res.statusCode == 200) {
         UsersModel user = UsersModel.fromJson(res.data);
-        await _saveToken(res.data['token']);
+        await _saveToken(user.token);
         return user;
       } else {
         throw Exception(res.data['message']);
       }
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout) {
-        throw Exception('Connection timeout. Please check your internet connection.');
+        throw Exception(
+            'Connection timeout. Please check your internet connection.');
       } else if (e.type == DioExceptionType.receiveTimeout) {
         throw Exception('Server took too long to respond. Please try again.');
       } else if (e.response != null && e.response!.data is Map) {
@@ -106,5 +108,10 @@ class AuthRepository {
   Future<void> _saveToken(String token) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('token', token);
+  }
+
+  Future<String?> getToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
   }
 }

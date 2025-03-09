@@ -16,17 +16,15 @@ class UsersModel {
   });
 
   factory UsersModel.fromJson(Map<String, dynamic> json) {
-    // Handle the nested 'user' object structure
     final userData = json['user'] as Map<String, dynamic>;
-    
+
     return UsersModel(
-      id: userData['id'],
-      name: userData['name'],
-      email: userData['email'],
-      role: userData['role']?.toString() ?? "",
-      status: userData['status']?.toString() ?? "",
-      token: json['token'],
-    );
+        id: userData['id'],
+        name: userData['name'],
+        email: userData['email'],
+        role: userData['role']?.toString() ?? "",
+        status: userData['status']?.toString() ?? "",
+        token: json['token']?.toString() ?? "");
   }
 
   Map<String, dynamic> toJson() {

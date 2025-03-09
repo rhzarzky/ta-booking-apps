@@ -2,9 +2,7 @@
 
 import 'package:appointly/core/theme/color_pallete.dart';
 import 'package:appointly/module/meetings/presentation/bloc/service_bloc.dart';
-import 'package:appointly/module/meetings/presentation/screen/detail_meeting_screen.dart';
 import 'package:appointly/module/meetings/presentation/screen/history_meeting.dart';
-import 'package:appointly/module/meetings/presentation/widget/card_service.dart';
 import 'package:appointly/module/meetings/presentation/widget/search_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -22,6 +20,10 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
   @override
   void initState() {
     super.initState();
+    _refreshData();
+  }
+
+  Future<void> _refreshData() async {
     context.read<ServiceBloc>().add(GetServiceEvent());
   }
 
@@ -74,29 +76,18 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                   } else if (state is ServiceFailure) {
                     return Center(child: Text('Error: ${state.failure}'));
                   } else if (state is ServiceLoaded) {
-                    return ListView.separated(
-                      itemCount: state.services.length,
-                      itemBuilder: (context, index) {
-                        final service = state.services[index];
-                        return CardService(
-                          imageService: service.image ??
-                              'assets/image/service_dummy_card.png',
-                          headService: service.title,
-                          descService: service.description,
-                          timeService:
-                              '${service.startDate} - ${service.endDate}',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => DetailMeetingScreen(),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      separatorBuilder: (context, index) =>
-                          SizedBox(height: 24),
+                    return RefreshIndicator(
+                      onRefresh: _refreshData,
+                      child: ListView.builder(
+                        itemCount: state.services.length,
+                        itemBuilder: (context, index) {
+                          final service = state.services[index];
+                          return ListTile(
+                            title: Text(service.title),
+                            subtitle: Text(service.description),
+                          );
+                        },
+                      ),
                     );
                   }
                   return Center(child: Text('No Data Available'));
