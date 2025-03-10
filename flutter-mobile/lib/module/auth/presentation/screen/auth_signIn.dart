@@ -3,6 +3,7 @@
 import 'package:Appointly/core/common/main_tab_screen.dart';
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/auth/presentation/bloc/auth_bloc.dart';
+import 'package:Appointly/module/auth/presentation/screen/auth_forgotPassword.dart';
 import 'package:Appointly/module/auth/presentation/screen/auth_register.dart';
 import 'package:Appointly/module/auth/presentation/widget/auth_button.dart';
 import 'package:Appointly/module/auth/presentation/widget/auth_field.dart';
@@ -33,6 +34,27 @@ class _AuthSigninState extends State<AuthSignin> {
           SizedBox(height: 36.0),
           Image.asset('assets/image/Logo.png'),
         ],
+      );
+    }
+
+    Widget _buildForgotPassword() {
+      return TextButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AuthForgotpassword(),
+            ),
+          );
+        },
+        child: Text(
+          'Forgot Password?',
+          style: GoogleFonts.ubuntu(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: ColorPallete.primaryColor,
+          ),
+        ),
       );
     }
 
@@ -76,12 +98,18 @@ class _AuthSigninState extends State<AuthSignin> {
                       hintText: 'johndoe@gmail.com',
                       labelText: 'Email Address',
                     ),
-                    AuthField(
-                      controller: passwordController,
-                      hintText: 'Max. 8 Characters',
-                      labelText: 'Password',
-                      isPassword: true,
-                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        AuthField(
+                          controller: passwordController,
+                          hintText: 'Max. 8 Characters',
+                          labelText: 'Password',
+                          isPassword: true,
+                        ),
+                        _buildForgotPassword(),
+                      ],
+                    )
                   ],
                 ),
                 SizedBox(height: 24.0),
@@ -148,7 +176,7 @@ class _AuthSigninState extends State<AuthSignin> {
                     ),
                   ],
                 ),
-               // Tambahan agar tidak terlalu mepet di bawah
+                // Tambahan agar tidak terlalu mepet di bawah
               ],
             ),
           ),
