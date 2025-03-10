@@ -16,14 +16,14 @@ class Service extends Model
         'title',
         'description',
         'option', 
-        'date', 
-        'days', 
-        'end_date', 
     ];
 
     protected $casts = [
         'option' => 'array', 
-        'days' => 'array',
-        'date' => 'array',   
     ];
+
+    public function schedule()
+    {
+        return $this->hasOne(Schedule::class, 'service_id');
+    }
 }
