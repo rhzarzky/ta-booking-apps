@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -12,7 +13,8 @@ class ServiceController extends Controller
 {
     public function showService()
     {
-        $services = Service::select('id', 'image', 'title', 'description', 'option', 'days', 'date', 'end_date')
+        $services = Service::with('schedule')
+            ->select('id', 'image', 'title', 'description', 'option') 
             ->get()
             ->map(function ($service) {
                 return [
@@ -21,9 +23,10 @@ class ServiceController extends Controller
                     'title' => $service->title,
                     'description' => $service->description,
                     'option' => json_decode($service->option, true),
-                    'days' => is_string($service->days) ? json_decode($service->days) : $service->days,
-                    'date' => json_decode($service->date, true),
-                    'end_date' => $service->end_date,
+                    'time' => $service->schedule ? json_decode($service->schedule->time, true) : null,
+                    'days' => $service->schedule ? json_decode($service->schedule->days, true) : null,
+                    'date' => $service->schedule ? json_decode($service->schedule->date, true) : null,
+                    'end_date' => $service->schedule ? $service->schedule->end_date : null,
                 ];
             });
 
@@ -43,6 +46,8 @@ class ServiceController extends Controller
             'option.*' => 'in:Offline,Online',
             'days' => 'required|array',
             'days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+            'time' => 'required|array',
+            'time.*' => 'required|date_format:H:i',
             'end_date' => 'nullable|date|after:today',
         ]);
 
@@ -51,12 +56,16 @@ class ServiceController extends Controller
             $validated['image'] = $imagePath;
         }
 
+        // Convert array to JSON for storage
         $validated['option'] = json_encode($validated['option']);
-        $validated['days'] = json_encode($validated['days']); 
+        $validated['days'] = json_encode($validated['days']);
+        $validated['time'] = json_encode($validated['time']);
+
+        $service = Service::create($validated);
 
         // Auto-generate service date
         $days = $request->days;
-        $endDate = isset($validated['end_date']) ? Carbon::parse($validated['end_date']) : Carbon::now()->addYear(); // Default: 1 year ahead
+        $endDate = $validated['end_date'] ? Carbon::parse($validated['end_date']) : Carbon::now()->addYear();
         $today = Carbon::now();
         $date = [];
 
@@ -70,9 +79,13 @@ class ServiceController extends Controller
             $today->addDay();
         }
 
-        $validated['date'] = json_encode($date);
-
-        $service = Service::create($validated);
+        $schedule = Schedule::create([
+            'service_id' => $service->id, 
+            'days' => json_encode($days),
+            'time' => json_encode($request->time),
+            'end_date' => $request->end_date,
+            'date' => json_encode($date),
+        ]);
 
         return response()->json([
             'status' => 'success',
@@ -83,9 +96,10 @@ class ServiceController extends Controller
                 'title' => $service->title,
                 'description' => $service->description,
                 'option' => json_decode($service->option),
-                'days' => json_decode($service->days),
-                'date' => json_decode($service->date),
-                'end_date' => $service->end_date,
+                'days' => json_decode($schedule->days),
+                'time' => json_decode($schedule->time),
+                'date' => json_decode($schedule->date),
+                'end_date' => $schedule->end_date,
             ],
         ], 201);
     }
