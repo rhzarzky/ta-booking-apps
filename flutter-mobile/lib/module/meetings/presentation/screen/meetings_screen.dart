@@ -3,6 +3,7 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/history_meeting.dart';
+import 'package:Appointly/module/meetings/presentation/widget/card_service.dart';
 import 'package:Appointly/module/meetings/presentation/widget/search_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -82,9 +83,13 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                         itemCount: state.services.length,
                         itemBuilder: (context, index) {
                           final service = state.services[index];
-                          return ListTile(
-                            title: Text(service.title),
-                            subtitle: Text(service.description),
+                          return CardService(
+                            headService: service.title,
+                            descService: service.description,
+                            imageService: service.image,
+                            timeService: service.days,
+                            provideService: service.option,
+                            onTap: () {},
                           );
                         },
                       ),

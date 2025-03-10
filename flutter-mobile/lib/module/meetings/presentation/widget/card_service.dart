@@ -8,7 +8,8 @@ class CardService extends StatelessWidget {
   final String imageService;
   final String headService;
   final String descService;
-  final String timeService;
+  final List<String> timeService;
+  final List<String> provideService;
   final VoidCallback onTap;
 
   const CardService({
@@ -17,6 +18,7 @@ class CardService extends StatelessWidget {
     required this.descService,
     required this.headService,
     required this.timeService,
+    required this.provideService,
     required this.onTap,
   });
 
@@ -35,7 +37,10 @@ class CardService extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12.0),
                 image: DecorationImage(
-                  image: AssetImage(imageService),
+                  // Use NetworkImage for URLs instead of AssetImage
+                  image: imageService.startsWith('http')
+                      ? NetworkImage(imageService) as ImageProvider
+                      : AssetImage(imageService),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -92,7 +97,7 @@ class CardService extends StatelessWidget {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            '3+ Ways to Meet',
+                            provideService.join(', '),
                             style: GoogleFonts.ubuntu(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
@@ -121,7 +126,7 @@ class CardService extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            timeService,
+                            timeService.join(', '),
                             style: GoogleFonts.ubuntu(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
