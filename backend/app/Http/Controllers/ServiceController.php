@@ -99,8 +99,7 @@ class ServiceController extends Controller
             'option.*' => 'in:Offline,Online',
             'days' => 'sometimes|array',
             'days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
-            'date' => 'sometimes|array',
-            'end_date' => 'sometimes|date|after_or_equal:start_date', 
+            'end_date' => 'sometimes|date|after_or_equal:today', 
         ]);
 
         if ($validator->fails()) {
@@ -126,6 +125,26 @@ class ServiceController extends Controller
 
             if (isset($validated['days'])) {
                 $validated['days'] = json_encode($validated['days']);
+            }
+
+            // Generate new date if 'days' or 'end_date' is updated
+            if (isset($validated['days']) || isset($validated['end_date'])) {
+                $days = isset($validated['days']) ? json_decode($validated['days'], true) : json_decode($service->days, true);
+                $endDate = isset($validated['end_date']) ? Carbon::parse($validated['end_date']) : Carbon::parse($service->end_date);
+                $today = Carbon::now();
+                $date = [];
+
+                while ($today->lte($endDate)) {
+                    if (in_array($today->format('l'), $days)) {
+                        $date[] = [
+                            'date' => $today->format('Y-m-d'),
+                            'day' => $today->format('l'),
+                        ];
+                    }
+                    $today->addDay();
+                }
+
+                $validated['date'] = json_encode($date);
             }
 
             $service->update($validated);
