@@ -36,6 +36,9 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
         automaticallyImplyLeading: false,
         foregroundColor: Colors.white,
         backgroundColor: Colors.white,
+        scrolledUnderElevation: 0,
+        elevation: 0,
+        shadowColor: Colors.transparent,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -83,13 +86,16 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                         itemCount: state.services.length,
                         itemBuilder: (context, index) {
                           final service = state.services[index];
-                          return CardService(
-                            headService: service.title,
-                            descService: service.description,
-                            imageService: service.image,
-                            timeService: service.days,
-                            provideService: service.option,
-                            onTap: () {},
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: CardService(
+                              headService: service.title,
+                              descService: service.description,
+                              imageService: service.image,
+                              timeService: service.days,
+                              provideService: service.option,
+                              onTap: () {},
+                            ),
                           );
                         },
                       ),
