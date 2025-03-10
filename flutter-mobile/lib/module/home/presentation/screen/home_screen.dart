@@ -115,9 +115,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Text(
           'Approved Events Tab',
           style: GoogleFonts.ubuntu(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: ColorPallete.darkGreySilver),
         ),
       );
     }
@@ -127,9 +127,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Text(
           'Under Review Events Tab',
           style: GoogleFonts.ubuntu(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: ColorPallete.darkGreySilver),
         ),
       );
     }
@@ -139,9 +139,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Text(
           'Declined Events Tab',
           style: GoogleFonts.ubuntu(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: ColorPallete.darkGreySilver),
         ),
       );
     }
@@ -239,11 +239,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: DefaultTabController(
                   length: 3,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
-                        padding: EdgeInsets.only(top: 16.0, bottom: 8.0),
+                        padding: EdgeInsets.only(
+                            top: 16.0, bottom: 8.0, right: 16, left: 16),
                         child: Text(
-                          'Your Events',
+                          'My Appointment',
                           style: GoogleFonts.ubuntu(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
