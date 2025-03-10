@@ -81,21 +81,6 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    Widget tabBar() {
-      return DefaultTabController(
-        length: 3,
-        child: Column(
-          children: [
-            Expanded(
-              child: TabBarView(
-                children: [],
-              ),
-            )
-          ],
-        ),
-      );
-    }
-
     Widget buildTabBarHeader() {
       return Container(
         color: Colors.white,
@@ -125,6 +110,62 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    Widget _buildApprovedTab() {
+      return Center(
+        child: Text(
+          'Approved Events Tab',
+          style: GoogleFonts.ubuntu(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    Widget _buildUnderReviewTab() {
+      return Center(
+        child: Text(
+          'Under Review Events Tab',
+          style: GoogleFonts.ubuntu(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    Widget _buildDeclinedTab() {
+      return Center(
+        child: Text(
+          'Declined Events Tab',
+          style: GoogleFonts.ubuntu(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    Widget tabBar() {
+      return DefaultTabController(
+        length: 3,
+        child: Column(
+          children: [
+            buildTabBarHeader(),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _buildApprovedTab(),
+                  _buildUnderReviewTab(),
+                  _buildDeclinedTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: ColorPallete.backgroundBody,
       body: SafeArea(
@@ -145,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 children: [
                   Text(
-                    'You’ve got',
+                    "You've got",
                     style: GoogleFonts.ubuntu(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
@@ -184,6 +225,42 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: ColorPallete.darkBlack),
                       ),
                       ChartStatus(),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+                height: 300, // Tetapkan ketinggian untuk TabBarView
+                child: DefaultTabController(
+                  length: 3,
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(top: 16.0, bottom: 8.0),
+                        child: Text(
+                          'Your Events',
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: ColorPallete.darkBlack,
+                          ),
+                        ),
+                      ),
+                      buildTabBarHeader(),
+                      Expanded(
+                        child: TabBarView(
+                          children: [
+                            _buildApprovedTab(),
+                            _buildUnderReviewTab(),
+                            _buildDeclinedTab(),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
