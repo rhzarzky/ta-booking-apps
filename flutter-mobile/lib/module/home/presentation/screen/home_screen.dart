@@ -8,10 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     Widget header() {
@@ -71,6 +75,50 @@ class HomeScreen extends StatelessWidget {
               difference: -1,
               startColor: ColorPallete.greySilverChalice,
               endColor: ColorPallete.greySilverChalice950,
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget tabBar() {
+      return DefaultTabController(
+        length: 3,
+        child: Column(
+          children: [
+            Expanded(
+              child: TabBarView(
+                children: [],
+              ),
+            )
+          ],
+        ),
+      );
+    }
+
+    Widget buildTabBarHeader() {
+      return Container(
+        color: Colors.white,
+        child: TabBar(
+          indicator: UnderlineTabIndicator(
+            borderSide:
+                BorderSide(color: ColorPallete.primaryColor, width: 4.0),
+            borderRadius: BorderRadius.horizontal(
+              left: Radius.circular(2),
+              right: Radius.circular(2),
+            ),
+          ),
+          labelColor: ColorPallete.primaryColor,
+          unselectedLabelColor: ColorPallete.darkGreySilver,
+          tabs: const [
+            Tab(
+              text: 'Approved',
+            ),
+            Tab(
+              text: 'Under Review',
+            ),
+            Tab(
+              text: 'Declined',
             ),
           ],
         ),
@@ -141,7 +189,6 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 20),
-              TabBarComp() // Add bottom padding if needed
             ],
           ),
         ),

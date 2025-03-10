@@ -54,14 +54,19 @@ class _AppBottomNavigationBarState extends State<AppBottomNavigationBar> {
           BottomNavigationBarItem(
             icon: Padding(
               padding: EdgeInsets.only(bottom: 4),
-              child: SvgPicture.asset(
-                'assets/icons/icon-home.svg',
-                colorFilter: ColorFilter.mode(
-                  widget.currentIndex == 0
-                      ? ColorPallete.primaryColor
-                      : ColorPallete.darkGreySilver,
-                  BlendMode.srcIn,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center, 
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/icon-home.svg',
+                    colorFilter: ColorFilter.mode(
+                      widget.currentIndex == 0
+                          ? ColorPallete.primaryColor
+                          : ColorPallete.darkGreySilver,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ],
               ),
             ),
             label: 'Home',
@@ -69,43 +74,59 @@ class _AppBottomNavigationBarState extends State<AppBottomNavigationBar> {
           BottomNavigationBarItem(
             icon: Padding(
               padding: EdgeInsets.only(bottom: 4),
-              child: SvgPicture.asset(
-                'assets/icons/icon-calendar.svg',
-                colorFilter: ColorFilter.mode(
-                  widget.currentIndex == 1
-                      ? ColorPallete.primaryColor
-                      : ColorPallete.darkGreySilver,
-                  BlendMode.srcIn,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center, 
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/icon-calendar.svg',
+                    colorFilter: ColorFilter.mode(
+                      widget.currentIndex == 1
+                          ? ColorPallete.primaryColor
+                          : ColorPallete.darkGreySilver,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ],
               ),
             ),
             label: 'Meetings',
           ),
           BottomNavigationBarItem(
             icon: Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: SvgPicture.asset(
-                  'assets/icons/icon-bell.svg',
-                  colorFilter: ColorFilter.mode(
-                    widget.currentIndex == 2
-                        ? ColorPallete.primaryColor
-                        : ColorPallete.darkGreySilver,
-                    BlendMode.srcIn,
+              padding: EdgeInsets.only(bottom: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center, 
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/icon-bell.svg',
+                    colorFilter: ColorFilter.mode(
+                      widget.currentIndex == 2
+                          ? ColorPallete.primaryColor
+                          : ColorPallete.darkGreySilver,
+                      BlendMode.srcIn,
+                    ),
                   ),
-                )),
+                ],
+              ),
+            ),
             label: 'Notification',
           ),
           BottomNavigationBarItem(
             icon: Padding(
               padding: EdgeInsets.only(bottom: 4),
-              child: SvgPicture.asset(
-                'assets/icons/icon-profile.svg',
-                colorFilter: ColorFilter.mode(
-                  widget.currentIndex == 3
-                      ? ColorPallete.primaryColor
-                      : ColorPallete.darkGreySilver,
-                  BlendMode.srcIn,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center, 
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/icon-profile.svg',
+                    colorFilter: ColorFilter.mode(
+                      widget.currentIndex == 3
+                          ? ColorPallete.primaryColor
+                          : ColorPallete.darkGreySilver,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ],
               ),
             ),
             label: 'Profile',

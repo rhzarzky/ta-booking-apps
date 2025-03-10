@@ -109,8 +109,8 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
         unselectedLabelColor: ColorPallete.darkGreySilver,
         tabs: const [
           Tab(text: 'Approved'),
-          Tab(text: 'Pending'),
-          Tab(text: 'Rejected'),
+          Tab(text: 'Under Review'),
+          Tab(text: 'Declined'),
         ],
       ),
     );
