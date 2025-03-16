@@ -1,6 +1,7 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_screen.dart';
 import 'package:Appointly/module/meetings/presentation/widget/card_appointment.dart';
 import 'package:Appointly/module/meetings/presentation/widget/filter_bottomsheet.dart';
 import 'package:flutter/material.dart';
@@ -158,7 +159,10 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             locationCard: appointment['location']!,
             durationCard: appointment['duration']!,
             linkCard: () {
-              // Handle navigation or action when the card is tapped
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => DetailMeetingScreen()));
               print('Appointment tapped: ${appointment['title']}');
             },
             noteCard: appointment['note']!,
