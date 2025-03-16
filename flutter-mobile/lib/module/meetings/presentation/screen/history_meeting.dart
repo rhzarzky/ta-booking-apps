@@ -34,7 +34,34 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
       'location': 'Online',
       'duration': '1 hour',
       'note': 'Prepare the contract draft',
-      'status': 'Approved',
+      'status': 'approved',
+    },
+    {
+      'title': 'Client Call',
+      'description': 'Discuss contract details',
+      'date': '2023-10-16',
+      'location': 'Online',
+      'duration': '1 hour',
+      'note': 'Prepare the contract draft',
+      'status': 'approved',
+    },
+    {
+      'title': 'Client Call',
+      'description': 'Discuss contract details',
+      'date': '2023-10-16',
+      'location': 'Online',
+      'duration': '1 hour',
+      'note': 'Prepare the contract draft',
+      'status': 'approved',
+    },
+    {
+      'title': 'Client Call',
+      'description': 'Discuss contract details',
+      'date': '2023-10-16',
+      'location': 'Online',
+      'duration': '1 hour',
+      'note': 'Prepare the contract draft',
+      'status': 'approved',
     },
   ];
 
@@ -46,7 +73,7 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
       'location': 'HR Office',
       'duration': '1.5 hours',
       'note': 'Review the resume beforehand',
-      'status': 'Pending',
+      'status': 'pending',
     },
   ];
 
@@ -58,7 +85,7 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
       'location': 'Training Room',
       'duration': '3 hours',
       'note': 'Cancelled due to low attendance',
-      'status': 'Rejected',
+      'status': 'declined',
     },
   ];
 

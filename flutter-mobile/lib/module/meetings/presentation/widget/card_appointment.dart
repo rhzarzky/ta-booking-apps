@@ -36,7 +36,7 @@ class CardAppointment extends StatelessWidget {
             top: 0,
             left: 290,
             right: 0,
-            child: _buildStatusChip(statusCard),
+            child: _buildGetStatus(),
           ),
           // Title and Description
           Padding(
@@ -101,8 +101,20 @@ class CardAppointment extends StatelessWidget {
     );
   }
 
-  // Helper method to build the status chip
-  Widget _buildStatusChip(String status) {
+  Widget _buildGetStatus() {
+    switch (statusCard.toLowerCase()) {
+      case 'approved':
+        return _buildStatusSucess(statusCard);
+      case 'pending':
+        return _buildStatusUnderReview(statusCard);
+      case 'declined':
+        return _buildStatusDeclined(statusCard);
+      default:
+        return _buildStatusSucess(statusCard);
+    }
+  }
+
+  Widget _buildStatusSucess(String status) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       decoration: BoxDecoration(
@@ -123,8 +135,48 @@ class CardAppointment extends StatelessWidget {
     );
   }
 
-  // Helper method to build the details grid
-  // Helper method to build the details grid
+  Widget _buildStatusUnderReview(String status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: ColorPallete.accent400,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(8.0),
+          topRight: Radius.circular(8.0),
+        ),
+      ),
+      child: Text(
+        status,
+        style: GoogleFonts.ubuntu(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusDeclined(String status) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: ColorPallete.greySilverChalice,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(8.0),
+          topRight: Radius.circular(8.0),
+        ),
+      ),
+      child: Text(
+        status,
+        style: GoogleFonts.ubuntu(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
   Widget _buildDetailsGrid(String date, String location, String duration) {
     return Column(
       children: [
@@ -151,7 +203,6 @@ class CardAppointment extends StatelessWidget {
     );
   }
 
-// Helper method to build a single detail item
   Widget _buildDetailItem(String label, String value) {
     return Container(
       padding: const EdgeInsets.all(8.0),
@@ -174,7 +225,7 @@ class CardAppointment extends StatelessWidget {
               color: ColorPallete.darkBlack,
             ),
           ),
-          const SizedBox(width: 4.0), // Spacer between label and value
+          const SizedBox(width: 4.0), 
           // Value Text
           Expanded(
             child: Text(
@@ -184,8 +235,8 @@ class CardAppointment extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: ColorPallete.darkBlack,
               ),
-              overflow: TextOverflow.ellipsis, // Handle overflow with ellipsis
-              maxLines: 1, // Ensure text stays in a single line
+              overflow: TextOverflow.ellipsis, 
+              maxLines: 1, 
             ),
           ),
         ],
@@ -193,7 +244,6 @@ class CardAppointment extends StatelessWidget {
     );
   }
 
-  // Helper method to build the note section
   Widget _buildNoteSection(String note) {
     return Container(
       height: 90,
