@@ -6,6 +6,9 @@ import 'package:Appointly/module/profile/presentation/widget/button.dart';
 import 'package:Appointly/module/profile/presentation/widget/field_profile.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -18,11 +21,123 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final fullNameController = TextEditingController();
+  XFile? _selectedImage; // To store the selected image
+
+  // Method to pick an image from the gallery
+  Future<void> pickImageFromGallery() async {
+    final imagePicker = ImagePicker();
+    try {
+      final pickedFile =
+          await imagePicker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = pickedFile;
+        });
+      }
+    } catch (e) {
+      print("Error picking image from gallery: $e");
+    }
+  }
+
+  // Method to pick an image from the camera
+  Future<void> pickImageFromCamera() async {
+    final imagePicker = ImagePicker();
+    try {
+      final pickedFile =
+          await imagePicker.pickImage(source: ImageSource.camera);
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = pickedFile;
+        });
+      }
+    } catch (e) {
+      print("Error picking image from camera: $e");
+    }
+  }
+
+  // Show a dialog to let the user choose between gallery and camera
+  Future<void> _showImagePickerDialog() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          title: Text(
+            "Choose Image Source",
+            style: GoogleFonts.ubuntu(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: ColorPallete.darkBlack,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                GestureDetector(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.image_outlined,
+                        color: ColorPallete.primaryColor,
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Text(
+                        "Gallery",
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: ColorPallete.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    pickImageFromGallery();
+                  },
+                ),
+                SizedBox(height: 20),
+                GestureDetector(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.camera_alt_outlined,
+                        color: ColorPallete.primaryColor,
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Text(
+                        "Camera",
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: ColorPallete.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    pickImageFromCamera();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
     super.initState();
-    // Add listeners to the controllers to update the UI when text changes
     emailController.addListener(_updateButtonVisibility);
     fullNameController.addListener(_updateButtonVisibility);
   }
@@ -37,9 +152,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   }
 
   void _updateButtonVisibility() {
-    setState(() {
-      // This will trigger a rebuild of the widget with the updated button visibility
-    });
+    setState(() {});
   }
 
   bool _areFieldsFilled() {
@@ -63,8 +176,9 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     );
   }
 
-  AppBar _buildAppBar() {
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      scrolledUnderElevation: 0,
       backgroundColor: Colors.white,
       automaticallyImplyLeading: false,
       title: Row(
@@ -109,9 +223,16 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           top: 20,
           child: Column(
             children: [
-              CircleAvatar(
-                backgroundImage: AssetImage('assets/image/avatar.png'),
-                radius: 64,
+              GestureDetector(
+                onTap: _showImagePickerDialog, // Show the image picker dialog
+                child: CircleAvatar(
+                  backgroundImage: _selectedImage != null
+                      ? FileImage(
+                          File(_selectedImage!.path)) // Use selected image
+                      : AssetImage('assets/image/avatar.png')
+                          as ImageProvider, // Default image
+                  radius: 64,
+                ),
               ),
               SizedBox(
                 height: 8.0,

@@ -46,6 +46,62 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return newPassword.text.isNotEmpty && oldPassword.text.isNotEmpty;
   }
 
+  void _confirmChangePassword() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            title: Text(
+              'Save New Password',
+              style: GoogleFonts.sourceSans3(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: ColorPallete.darkBlack,
+              ),
+            ),
+            content: Text(
+              'Are you sure you want to change your password?',
+              style: GoogleFonts.ubuntu(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: ColorPallete.darkGreySilver,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: ColorPallete.darkBlack,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => ProfileScreen()));
+                },
+                child: Text(
+                  'Save',
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: ColorPallete.primaryColor,
+                  ),
+                ),
+              )
+            ],
+          );
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
@@ -102,7 +158,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           children: [
             FieldProfile(
               labelText: 'Old Password',
-              hintText: 'Enter Your Old Password Min.8 Characters',
+              hintText: 'Min.8 Characters',
               controller: oldPassword,
               isPassword: true,
               isOptional: true,
@@ -112,7 +168,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             ),
             FieldProfile(
               labelText: 'New Password',
-              hintText: 'Enter Your New Password Min.8 Characters',
+              hintText: 'Min.8 Characters',
               controller: newPassword,
               isPassword: true,
               isOptional: true,
@@ -124,14 +180,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               visible: _areFieldsFilled(),
               child: Button(
                 text: 'Save Changes',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfileScreen(),
-                    ),
-                  );
-                },
+                onTap: _confirmChangePassword,
               ),
             ),
           ],

@@ -35,6 +35,7 @@ class FieldProfile extends StatelessWidget {
         SizedBox(height: 8),
         StatefulBuilder(builder: (context, setState) {
           return TextFormField(
+            cursorColor: ColorPallete.primaryColor,
             controller: controller,
             obscureText: isPassword && !isPasswordVisible,
             decoration: InputDecoration(

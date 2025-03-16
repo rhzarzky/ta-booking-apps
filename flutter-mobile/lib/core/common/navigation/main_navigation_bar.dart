@@ -28,7 +28,7 @@ class _AppBottomNavigationBarState extends State<AppBottomNavigationBar> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: ColorPallete.greySilverChalice.withOpacity(0.1),
+            color: Colors.white.withOpacity(1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),

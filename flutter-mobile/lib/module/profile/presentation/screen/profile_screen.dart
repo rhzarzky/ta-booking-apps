@@ -49,6 +49,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
           title: Text(
             'Logout',
             style: GoogleFonts.sourceSans3(
@@ -68,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Tutup dialog
+                Navigator.pop(context);
               },
               child: Text(
                 'Cancel',
@@ -81,8 +85,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Tutup dialog
-                context.read<AuthBloc>().add(LogoutUser()); // Trigger logout
+                Navigator.pop(context);
+                context.read<AuthBloc>().add(LogoutUser());
               },
               child: Text(
                 'Logout',
@@ -238,8 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     );
                   } else if (index == 2) {
-                    _showLogoutConfirmationDialog(
-                        context); // Tampilkan dialog konfirmasi
+                    _showLogoutConfirmationDialog(context);
                   }
                 },
                 titleColor: item['titleColor'],

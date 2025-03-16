@@ -1,48 +1,49 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class NotificationItem extends StatelessWidget {
   final String title;
-  final String status;
   final String timeStamp;
-  final String imageStatus;
+  final String indicatorStatus;
+  final VoidCallback? onTap;
 
   const NotificationItem({
     super.key,
     required this.title,
-    required this.status,
     required this.timeStamp,
-    required this.imageStatus,
+    required this.indicatorStatus,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      margin: EdgeInsets.only(bottom: 8.0),
+      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.all(Radius.circular(8.0)),
+        color: Colors.white,
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            color: ColorPallete.greenMalachite,
-            decoration:
-                BoxDecoration(borderRadius: BorderRadius.circular(24.0)),
-            child: Image.asset("assets/icons/calendar-check-white.svg"),
-          ),
+          _buildGetIndicator(),
           SizedBox(
-            width: 8.0,
+            width: 12.0,
           ),
           Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Service Electric 24/7 Available ',
+                title ?? 'Service Electric 24/7 Available ',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.ubuntu(
                   fontSize: 14,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w600,
                   color: ColorPallete.darkBlack,
                 ),
               ),
@@ -50,21 +51,12 @@ class NotificationItem extends StatelessWidget {
                 height: 4.0,
               ),
               Text(
-                'SHas been Approved',
-                style: GoogleFonts.ubuntu(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: ColorPallete.darkBlack,
-                ),
-              ),
-              SizedBox(
-                height: 8.0,
-              ),
-              Text(
-                '2 minutes ago',
+                timeStamp ?? '2 minutes ago',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.ubuntu(
                   fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   color: ColorPallete.darkGreySilver,
                 ),
               ),
@@ -72,14 +64,61 @@ class NotificationItem extends StatelessWidget {
           ),
           Spacer(),
           IconButton(
-              onPressed: () {},
-              icon: Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: ColorPallete.darkBlack,
-                size: 24.0,
-              ))
+            onPressed: onTap,
+            icon: Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: ColorPallete.greySilverChalice,
+              size: 20.0,
+            ),
+          )
         ],
       ),
+    );
+  }
+
+  Widget _buildGetIndicator() {
+    switch (indicatorStatus.toLowerCase()) {
+      case 'success':
+        return _successIndicator();
+      case 'pending':
+        return _pendingIndicator();
+      case 'declined':
+        return _declinedIndicator();
+      default:
+        return _pendingIndicator();
+    }
+  }
+
+  Widget _successIndicator() {
+    return Container(
+      padding: EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.0),
+        color: ColorPallete.greenMalachite,
+      ),
+      child: SvgPicture.asset('assets/icons/calendar-check-white.svg'),
+    );
+  }
+
+  Widget _pendingIndicator() {
+    return Container(
+      padding: EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.0),
+        color: ColorPallete.secondColor,
+      ),
+      child: SvgPicture.asset('assets/icons/calendar-time-white.svg'),
+    );
+  }
+
+  Widget _declinedIndicator() {
+    return Container(
+      padding: EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.0),
+        color: ColorPallete.redCinnabar,
+      ),
+      child: SvgPicture.asset('assets/icons/calendar-x-white.svg'),
     );
   }
 }
