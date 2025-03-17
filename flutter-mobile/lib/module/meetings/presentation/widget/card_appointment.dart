@@ -43,6 +43,7 @@ class CardAppointment extends StatelessWidget {
             padding: const EdgeInsets.all(12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Text(
                   titleCard,
@@ -51,6 +52,7 @@ class CardAppointment extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: ColorPallete.darkBlack,
                   ),
+                  textAlign: TextAlign.left,
                 ),
                 const SizedBox(height: 4.0),
                 Text(
@@ -62,6 +64,7 @@ class CardAppointment extends StatelessWidget {
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.left,
                 ),
                 const SizedBox(height: 12.0),
 
@@ -225,7 +228,7 @@ class CardAppointment extends StatelessWidget {
               color: ColorPallete.darkBlack,
             ),
           ),
-          const SizedBox(width: 4.0), 
+          const SizedBox(width: 4.0),
           // Value Text
           Expanded(
             child: Text(
@@ -235,8 +238,8 @@ class CardAppointment extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: ColorPallete.darkBlack,
               ),
-              overflow: TextOverflow.ellipsis, 
-              maxLines: 1, 
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],

@@ -5,6 +5,7 @@ import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/history_meeting.dart';
 import 'package:Appointly/module/meetings/presentation/widget/card_service.dart';
 import 'package:Appointly/module/meetings/presentation/widget/search_bar.dart';
+import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
@@ -18,10 +19,40 @@ class MeetingsScreen extends StatefulWidget {
 }
 
 class _MeetingsScreenState extends State<MeetingsScreen> {
+  late ScrollController _scrollController;
+  bool _isSearchBarVisible = true;
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_scrollistener);
     _refreshData();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollistener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollistener() {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.idle) {
+      if (_isSearchBarVisible) {
+        setState(() {
+          _isSearchBarVisible = false;
+        });
+      }
+    } else if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
+      if (!_isSearchBarVisible) {
+        setState(() {
+          _isSearchBarVisible = true;
+        });
+      }
+    }
   }
 
   Future<void> _refreshData() async {
@@ -70,8 +101,12 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
         child: Column(
           children: [
             SizedBox(height: 24),
-            CustomSearchBar(),
-            SizedBox(height: 24),
+            AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              height: _isSearchBarVisible ? 56 : 0,
+              child: _isSearchBarVisible ? CustomSearchBar() : SizedBox(),
+            ),
+            SizedBox(height: _isSearchBarVisible ? 24 : 0),
             Expanded(
               child: BlocBuilder<ServiceBloc, ServiceState>(
                 builder: (context, state) {
