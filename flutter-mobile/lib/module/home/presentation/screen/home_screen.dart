@@ -2,7 +2,7 @@
 
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/home/presentation/widget/chart_status.dart';
-import 'package:Appointly/module/home/presentation/widget/custom_search_bar.dart';
+import 'package:Appointly/module/home/presentation/widget/search_bar_anchor.dart';
 import 'package:Appointly/module/home/presentation/widget/status_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -29,22 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Image.asset(
                 'assets/image/Logo.png',
               ),
-              IconButton.filled(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CustomSearchBar(),
-                    ),
-                  );
-                },
-                icon: SvgPicture.asset('assets/icons/icon-search.svg'),
-                style: IconButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.all(12)),
-                iconSize: 24,
-                color: Colors.white,
-              ),
+              SearchBarAnchor()
             ],
           ),
         ],
