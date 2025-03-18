@@ -3,6 +3,7 @@ import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:pulsator/pulsator.dart';
 
 class DetailMeetingSuccess extends StatefulWidget {
   const DetailMeetingSuccess({super.key});
@@ -11,9 +12,38 @@ class DetailMeetingSuccess extends StatefulWidget {
   State<DetailMeetingSuccess> createState() => _DetailMeetingSuccessState();
 }
 
-class _DetailMeetingSuccessState extends State<DetailMeetingSuccess> {
+class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
+    with SingleTickerProviderStateMixin {
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
+
+  AnimationController? _controller;
+  Animation<double>? _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(
+        milliseconds: 1000,
+      ),
+    );
+
+    _animation = Tween<double>(begin: 1.0, end: 1.2).animate(CurvedAnimation(
+      parent: _controller!,
+      curve: Curves.easeInOut,
+    ));
+
+    _controller!.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
   Future<void> _selectDate() async {
     final DateTime? pickedDate = await showDatePicker(
@@ -92,6 +122,8 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess> {
           _buildScheduleSection(),
           SizedBox(height: 16),
           _buildLocationSection(),
+          SizedBox(height: 16),
+          _buildStatus(),
           SizedBox(height: 16),
           _buildNoteSection(),
           SizedBox(height: 16),
@@ -251,6 +283,88 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess> {
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatus() {
+    return Column(
+      children: [
+        Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: ColorPallete.concrete50,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Stack(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(
+                            width: 2,
+                            color: ColorPallete.backgroundBody,
+                          ),
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(12.0),
+                          ),
+                        ),
+                        child: Text(
+                          'Status',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: ColorPallete.primaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Pulsating widget in the top-right corner
+                  Positioned(
+                    top: -4,
+                    right: -4,
+                    child: SizedBox(
+                      width: 50, // Explicit width
+                      height: 50, // Explicit height
+                      child: Pulsator(
+                        style: PulseStyle(
+                          color: Colors.blue,
+                          borderColor: Colors.white,
+                          borderWidth: 2.0,
+                          gradientStyle: PulseGradientStyle(
+                            start: 0.5,
+                            startColor: Colors.white,
+                            reverseColors: true,
+                          ),
+                        ),
+                        count: 5,
+                        duration: Duration(seconds: 2),
+                        repeat: 0,
+                        startFromScratch: true,
+                        autoStart: true,
+                        fit: PulseFit.contain,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );

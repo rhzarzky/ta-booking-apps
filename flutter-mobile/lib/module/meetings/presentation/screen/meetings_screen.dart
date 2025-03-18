@@ -39,7 +39,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
 
   void _scrollistener() {
     if (_scrollController.position.userScrollDirection ==
-        ScrollDirection.idle) {
+        ScrollDirection.reverse) {
       if (_isSearchBarVisible) {
         setState(() {
           _isSearchBarVisible = false;
@@ -106,7 +106,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
               height: _isSearchBarVisible ? 56 : 0,
               child: _isSearchBarVisible ? CustomSearchBar() : SizedBox(),
             ),
-            SizedBox(height: _isSearchBarVisible ? 24 : 0),
+            SizedBox(height: _isSearchBarVisible ? 16 : 0),
             Expanded(
               child: BlocBuilder<ServiceBloc, ServiceState>(
                 builder: (context, state) {
@@ -118,6 +118,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                     return RefreshIndicator(
                       onRefresh: _refreshData,
                       child: ListView.builder(
+                        controller: _scrollController,
                         itemCount: state.services.length,
                         itemBuilder: (context, index) {
                           final service = state.services[index];
