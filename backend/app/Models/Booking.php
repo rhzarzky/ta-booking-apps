@@ -13,6 +13,8 @@ class Booking extends Model {
         'user_id', 
         'status',
         'option',
+        'note',
+        'day',
         'time'
     ];
 

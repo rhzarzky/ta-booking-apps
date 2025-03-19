@@ -10,8 +10,10 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('service_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->enum('option', ['Offline', 'Online']); 
+            $table->enum('option', ['Offline', 'Online']);
+            $table->string('day');
             $table->time('time'); 
+            $table->string('note')->nullable();
             $table->enum('status', ['Pending', 'Approved', 'Declined'])->default('Pending');
             $table->timestamps();
         });

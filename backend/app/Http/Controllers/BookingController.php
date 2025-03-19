@@ -16,7 +16,7 @@ class BookingController extends Controller
         ->get()
         ->map(function ($booking) {
             return [
-                'id' => $booking->id,
+                'id_booking' => $booking->id,
                 'user' => [
                     'id' => $booking->user->id,
                     'email' => $booking->user->email,
@@ -26,10 +26,11 @@ class BookingController extends Controller
                     'id' => $booking->service->id,
                     'title' => $booking->service->title,
                     'description' => $booking->service->description,
+                    'option' => $booking->option,
+                    'day' => $booking->day,
+                    'time' => $booking->time,
+                    'status' => $booking->status,
                 ],
-                'option' => $booking->option,
-                'time' => $booking->time,
-                'status' => $booking->status,
             ];
         });
         return response()->json([
@@ -46,7 +47,9 @@ class BookingController extends Controller
         $availableOptions = json_decode($service->option, true);
 
         $validated = $request->validate([
+            'day' => 'required|string|max:255',
             'time' => 'required|date_format:H:i',
+            'note' => 'nullable|string|maks:255',
             'option' => 'required|string|in:' . implode(',', $availableOptions), // Only allow options set by admin
         ]);
 
@@ -61,7 +64,9 @@ class BookingController extends Controller
             'service_id' => $service->id,
             'user_id' => $user->id,
             'option' => $validated['option'],
+            'day' => $validated['day'],
             'time' => $validated['time'],
+            'note' => $validated['note'],
             'status' => 'Pending',
         ]);
 
@@ -71,7 +76,9 @@ class BookingController extends Controller
             'booking' => [
                 'id' => $booking->id,
                 'option' => $booking->option,
+                'day' => $booking->day,
                 'time' => $booking->time,
+                'note' => $booking->note,
                 'status' => $booking->status,
                 'service' => [
                     'id' => $service->id,
