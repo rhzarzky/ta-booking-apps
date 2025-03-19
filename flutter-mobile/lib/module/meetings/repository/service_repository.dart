@@ -8,7 +8,7 @@ class ServiceRepository {
   ServiceRepository()
       : _dio = Dio(
           BaseOptions(
-            baseUrl: 'http://192.168.100.18:8000/v1',
+            baseUrl: 'http://192.168.5.132:8000/v1',
             headers: {
               'Content-Type': 'application/json',
             },

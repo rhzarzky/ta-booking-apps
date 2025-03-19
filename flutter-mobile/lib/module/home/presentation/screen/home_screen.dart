@@ -29,7 +29,15 @@ class _HomeScreenState extends State<HomeScreen> {
               Image.asset(
                 'assets/image/Logo.png',
               ),
-              SearchBarAnchor()
+              IconButton.filled(
+                onPressed: () {},
+                icon: SvgPicture.asset('assets/icons/icon-search.svg'),
+                style: IconButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.all(12)),
+                iconSize: 24,
+                color: Colors.white,
+              ),
             ],
           ),
         ],

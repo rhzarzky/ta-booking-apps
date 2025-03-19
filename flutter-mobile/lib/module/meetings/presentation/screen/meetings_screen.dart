@@ -2,6 +2,7 @@
 
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_screen.dart';
 import 'package:Appointly/module/meetings/presentation/screen/history_meeting.dart';
 import 'package:Appointly/module/meetings/presentation/widget/card_service.dart';
 import 'package:Appointly/module/meetings/presentation/widget/search_bar.dart';
@@ -130,7 +131,14 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                               imageService: service.image,
                               timeService: service.days,
                               provideService: service.option,
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetailMeetingScreen(),
+                                  ),
+                                );
+                              },
                             ),
                           );
                         },

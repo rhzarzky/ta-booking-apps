@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthRepository {
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://192.168.100.18:8000/v1',
+      baseUrl: 'http://192.168.5.132:8000/v1',
       headers: {'Content-Type': 'application/json'},
       validateStatus: (status) => status! < 500,
       connectTimeout: Duration(seconds: 30),

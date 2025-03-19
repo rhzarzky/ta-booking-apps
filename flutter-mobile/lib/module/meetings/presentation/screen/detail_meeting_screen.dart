@@ -1,4 +1,5 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/presentation/screen/field_location_offline.dart';
 import 'package:Appointly/module/meetings/presentation/widget/inperson_field_option.dart';
 import 'package:Appointly/module/meetings/presentation/widget/success_state.dart';
 import 'package:flutter/material.dart';
@@ -287,7 +288,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => InpersonFieldOption(),
+                                    builder: (context) => FieldLocationOffline(),
                                   ),
                                 );
                               },
