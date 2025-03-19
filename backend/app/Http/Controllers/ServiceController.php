@@ -11,7 +11,7 @@ use Carbon\Carbon;
 
 class ServiceController extends Controller
 {
-    public function showService()
+    public function showAllService()
     {
         $services = Service::with('schedule')
             ->select('id', 'image', 'title', 'description', 'option') 
@@ -35,7 +35,27 @@ class ServiceController extends Controller
             'message' => 'Services retrieved successfully',
             'services' => $services,
         ], 200);
-    }   
+    }
+    public function showService($id)
+    {
+        $service = Service::findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Service retrieved successfully',
+            'service' => [
+                'id' => $service->id,
+                'image' => $service->image ? asset('storage/' . $service->image) : null,
+                'title' => $service->title,
+                'description' => $service->description,
+                'option' => json_decode($service->option, true),
+                'time' => $service->schedule ? json_decode($service->schedule->time, true) : null,
+                'days' => $service->schedule ? json_decode($service->schedule->days, true) : null,
+                'date' => $service->schedule ? json_decode($service->schedule->date, true) : null,
+                'end_date' => $service->schedule ? $service->schedule->end_date : null,
+            ],
+        ], 200);
+    }      
     public function storeService(Request $request)
     {
         $validated = $request->validate([
