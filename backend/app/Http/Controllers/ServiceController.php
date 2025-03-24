@@ -133,6 +133,8 @@ class ServiceController extends Controller
             'option.*' => 'in:Offline,Online',
             'days' => 'sometimes|array',
             'days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+            'time' => 'required|string',
+            'time.*' => 'required|date_format:H:i',
             'end_date' => 'sometimes|date|after_or_equal:today', 
         ]);
 
@@ -161,6 +163,10 @@ class ServiceController extends Controller
                 $validated['days'] = json_encode($validated['days']);
             }
 
+            if (isset($validated['time'])) {
+                $validated['time'] = json_encode($validated['time']);
+            }
+
             // Generate new date if 'days' or 'end_date' is updated
             if (isset($validated['days']) || isset($validated['end_date'])) {
                 $days = isset($validated['days']) ? json_decode($validated['days'], true) : json_decode($service->days, true);
@@ -182,6 +188,14 @@ class ServiceController extends Controller
             }
 
             $service->update($validated);
+            
+            $schedule = Schedule::update([
+                'service_id' => $service->id, 
+                'days' => json_encode($days),
+                'time' => json_encode($request->time),
+                'end_date' => $request->end_date,
+                'date' => json_encode($date),
+            ]);
 
             return response()->json([
                 'status' => 'success',
@@ -193,6 +207,7 @@ class ServiceController extends Controller
                     'description' => $service->description,
                     'option' => json_decode($service->option, true),
                     'days' => json_decode($service->days, true),
+                    'time' => json_decode($schedule->time),
                     'date' => json_decode($service->date, true),
                     'end_date' => $service->end_date,
                 ],
