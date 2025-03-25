@@ -133,7 +133,7 @@ class ServiceController extends Controller
             'option.*' => 'in:Offline,Online',
             'days' => 'sometimes|array',
             'days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
-            'time' => 'required|string',
+            'time' => 'sometimes|array',
             'time.*' => 'required|date_format:H:i',
             'end_date' => 'sometimes|date|after_or_equal:today', 
         ]);
@@ -167,7 +167,9 @@ class ServiceController extends Controller
                 $validated['time'] = json_encode($validated['time']);
             }
 
-            // Generate new date if 'days' or 'end_date' is updated
+            // update service
+            $service->update($validated);
+
             if (isset($validated['days']) || isset($validated['end_date'])) {
                 $days = isset($validated['days']) ? json_decode($validated['days'], true) : json_decode($service->days, true);
                 $endDate = isset($validated['end_date']) ? Carbon::parse($validated['end_date']) : Carbon::parse($service->end_date);
@@ -184,18 +186,16 @@ class ServiceController extends Controller
                     $today->addDay();
                 }
 
-                $validated['date'] = json_encode($date);
+                Schedule::updateOrCreate(
+                    ['service_id' => $service->id], 
+                    [
+                        'days' => json_encode($days),
+                        'time' => json_encode($request->time),
+                        'end_date' => $request->end_date,
+                        'date' => json_encode($date),
+                    ]
+                );
             }
-
-            $service->update($validated);
-            
-            $schedule = Schedule::update([
-                'service_id' => $service->id, 
-                'days' => json_encode($days),
-                'time' => json_encode($request->time),
-                'end_date' => $request->end_date,
-                'date' => json_encode($date),
-            ]);
 
             return response()->json([
                 'status' => 'success',
@@ -207,9 +207,9 @@ class ServiceController extends Controller
                     'description' => $service->description,
                     'option' => json_decode($service->option, true),
                     'days' => json_decode($service->days, true),
-                    'time' => json_decode($schedule->time),
-                    'date' => json_decode($service->date, true),
-                    'end_date' => $service->end_date,
+                    'time' => json_decode($service->schedule->time, true),
+                    'date' => json_decode($service->schedule->date, true),
+                    'end_date' => $service->schedule->end_date,
                 ],
             ], 200);
         } catch (ModelNotFoundException $e) {
