@@ -1,3 +1,4 @@
+SidebarArea.vue
 <template>
     <div class="sidebar bg-white text-gray-800 w-64 min-h-screen p-4 shadow-lg">
       <div class="flex items-center justify-center mb-8">
@@ -30,7 +31,7 @@
   
   <script>
   export default {
-    name: 'Sidebar',
+    name: "SidebarArea",
   };
   </script>
   
@@ -39,3 +40,4 @@
     width: 16rem; /* 64 */
   }
   </style>
+  

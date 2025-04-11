@@ -1,5 +1,3 @@
-// import Vue from 'vue';
-// import VueRouter from 'vue-router';
 import { createRouter, createWebHistory } from 'vue-router';
 import LandingPage from '@/views/LandingPage.vue';
 import LoginClient from '@/views/LoginClient.vue';
@@ -9,8 +7,8 @@ import Dashboard from '@/views/Client/Dashboard.vue';
 import Meeting from '@/views/Client/Meeting.vue';
 import Activity from '@/views/Client/Activity.vue';
 import Profile from '@/views/Client/Profile.vue';
-
-// Vue.use(VueRouter);
+import EditProfile from '@/views/Client/EditProfile.vue';
+import DetailBooking from '@/views/Client/DetailBooking.vue'; 
 
 const routes = [
   {
@@ -33,17 +31,15 @@ const routes = [
       { path: 'meeting', component: Meeting },
       { path: 'activity', component: Activity },
       { path: 'profile', component: Profile },
+      { path: 'edit-profile', component: EditProfile },
+      { path: 'detail-booking', name: 'DetailBooking', component: DetailBooking }, 
     ],
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 });
-// const router = new VueRouter({
-//   mode: 'history',
-//   routes,
-// });
 
 export default router;
