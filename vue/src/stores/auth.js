@@ -1,105 +1,41 @@
-// src/stores/auth.js
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import axios from 'axios';
-import { authServices } from '../../services/auth-services';
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { login, logout, register, userProfile } from '@/api/auth-api'
+import { authServices } from '@/services/auth-services'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref(null);
-  const errors = ref({});
-  const loading = ref(false);
+  const user = ref(authServices.getUser())
+  const isAuthenticated = ref(authServices.isLoggedIn())
 
-  const isLoggedIn = computed(() => authServices.isAuthenticated());
+  const loginUser = async (credentials) => {
+    const res = await login(credentials)
+    user.value = res.user
+    isAuthenticated.value = true
+  }
 
-  // Handle Login
-  const handleLogin = async (credentials) => {
-    loading.value = true;
-    try {
-      errors.value = {};
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, credentials);
+  const registerUser = async (userData) => {
+    const res = await register(userData)
+    user.value = res.user
+    isAuthenticated.value = true
+  }
 
-      if (response.data.status === 'success') {
-        user.value = response.data.user;
-        authServices.setToken(response.data.token);
-        authServices.setUserId(response.data.user.id);
-      } else {
-        errors.value = { general: response.data.message || 'Login failed' };
-      }
+  const logoutUser = async () => {
+    await logout()
+    user.value = null
+    isAuthenticated.value = false
+  }
 
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 422) {
-        errors.value = error.response.data.errors;
-      } else {
-        errors.value = { general: 'Login failed. Please try again.' };
-      }
-      throw error;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  // ✅ Handle Register
-  const handleRegister = async (userData) => {
-    loading.value = true;
-    try {
-      errors.value = {};
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/register`, userData);
-
-      if (response.data.status === 'success') {
-        user.value = response.data.user;
-        authServices.setToken(response.data.token);
-        authServices.setUserId(response.data.user.id);
-      } else {
-        errors.value = { general: response.data.message || 'Registration failed' };
-      }
-
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 422) {
-        errors.value = error.response.data.errors;
-      } else {
-        errors.value = { general: 'Registration failed. Please try again.' };
-      }
-      throw error;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  // Logout
-  const handleLogout = () => {
-    user.value = null;
-    authServices.clearAuthData();
-  };
-
-  // Get current user
-  const getCurrentUser = async () => {
-    try {
-      const token = authServices.getToken();
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.data.user) {
-        user.value = response.data.user;
-      }
-    } catch (error) {
-      console.error('Failed to fetch current user:', error);
-      throw error;
-    }
-  };
+  const fetchUserProfile = async () => {
+    const data = await userProfile()
+    user.value = data
+  }
 
   return {
     user,
-    errors,
-    loading,
-    isLoggedIn,
-    handleLogin,
-    handleRegister,
-    handleLogout,
-    getCurrentUser,
-  };
-});
+    isAuthenticated,
+    loginUser,
+    registerUser,
+    logoutUser,
+    fetchUserProfile,
+  }
+})

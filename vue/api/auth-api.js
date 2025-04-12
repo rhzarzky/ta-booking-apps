@@ -1,58 +1,86 @@
-import api from './api';
-import { ref } from 'vue';
-import { authServices } from '../services/auth-services';
+import api from "./api";
+import { ref } from "vue";
+import { authServices } from "@/services/auth-services";
 
 export const loading = ref(false);
 export const errors = ref({});
 
-// Fungsi login
+// login api
 export const login = async (credentials) => {
+  loading.value = true;
+  errors.value = {};
   try {
     if (!credentials.email || !credentials.password) {
       errors.value = {
-        email: !credentials.email ? ["Email harus diisi."] : undefined,
-        password: !credentials.password ? ["Password harus diisi."] : undefined,
+        email: !credentials.email ? ["The email field is required."] : undefined,
+        password: !credentials.password ? ["The password field is required."] : undefined,
       };
-      throw new Error("Validasi login gagal");
+      throw new Error("Validation failed");
     }
 
-    const response = await api.post('/login', credentials);
+    const response = await api.post("/login", credentials);
+    const { status, token, user, error } = response.data;
 
-    if (response.data && response.data.token && response.data.user) {
-      authServices.setToken(response.data.token);
-      authServices.setUserId(response.data.user.id);
+    if (status === "success" && token) {
+      authServices.setToken(token);
+      authServices.setUser(user);
+      return user;
+    } else {
+      errors.value = { credentials: [error || "Login failed."] };
+      throw new Error(error || "Login failed");
     }
-
-    return response.data;
   } catch (error) {
-    console.error("Login error:", error.response?.data || error.message);
+    console.error("Login error:", error);
     throw error;
+  } finally {
+    loading.value = false;
   }
 };
 
-// Fungsi register (opsional, jika backend kamu menyediakan endpoint)
+// register api
 export const register = async (userData) => {
+  loading.value = true;
+  errors.value = {};
   try {
-    const response = await api.post('/register', userData);
-    if (response.data.token && response.data.user) {
-      authServices.setToken(response.data.token);
-      authServices.setUserId(response.data.user.id);
+    const response = await api.post("/register", userData);
+    const { status, token, user, errors: validationErrors } = response.data;
+
+    if (status === "success" && token) {
+      authServices.setToken(token);
+      authServices.setUser(user);
+      return user;
+    } else {
+      errors.value = validationErrors || { general: ["Registration failed."] };
+      throw new Error("Register failed");
     }
-    return response.data;
   } catch (error) {
-    console.error("Register error:", error.response?.data || error.message);
+    console.error("Register error:", error);
     throw error;
+  } finally {
+    loading.value = false;
   }
 };
 
-// Fungsi logout
+// logout api
 export const logout = async () => {
   try {
-    await api.post('/logout');
-    authServices.removeToken();
-    authServices.removeUserId();
+    const response = await api.post("/logout");
+    if (response.data.status === "success") {
+      authServices.clearAuth();
+    }
   } catch (error) {
     console.error("Logout error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// get current user
+export const userProfile = async () => {
+  try {
+    const response = await api.get("/user");
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch user profile:", error);
     throw error;
   }
 };

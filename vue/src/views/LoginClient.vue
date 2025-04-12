@@ -107,6 +107,3 @@ export default {
 };
 </script>
 
-<style scoped>
-/* Tambahkan gaya khusus jika diperlukan */
-</style>
