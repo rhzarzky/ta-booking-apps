@@ -8,7 +8,7 @@ class ServiceRepository {
   ServiceRepository()
       : _dio = Dio(
           BaseOptions(
-            baseUrl: 'http://192.168.5.132:8000/v1',
+            baseUrl: 'http://192.168.100.18:8000/v1',
             headers: {
               'Content-Type': 'application/json',
             },
@@ -23,7 +23,6 @@ class ServiceRepository {
       _dio.options.headers['Authorization'] = 'Bearer $token';
     } else {
       _dio.options.headers.remove('Authorization');
-      print('Authorization header removed because token is null or empty');
     }
   }
 
@@ -39,18 +38,61 @@ class ServiceRepository {
         }
       }
 
-      print('Headers dd before request: ${_dio.options.headers}');
       final response = await _dio.get('/service');
-      print('Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         return DataService.fromJson(response.data);
       } else {
-        print('Service error: ${response.statusMessage}');
         throw Exception('Failed to load services: ${response.statusMessage}');
       }
     } catch (e) {
-      print('ServiceRepository error: ${e.toString()}');
+      rethrow;
+    }
+  }
+
+  Future<DataService> getServiceById(int id) async {
+    try {
+      if (!_dio.options.headers.containsKey('Authorization')) {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('token');
+        if (token != null && token.isNotEmpty) {
+          updateToken(token);
+        }
+      }
+
+
+      // Pertama, coba dapatkan semua services
+      final allServicesResponse = await _dio.get('/service');
+      if (allServicesResponse.statusCode == 200) {
+        final allServices = DataService.fromJson(allServicesResponse.data);
+
+        // Cari service dengan ID yang sesuai
+        final filteredServices =
+            allServices.services.where((s) => s.id == id).toList();
+        if (filteredServices.isNotEmpty) {
+          return DataService(services: filteredServices);
+        }
+      }
+
+      // Jika endpoint /service/{id} tidak berfungsi dengan baik, kita bisa gunakan cara di atas
+      // Tetapi kita masih mencoba endpoint langsung juga
+      final response = await _dio.get('/service/$id');
+
+      if (response.statusCode == 200) {
+        // Jika API mengembalikan single object (bukan array)
+        if (response.data is Map && !response.data.containsKey('services')) {
+          // Buat service object dari response dan wrap dalam array
+          final service = Service.fromModel(response.data);
+          return DataService(services: [service]);
+        }
+
+        // Jika response berisi key 'services' seperti biasa
+        return DataService.fromJson(response.data);
+      } else {
+        throw Exception('Failed to load service: ${response.statusMessage}');
+      }
+    } catch (e) {
+      print("Error in getServiceById: $e");
       rethrow;
     }
   }

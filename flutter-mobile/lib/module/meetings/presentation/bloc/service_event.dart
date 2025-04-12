@@ -5,6 +5,12 @@ sealed class ServiceEvent {}
 
 class GetServiceEvent extends ServiceEvent {}
 
+class GetServiceIdEvent extends ServiceEvent {
+  final int id;
+
+  GetServiceIdEvent({required this.id});
+}
+
 class UpdateTokenEvent extends ServiceEvent {
   final String? token;
 

@@ -19,13 +19,15 @@ class MeetingsScreen extends StatefulWidget {
   State<MeetingsScreen> createState() => _MeetingsScreenState();
 }
 
-class _MeetingsScreenState extends State<MeetingsScreen> {
+class _MeetingsScreenState extends State<MeetingsScreen>
+    with WidgetsBindingObserver {
   late ScrollController _scrollController;
   bool _isSearchBarVisible = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollistener);
     _refreshData();
@@ -33,9 +35,17 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.removeListener(_scrollistener);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshData();
+    }
   }
 
   void _scrollistener() {
@@ -58,6 +68,7 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
 
   Future<void> _refreshData() async {
     context.read<ServiceBloc>().add(GetServiceEvent());
+    return Future.value();
   }
 
   @override
@@ -132,10 +143,16 @@ class _MeetingsScreenState extends State<MeetingsScreen> {
                               timeService: service.days,
                               provideService: service.option,
                               onTap: () {
+                                context
+                                    .read<ServiceBloc>()
+                                    .add(GetServiceIdEvent(id: service.id));
+
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => DetailMeetingScreen(),
+                                    builder: (context) => DetailMeetingScreen(
+                                      serviceId: service.id,
+                                    ),
                                   ),
                                 );
                               },

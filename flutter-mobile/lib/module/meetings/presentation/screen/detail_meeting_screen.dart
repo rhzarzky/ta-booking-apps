@@ -1,13 +1,22 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/field_location_offline.dart';
-import 'package:Appointly/module/meetings/presentation/widget/inperson_field_option.dart';
 import 'package:Appointly/module/meetings/presentation/widget/success_state.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:Appointly/module/meetings/model/service_model.dart';
 
 class DetailMeetingScreen extends StatefulWidget {
-  const DetailMeetingScreen({super.key});
+  final int serviceId;
+
+  const DetailMeetingScreen({
+    super.key,
+    required this.serviceId,
+  });
 
   @override
   State<DetailMeetingScreen> createState() => _DetailMeetingScreenState();
@@ -45,6 +54,17 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
     }
   }
 
+  Future<void> _refreshData() async {
+    context.read<ServiceBloc>().add(GetServiceIdEvent(id: widget.serviceId));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Load service data when screen opens
+    context.read<ServiceBloc>().add(GetServiceIdEvent(id: widget.serviceId));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,11 +74,57 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
         children: [
           Stack(
             children: [
-              _buildBackgroundImage(),
+              BlocBuilder<ServiceBloc, ServiceState>(
+                builder: (context, state) {
+                  if (state is ServiceLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  } else if (state is ServiceFailure) {
+                    return Center(
+                      child: Text(
+                        'Error: ${state.failure}',
+                      ),
+                    );
+                  } else if (state is ServiceLoaded) {
+                    if (state.services.isEmpty) {
+                      return Center(
+                        child: Text('Service tidak ditemukan'),
+                      );
+                    }
+                    try {
+                      // Cari service dengan ID yang sesuai
+                      final service = state.services.firstWhere(
+                        (service) => service.id == widget.serviceId,
+                        orElse: () => state.services.first,
+                      );
+
+                      return RefreshIndicator(
+                        onRefresh: _refreshData,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              _buildBackgroundImage(service),
+                              _buildContent(service),
+                            ],
+                          ),
+                        ),
+                      );
+                    } catch (e) {
+                      return Center(
+                        child: Text('Terjadi kesalahan saat memuat service'),
+                      );
+                    }
+                  }
+                  return const Center(
+                    child: Text('No Data Available'),
+                  );
+                },
+              ),
               _buildBackButton(),
             ],
           ),
-          _buildContent(),
+          // _buildContent(),
         ],
       ),
     );
@@ -74,16 +140,49 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
     );
   }
 
-  Widget _buildBackgroundImage() {
-    return Container(
-      height: 300,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/image/service_dummy_card.png'),
-          fit: BoxFit.cover,
+  Widget _buildBackgroundImage(Service service) {
+    if (service.image.isEmpty) {
+      return Container(
+        height: 300,
+        color: ColorPallete.concrete50,
+        child: Center(child: Text('Tidak ada gambar')),
+      );
+    }
+
+    if (service.image.startsWith('http://') ||
+        service.image.startsWith('https://')) {
+      return Container(
+        height: 300,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: NetworkImage(service.image),
+            fit: BoxFit.cover,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      try {
+        return Container(
+          height: 300,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(service.image),
+              fit: BoxFit.cover,
+            ),
+          ),
+        );
+      } catch (e) {
+        return Container(
+          height: 300,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/service-1.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildBackButton() {
@@ -96,21 +195,25 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
           borderRadius: BorderRadius.circular(24),
         ),
         child: IconButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // Muat ulang semua service saat kembali ke Meeting Screen
+            context.read<ServiceBloc>().add(GetServiceEvent());
+            Navigator.pop(context);
+          },
           icon: Icon(Icons.arrow_back_rounded),
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(Service service) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTitleSection(),
+            _buildTitleSection(service),
             SizedBox(height: 24),
             _buildScheduleSection(),
             SizedBox(height: 16),
@@ -125,12 +228,12 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
     );
   }
 
-  Widget _buildTitleSection() {
+  Widget _buildTitleSection(Service service) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Service Electric 24/7 Available',
+          service.title,
           style: GoogleFonts.ubuntu(
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -139,7 +242,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
         ),
         SizedBox(height: 2.0),
         Text(
-          'Service Electric 24/7 Available description.',
+          service.description,
           style: GoogleFonts.ubuntu(
             fontSize: 16,
             fontWeight: FontWeight.w400,
@@ -288,7 +391,8 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => FieldLocationOffline(),
+                                    builder: (context) =>
+                                        FieldLocationOffline(),
                                   ),
                                 );
                               },

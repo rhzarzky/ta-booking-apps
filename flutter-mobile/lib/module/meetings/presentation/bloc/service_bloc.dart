@@ -11,6 +11,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   final ServiceRepository serviceRepository;
 
   ServiceBloc({required this.serviceRepository}) : super(ServiceInitial()) {
+    // all service
     on<GetServiceEvent>((event, emit) async {
       emit(ServiceLoading());
       try {
@@ -23,7 +24,6 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
           serviceRepository.updateToken(token);
         }
         final result = await serviceRepository.getServices();
-        print('Services Loaded: ${result.services}'); // Add this line
         emit(ServiceLoaded(result.services));
       } catch (e) {
         emit(
@@ -34,17 +34,35 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
       }
     });
 
+    // service by id
+    on<GetServiceIdEvent>((event, emit) async {
+      emit(ServiceLoading());
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('token');
+
+        if (token != null && token.isNotEmpty) {
+          serviceRepository.updateToken(token);
+        }
+
+        final result = await serviceRepository.getServiceById(event.id);
+
+          emit(ServiceLoaded(result.services));
+       
+      } catch (e) {
+        emit(ServiceFailure(failure: e.toString()));
+      }
+    });
+
+    // update token
     on<UpdateTokenEvent>((event, emit) {
       try {
         // Periksa token sebelum meneruskannya ke repository
         final token = event.token;
-        print('Updating token: ${token ?? "NULL TOKEN"}');
 
         // Hanya update jika token tidak null dan tidak kosong
         if (token != null && token.isNotEmpty) {
           serviceRepository.updateToken(token);
-        } else {
-          print('Warning: Attempted to update with null or empty token');
         }
       } catch (e) {
         print('Error updating token: ${e.toString()}');

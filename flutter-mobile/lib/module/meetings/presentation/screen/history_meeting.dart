@@ -159,11 +159,10 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             locationCard: appointment['location']!,
             durationCard: appointment['duration']!,
             linkCard: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => DetailMeetingScreen()));
-              print('Appointment tapped: ${appointment['title']}');
+              // Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //         builder: (context) => DetailMeetingScreen(serviceId: service.id,)));
             },
             noteCard: appointment['note']!,
             statusCard: appointment['status']!,
