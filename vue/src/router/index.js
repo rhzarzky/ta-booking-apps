@@ -1,45 +1,23 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import LandingPage from '@/views/LandingPage.vue';
-import LoginClient from '@/views/LoginClient.vue';
-import RegisterClient from '@/views/RegisterClient.vue';
-import DefaultLayout from '@/layouts/DefaultLayout.vue';
-import Dashboard from '@/views/Client/Dashboard.vue';
-import Meeting from '@/views/Client/Meeting.vue';
-import Activity from '@/views/Client/Activity.vue';
-import Profile from '@/views/Client/Profile.vue';
-import EditProfile from '@/views/Client/EditProfile.vue';
-import DetailBooking from '@/views/Client/DetailBooking.vue'; 
-
-const routes = [
-  {
-    path: '/',
-    component: LandingPage,
-  },
-  {
-    path: '/login',
-    component: LoginClient,
-  },
-  {
-    path: '/register',
-    component: RegisterClient,
-  },
-  {
-    path: '/client',
-    component: DefaultLayout,
-    children: [
-      { path: 'dashboard', component: Dashboard },
-      { path: 'meeting', component: Meeting },
-      { path: 'activity', component: Activity },
-      { path: 'profile', component: Profile },
-      { path: 'edit-profile', component: EditProfile },
-      { path: 'detail-booking', name: 'DetailBooking', component: DetailBooking }, 
-    ],
-  },
-];
+import routes from './routes';
+import { authServices } from '../../services/auth-services';
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+// Route Guard
+router.beforeEach((to, from, next) => {
+  const isLoggedIn = !!authServices.getToken(); // Cek token dari authServices
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+
+  if (requiresAuth && !isLoggedIn) {
+    next('/login');
+  } else {
+    next();
+  }
 });
 
 export default router;
