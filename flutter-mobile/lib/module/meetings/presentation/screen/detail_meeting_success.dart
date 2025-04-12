@@ -1,5 +1,6 @@
 import 'package:Appointly/core/common/main_tab_screen.dart';
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/presentation/widget/dropdown_time.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -15,7 +16,8 @@ class DetailMeetingSuccess extends StatefulWidget {
 class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     with SingleTickerProviderStateMixin {
   DateTime? selectedDate;
-  TimeOfDay? selectedTime;
+  // TimeOfDay? selectedTime;
+  String selectedTime = '08:00 AM';
 
   AnimationController? _controller;
   Animation<double>? _animation;
@@ -60,18 +62,18 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     }
   }
 
-  Future<void> _selectTime() async {
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
+  // Future<void> _selectTime() async {
+  //   final TimeOfDay? pickedTime = await showTimePicker(
+  //     context: context,
+  //     initialTime: TimeOfDay.now(),
+  //   );
 
-    if (pickedTime != null && pickedTime != selectedTime) {
-      setState(() {
-        selectedTime = pickedTime;
-      });
-    }
-  }
+  //   if (pickedTime != null && pickedTime != selectedTime) {
+  //     setState(() {
+  //       selectedTime = pickedTime;
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -202,12 +204,14 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
         ),
         SizedBox(width: 8),
         Expanded(
-          child: _buildPickerButton(
-            onTap: _selectTime,
-            iconPath: 'assets/icons/icon-clock.svg',
-            text: selectedTime != null
-                ? '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-                : 'Select Time',
+          child: DropdownTime(
+            selectedValue: selectedTime,
+            items: ['08:00 AM', '09:00 AM', '10:00 AM'],
+            onChanged: (value) {
+              setState(() {
+                selectedTime = value!;
+              });
+            },
           ),
         ),
       ],

@@ -3,6 +3,7 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/field_location_offline.dart';
+import 'package:Appointly/module/meetings/presentation/widget/dropdown_time.dart';
 import 'package:Appointly/module/meetings/presentation/widget/success_state.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,7 +25,8 @@ class DetailMeetingScreen extends StatefulWidget {
 
 class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
   DateTime? selectedDate;
-  TimeOfDay? selectedTime;
+  String selectedTime = '08:00 AM';
+  // TimeOfDay? selectedTime;
 
   Future<void> _selectDate() async {
     final DateTime? pickedDate = await showDatePicker(
@@ -41,18 +43,18 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
     }
   }
 
-  Future<void> _selectTime() async {
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
+  // Future<void> _selectTime() async {
+  //   final TimeOfDay? pickedTime = await showTimePicker(
+  //     context: context,
+  //     initialTime: TimeOfDay.now(),
+  //   );
 
-    if (pickedTime != null && pickedTime != selectedTime) {
-      setState(() {
-        selectedTime = pickedTime;
-      });
-    }
-  }
+  //   if (pickedTime != null && pickedTime != selectedTime) {
+  //     setState(() {
+  //       selectedTime = pickedTime;
+  //     });
+  //   }
+  // }
 
   Future<void> _refreshData() async {
     context.read<ServiceBloc>().add(GetServiceIdEvent(id: widget.serviceId));
@@ -297,12 +299,14 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
         ),
         SizedBox(width: 8.0),
         Expanded(
-          child: _buildPickerButton(
-            onTap: _selectTime,
-            iconPath: 'assets/icons/icon-clock.svg',
-            text: selectedTime != null
-                ? '${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-                : 'Select Time',
+          child: DropdownTime(
+            selectedValue: selectedTime,
+            items: ['08:00 AM', '09:00 AM', '10:00 AM'],
+            onChanged: (value) {
+              setState(() {
+                selectedTime = value!;
+              });
+            },
           ),
         ),
       ],
