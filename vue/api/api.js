@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { authServices } from '@/services/auth-services'
+import { authServices } from '../services/auth-services'
 
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_BASE_URL}${import.meta.env.VITE_API_PATH}`,
@@ -13,6 +13,7 @@ const api = axios.create({
   withCredentials: false,
 })
 
+// Interceptor untuk menambahkan token ke setiap request
 api.interceptors.request.use(
   (config) => {
     const token = authServices.getToken()
@@ -24,13 +25,31 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
+// Interceptor untuk menangani error dari response
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config
+    const status = error.response?.status
+    const requestUrl = originalRequest?.url
+
+    console.error('API Error:')
+    console.log('Status:', status)
+    console.log('Request URL:', requestUrl)
+    console.log('Response:', error.response?.data)
+
+    // Hanya logout jika 401 bukan dari login atau register
+    if (
+      status === 401 &&
+      requestUrl &&
+      !requestUrl.includes('/login') &&
+      !requestUrl.includes('/register')
+    ) {
+      console.warn('Token expired or invalid. Logging out...')
       authServices.clearAuth()
       // Optional: window.location.href = '/login'
     }
+
     return Promise.reject(error)
   }
 )

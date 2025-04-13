@@ -1,51 +1,141 @@
+<script>
+import { registerUser } from '../../api/auth-api'
+
+export default {
+  name: 'RegisterUser',
+  data() {
+    return {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      errors: {},
+      generalError: '',
+      isSubmitting: false,
+    }
+  },
+  methods: {
+    async handleRegister() {
+      this.errors = {}
+      this.generalError = ''
+      this.isSubmitting = true
+
+      if (this.password !== this.confirmPassword) {
+        this.errors.password = 'Confirmation password does not match'
+        this.isSubmitting = false
+        return
+      }
+
+      try {
+        const payload = {
+          name: this.name,
+          email: this.email,
+          password: this.password,
+          password_confirmation: this.confirmPassword,
+        }
+
+        const response = await registerUser(payload)
+
+        if (response.status === 'success') {
+          this.$router.push('/login')
+        } else if (response.status === 'error') {
+          const errorObj = response.errors || {}
+          this.errors.email = errorObj.email?.[0] || ''
+          this.errors.password = errorObj.password?.[0] || ''
+          this.generalError = 'Registration failed. Please fix the errors above.'
+        }
+      } catch (err) {
+        this.generalError = 'An unexpected error occurred.'
+      } finally {
+        this.isSubmitting = false
+      }
+    },
+  },
+}
+</script>
+
 <template>
   <div class="flex h-screen bg-gray-100">
     <!-- Form Register -->
     <div class="w-1/2 flex items-center justify-center p-8">
-      <div class="w-full max-w-lg"> <!-- Memperlebar form dengan max-w-lg -->
-        <!-- Logo -->
-        <img src="@/assets/images/Appointly.png" alt="Logo Appointly" class="h-10 mb-6">
-        
+      <div class="w-full max-w-lg">
+        <img src="@/assets/images/Appointly.png" alt="Logo Appointly" class="h-10 mb-6" />
+
         <h2 class="text-3xl font-bold text-gray-800">Unlock Your Experience!</h2>
         <p class="text-gray-500 mb-6">Create an account and unlock your next great scheduling.</p>
 
-        <!-- Form -->
+        <!-- Error Message -->
+        <div v-if="generalError" class="text-red-600 text-sm mb-4">{{ generalError }}</div>
+
         <form @submit.prevent="handleRegister" class="space-y-4">
           <div>
             <label class="block text-gray-700 font-medium">Full Name</label>
-            <input type="text" v-model="name" placeholder="John Doe" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400" required />
+            <input
+              type="text"
+              v-model="name"
+              placeholder="John Doe"
+              class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+              required
+            />
           </div>
           <div>
             <label class="block text-gray-700 font-medium">Email</label>
-            <input type="email" v-model="email" placeholder="Jhondoe@gmail.com" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400" required />
+            <input
+              type="email"
+              v-model="email"
+              placeholder="johndoe@gmail.com"
+              class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+            <p v-if="errors.email" class="text-red-500 text-sm">{{ errors.email }}</p>
           </div>
           <div>
             <label class="block text-gray-700 font-medium">Password</label>
-            <input type="password" v-model="password" placeholder="Max. 8 Characters" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400" required />
+            <input
+              type="password"
+              v-model="password"
+              placeholder="Minimum 8 characters"
+              class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+            <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>
           </div>
           <div>
             <label class="block text-gray-700 font-medium">Confirm Password</label>
-            <input type="password" v-model="confirmPassword" placeholder="Confirm your password" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400" required />
+            <input
+              type="password"
+              v-model="confirmPassword"
+              placeholder="Confirm your password"
+              class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+              required
+            />
+            <p v-if="confirmPassword && confirmPassword !== password" class="text-red-500 text-sm">
+              Confirmation password does not match
+            </p>
           </div>
-          <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700">
-            Get Started
+
+          <button
+            type="submit"
+            class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700"
+            :disabled="isSubmitting"
+          >
+            {{ isSubmitting ? 'Processing...' : 'Get Started' }}
           </button>
         </form>
 
-        <!-- OR -->
         <div class="flex items-center my-6">
-          <hr class="flex-grow border-gray-300">
+          <hr class="flex-grow border-gray-300" />
           <span class="px-4 text-gray-400">Or</span>
-          <hr class="flex-grow border-gray-300">
+          <hr class="flex-grow border-gray-300" />
         </div>
 
-        <!-- Google Login -->
-        <button class="w-full flex items-center justify-center border py-3 rounded-lg font-semibold text-gray-700 hover:bg-gray-100">
+        <button
+          class="w-full flex items-center justify-center border py-3 rounded-lg font-semibold text-gray-700 hover:bg-gray-100"
+        >
           <img src="@/assets/images/google.png" class="h-5 w-5 mr-2" />
           Continue with Google
         </button>
 
-        <!-- Login Link -->
         <p class="text-center text-gray-600 mt-6">
           Already have an account?
           <router-link to="/login" class="text-indigo-600 font-semibold">Sign in</router-link>
@@ -55,8 +145,12 @@
 
     <!-- Image Section -->
     <div class="w-1/2 flex items-center justify-center bg-gray-100 p-8 relative rounded-l-lg">
-      <img src="@/assets/images/gambar1.jpeg" class="w-full h-full object-cover object-center rounded-lg shadow-lg" style="max-width: 100%; max-height: 100vh;" />
-      <div class="absolute inset-0 flex flex-col justify-end text-white p-8 rounded-lg">
+      <img
+        src="@/assets/images/gambar1.jpeg"
+        class="w-full h-full object-cover object-center rounded-lg shadow-lg"
+        style="max-width: 100%; max-height: 100vh"
+      />
+      <div class="absolute inset-0 flex flex-col justify-end text-white p-8 rounded-lg bg-black bg-opacity-40">
         <h3 class="text-3xl font-bold">Say goodbye to manual scheduling hassles</h3>
         <p class="mt-2 text-lg">Our smart appointment booking system allows you to manage your schedule effortlessly.</p>
       </div>
@@ -64,26 +158,3 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'RegisterClient',
-  data() {
-    return {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    };
-  },
-  methods: {
-    handleRegister() {
-      if (this.password !== this.confirmPassword) {
-        alert('Passwords do not match');
-        return;
-      }
-      console.log('Registering with:', this.name, this.email, this.password);
-      this.$router.push('/client/dashboard');
-    },
-  },
-};
-</script>
