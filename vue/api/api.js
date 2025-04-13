@@ -1,57 +1,24 @@
 import axios from 'axios'
-import { authServices } from '../services/auth-services'
+import { useAuthStore } from '@/stores/auth'
 
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_BASE_URL}${import.meta.env.VITE_API_PATH}`,
-  timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json',
-    ...(authServices.getApiKey && authServices.getApiKey() && {
-      'x-api-key': authServices.getApiKey()
-    })
-  },
-  withCredentials: false,
+  baseURL: 'http://127.0.0.1:8000/v1',
 })
 
-// Interceptor untuk menambahkan token ke setiap request
-api.interceptors.request.use(
-  (config) => {
-    const token = authServices.getToken()
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => Promise.reject(error)
-)
+api.interceptors.request.use((config) => {
+  // Panggil store DI DALAM interceptor
+  const authStore = useAuthStore()
+  const token = authStore?.token
 
-// Interceptor untuk menangani error dari response
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const originalRequest = error.config
-    const status = error.response?.status
-    const requestUrl = originalRequest?.url
-
-    console.error('API Error:')
-    console.log('Status:', status)
-    console.log('Request URL:', requestUrl)
-    console.log('Response:', error.response?.data)
-
-    // Hanya logout jika 401 bukan dari login atau register
-    if (
-      status === 401 &&
-      requestUrl &&
-      !requestUrl.includes('/login') &&
-      !requestUrl.includes('/register')
-    ) {
-      console.warn('Token expired or invalid. Logging out...')
-      authServices.clearAuth()
-      // Optional: window.location.href = '/login'
-    }
-
-    return Promise.reject(error)
+  // Jangan tambahkan token untuk login & register
+  if (token && !['/login', '/register'].includes(config.url)) {
+    config.headers.Authorization = `Bearer ${token}`
+    console.log('[Request Interceptor] Token DITAMBAHKAN:', config.url)
+  } else {
+    console.log('[Request Interceptor] Token TIDAK ditambahkan:', config.url)
   }
-)
+
+  return config
+}, error => Promise.reject(error))
 
 export default api

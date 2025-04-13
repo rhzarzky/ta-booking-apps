@@ -1,8 +1,9 @@
 <script>
-import { registerUser } from '../../api/auth-api'
+import Swal from 'sweetalert2'
+import { RegisterClient } from '../../api/auth-api'
 
 export default {
-  name: 'RegisterUser',
+  name: 'RegisterClient',
   data() {
     return {
       name: '',
@@ -23,6 +24,11 @@ export default {
       if (this.password !== this.confirmPassword) {
         this.errors.password = 'Confirmation password does not match'
         this.isSubmitting = false
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops...',
+          text: 'Password and confirmation do not match!',
+        })
         return
       }
 
@@ -34,18 +40,50 @@ export default {
           password_confirmation: this.confirmPassword,
         }
 
-        const response = await registerUser(payload)
+        const response = await RegisterClient(payload)
 
-        if (response.status === 'success') {
+        // Asumsikan backend akan return token jika berhasil
+        if (response.token) {
+          await Swal.fire({
+            icon: 'success',
+            title: 'Registered!',
+            text: 'Your account has been created successfully.',
+            timer: 2000,
+            showConfirmButton: false,
+          })
+
           this.$router.push('/login')
-        } else if (response.status === 'error') {
+        } else {
           const errorObj = response.errors || {}
-          this.errors.email = errorObj.email?.[0] || ''
-          this.errors.password = errorObj.password?.[0] || ''
-          this.generalError = 'Registration failed. Please fix the errors above.'
+
+          this.errors = {
+            email: errorObj.email?.[0] || '',
+            password: errorObj.password?.[0] || '',
+            name: errorObj.name?.[0] || '',
+          }
+
+          await Swal.fire({
+            icon: 'error',
+            title: 'Registration Failed',
+            text: 'Please fix the errors in the form.',
+          })
         }
+
       } catch (err) {
-        this.generalError = 'An unexpected error occurred.'
+        const errorObj = err.response?.data?.errors || {}
+
+        this.errors = {
+          email: errorObj.email?.[0] || '',
+          password: errorObj.password?.[0] || '',
+          name: errorObj.name?.[0] || '',
+        }
+
+        await Swal.fire({
+          icon: 'error',
+          title: 'Unexpected Error',
+          text: 'Something went wrong. Please try again later.',
+        })
+        console.error(err)
       } finally {
         this.isSubmitting = false
       }
@@ -53,6 +91,8 @@ export default {
   },
 }
 </script>
+
+
 
 <template>
   <div class="flex h-screen bg-gray-100">
@@ -77,7 +117,9 @@ export default {
               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               required
             />
+            <p v-if="errors.name" class="text-red-500 text-sm">{{ errors.name }}</p>
           </div>
+
           <div>
             <label class="block text-gray-700 font-medium">Email</label>
             <input
@@ -89,6 +131,7 @@ export default {
             />
             <p v-if="errors.email" class="text-red-500 text-sm">{{ errors.email }}</p>
           </div>
+
           <div>
             <label class="block text-gray-700 font-medium">Password</label>
             <input
@@ -100,6 +143,7 @@ export default {
             />
             <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>
           </div>
+
           <div>
             <label class="block text-gray-700 font-medium">Confirm Password</label>
             <input
@@ -150,11 +194,14 @@ export default {
         class="w-full h-full object-cover object-center rounded-lg shadow-lg"
         style="max-width: 100%; max-height: 100vh"
       />
-      <div class="absolute inset-0 flex flex-col justify-end text-white p-8 rounded-lg bg-black bg-opacity-40">
+      <div
+        class="absolute inset-0 flex flex-col justify-end text-white p-8 rounded-lg bg-black bg-opacity-40"
+      >
         <h3 class="text-3xl font-bold">Say goodbye to manual scheduling hassles</h3>
-        <p class="mt-2 text-lg">Our smart appointment booking system allows you to manage your schedule effortlessly.</p>
+        <p class="mt-2 text-lg">
+          Our smart appointment booking system allows you to manage your schedule effortlessly.
+        </p>
       </div>
     </div>
   </div>
 </template>
-

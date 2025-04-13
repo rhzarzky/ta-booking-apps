@@ -26,45 +26,42 @@ const storageUtil = {
 };
 
 export const authServices = {
-  // Token
-  getToken() {
-    return storageUtil.get("token");
-  },
-
+  // Simpan token ke localStorage
   setToken(token) {
-    storageUtil.set("token", token);
+    localStorage.setItem('token', token)
   },
 
+  // Ambil token dari localStorage
+  getToken() {
+    return localStorage.getItem('token')
+  },
+
+  // Hapus token dari localStorage
   removeToken() {
-    storageUtil.remove("token");
+    localStorage.removeItem('token')
   },
 
-  // User
+  // Simpan data user
   setUser(user) {
-    storageUtil.set("user", JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(user))
   },
 
+  // Ambil data user
   getUser() {
-    const data = storageUtil.get("user");
-    return data ? JSON.parse(data) : null;
+    const user = localStorage.getItem('user')
+    return user ? JSON.parse(user) : null
   },
 
+  // Hapus data user
   removeUser() {
-    storageUtil.remove("user");
+    localStorage.removeItem('user')
   },
 
-  // API Key (opsional, kalau kamu pakai x-api-key)
-  getApiKey() {
-    return import.meta.env.VITE_API_KEY || null;
-  },
-
-  // Auth State
+  // ✅ Cek apakah user login berdasarkan token
   isLoggedIn() {
-    return !!this.getToken();
-  },
+    return !!this.getToken()
+  }
+}
 
-  clearAuth() {
-    this.removeToken();
-    this.removeUser();
-  },
-};
+// 🔍 Log untuk memastikan semua fungsi tersedia
+console.log('[authServices] Available methods:', Object.keys(authServices))
