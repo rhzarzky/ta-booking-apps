@@ -31,12 +31,10 @@ export const authServices = {
     localStorage.setItem('token', token)
   },
 
-  // Ambil token dari localStorage
   getToken() {
     return localStorage.getItem('token')
   },
 
-  // Hapus token dari localStorage
   removeToken() {
     localStorage.removeItem('token')
   },
@@ -46,18 +44,27 @@ export const authServices = {
     localStorage.setItem('user', JSON.stringify(user))
   },
 
-  // Ambil data user
   getUser() {
     const user = localStorage.getItem('user')
     return user ? JSON.parse(user) : null
   },
 
-  // Hapus data user
   removeUser() {
     localStorage.removeItem('user')
   },
 
-  // ✅ Cek apakah user login berdasarkan token
+  // ✅ Tambahan untuk ID user
+  setUserId(id) {
+    localStorage.setItem('user_id', id)
+  },
+  getUserId() {
+    return localStorage.getItem('user_id')
+  },
+  removeUserId() {
+    localStorage.removeItem('user_id')
+  },
+
+  // ✅ Cek login
   isLoggedIn() {
     return !!this.getToken()
   }

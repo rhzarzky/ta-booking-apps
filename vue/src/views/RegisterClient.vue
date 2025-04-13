@@ -1,6 +1,8 @@
 <script>
 import Swal from 'sweetalert2'
 import { RegisterClient } from '../../api/auth-api'
+import showIcon from '@/assets/images/showps.png'
+import hideIcon from '@/assets/images/hideps.png'
 
 export default {
   name: 'RegisterClient',
@@ -13,23 +15,29 @@ export default {
       errors: {},
       generalError: '',
       isSubmitting: false,
+      showPassword: false,
+      showConfirmPassword: false,
+      icons: {
+        show: showIcon,
+        hide: hideIcon,
+      },
     }
   },
   methods: {
+    togglePassword() {
+      this.showPassword = !this.showPassword
+    },
+    toggleConfirmPassword() {
+      this.showConfirmPassword = !this.showConfirmPassword
+    },
     async handleRegister() {
       this.errors = {}
       this.generalError = ''
       this.isSubmitting = true
 
+      // Validasi confirm password setelah klik submit
       if (this.password !== this.confirmPassword) {
-        this.errors.password = 'Confirmation password does not match'
-        this.isSubmitting = false
-        Swal.fire({
-          icon: 'error',
-          title: 'Oops...',
-          text: 'Password and confirmation do not match!',
-        })
-        return
+        this.errors.confirmPassword = 'Confirmation password does not match'
       }
 
       try {
@@ -42,7 +50,6 @@ export default {
 
         const response = await RegisterClient(payload)
 
-        // Asumsikan backend akan return token jika berhasil
         if (response.token) {
           await Swal.fire({
             icon: 'success',
@@ -51,39 +58,24 @@ export default {
             timer: 2000,
             showConfirmButton: false,
           })
-
           this.$router.push('/login')
         } else {
           const errorObj = response.errors || {}
-
-          this.errors = {
-            email: errorObj.email?.[0] || '',
-            password: errorObj.password?.[0] || '',
-            name: errorObj.name?.[0] || '',
+          this.errors.email = errorObj.email?.[0] || ''
+          const passwordError = errorObj.password?.[0] || ''
+          if (passwordError !== 'The password field confirmation does not match.') {
+            this.errors.password = passwordError
           }
-
-          await Swal.fire({
-            icon: 'error',
-            title: 'Registration Failed',
-            text: 'Please fix the errors in the form.',
-          })
+          this.errors.name = errorObj.name?.[0] || ''
         }
-
       } catch (err) {
         const errorObj = err.response?.data?.errors || {}
-
-        this.errors = {
-          email: errorObj.email?.[0] || '',
-          password: errorObj.password?.[0] || '',
-          name: errorObj.name?.[0] || '',
+        this.errors.email = errorObj.email?.[0] || ''
+        const passwordError = errorObj.password?.[0] || ''
+        if (passwordError !== 'The password field confirmation does not match.') {
+          this.errors.password = passwordError
         }
-
-        await Swal.fire({
-          icon: 'error',
-          title: 'Unexpected Error',
-          text: 'Something went wrong. Please try again later.',
-        })
-        console.error(err)
+        this.errors.name = errorObj.name?.[0] || ''
       } finally {
         this.isSubmitting = false
       }
@@ -92,20 +84,25 @@ export default {
 }
 </script>
 
-
-
 <template>
   <div class="flex h-screen bg-gray-100">
-    <!-- Form Register -->
+    <!-- Form Section -->
     <div class="w-1/2 flex items-center justify-center p-8">
       <div class="w-full max-w-lg">
         <img src="@/assets/images/Appointly.png" alt="Logo Appointly" class="h-10 mb-6" />
-
         <h2 class="text-3xl font-bold text-gray-800">Unlock Your Experience!</h2>
         <p class="text-gray-500 mb-6">Create an account and unlock your next great scheduling.</p>
 
-        <!-- Error Message -->
-        <div v-if="generalError" class="text-red-600 text-sm mb-4">{{ generalError }}</div>
+        <!-- Error Summary -->
+        <!-- Error Summary -->
+        <div
+          v-if="errors.email || errors.password || errors.confirmPassword"
+          class="mb-4 p-3 bg-red-100 text-red-600 rounded text-sm font-semibold"
+        >
+          <p v-if="errors.email">{{ errors.email }}</p>
+          <p v-if="errors.password">{{ errors.password }}</p>
+          <p v-if="errors.confirmPassword">{{ errors.confirmPassword }}</p>
+        </div>
 
         <form @submit.prevent="handleRegister" class="space-y-4">
           <div>
@@ -129,33 +126,40 @@ export default {
               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               required
             />
-            <p v-if="errors.email" class="text-red-500 text-sm">{{ errors.email }}</p>
           </div>
 
-          <div>
+          <div class="relative">
             <label class="block text-gray-700 font-medium">Password</label>
             <input
-              type="password"
+              :type="showPassword ? 'text' : 'password'"
               v-model="password"
               placeholder="Minimum 8 characters"
               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               required
             />
-            <p v-if="errors.password" class="text-red-500 text-sm">{{ errors.password }}</p>
+            <img
+              :src="showPassword ? icons.show : icons.hide"
+              @click="togglePassword"
+              class="absolute right-4 top-11 h-5 w-5 cursor-pointer"
+              alt="Toggle Password"
+            />
           </div>
 
-          <div>
+          <div class="relative">
             <label class="block text-gray-700 font-medium">Confirm Password</label>
             <input
-              type="password"
+              :type="showConfirmPassword ? 'text' : 'password'"
               v-model="confirmPassword"
               placeholder="Confirm your password"
               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               required
             />
-            <p v-if="confirmPassword && confirmPassword !== password" class="text-red-500 text-sm">
-              Confirmation password does not match
-            </p>
+            <img
+              :src="showConfirmPassword ? icons.show : icons.hide"
+              @click="toggleConfirmPassword"
+              class="absolute right-4 top-11 h-5 w-5 cursor-pointer"
+              alt="Toggle Confirm Password"
+            />
           </div>
 
           <button
@@ -187,7 +191,7 @@ export default {
       </div>
     </div>
 
-    <!-- Image Section -->
+    <!-- Right Image Section -->
     <div class="w-1/2 flex items-center justify-center bg-gray-100 p-8 relative rounded-l-lg">
       <img
         src="@/assets/images/gambar1.jpeg"

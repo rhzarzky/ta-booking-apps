@@ -4,20 +4,32 @@ import { authServices } from "../services/auth-services"
 // ✅ Login API
 export const login = async (credentials) => {
   try {
-    const response = await api.post("/login", credentials)
-    const { status, token, user, error } = response.data
-
-    if (status === "success" && token) {
-      authServices.setToken(token)
-      authServices.setUser(user)
-      return user
-    } else {
-      throw new Error(error || "Login failed.")
+    if (!credentials.email || !credentials.password) {
+      errors.value = {
+        email: !credentials.email
+          ? ["The email field is required."]
+          : undefined,
+        password: !credentials.password
+          ? ["The password field is required."]
+          : undefined,
+      };
+      throw new Error("Validation failed");
     }
-  } catch (err) {
-    throw err
+
+    const response = await api.post("/login", credentials);
+
+    if (response.data.token) {
+      authServices.setToken(response.data.token);
+      authServices.setUserId(response.data.id);
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Login error:", error.response?.data || error.message);
+    throw error;
   }
-}
+};
+
 
 // ✅ Register API
 export const register = async (userData) => {
