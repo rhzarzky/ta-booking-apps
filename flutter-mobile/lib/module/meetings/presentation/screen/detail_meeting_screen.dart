@@ -3,6 +3,7 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/field_location_offline.dart';
+import 'package:Appointly/module/meetings/presentation/widget/custom_calendar.dart';
 import 'package:Appointly/module/meetings/presentation/widget/dropdown_time.dart';
 import 'package:Appointly/module/meetings/presentation/widget/success_state.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:Appointly/module/meetings/model/service_model.dart';
+import '';
 
 class DetailMeetingScreen extends StatefulWidget {
   final int serviceId;
@@ -25,36 +27,167 @@ class DetailMeetingScreen extends StatefulWidget {
 
 class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
   DateTime? selectedDate;
-  String selectedTime = '08:00 AM';
-  // TimeOfDay? selectedTime;
+  // Menyimpan index waktu yang dipilih alih-alih menyimpan string waktu
+  int _selectedTimeIndex = 0;
 
-  Future<void> _selectDate() async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
+  // Getter untuk mendapatkan waktu yang dipilih dari service
+  String get selectedTime {
+    final state = context.read<ServiceBloc>().state;
+    if (state is ServiceLoaded) {
+      try {
+        final service = state.services.firstWhere(
+          (service) => service.id == widget.serviceId,
+          orElse: () => state.services.first,
+        );
 
-    if (pickedDate != null && pickedDate != selectedDate) {
-      setState(() {
-        selectedDate = pickedDate;
-      });
+        if (service.time.isNotEmpty) {
+          // Gunakan index untuk mengambil waktu yang dipilih
+          final timeIndex =
+              _selectedTimeIndex < service.time.length ? _selectedTimeIndex : 0;
+          return convert24To12Format(service.time[timeIndex]);
+        }
+      } catch (e) {
+        // Jika terjadi error, gunakan waktu default
+      }
+    }
+    return '08:00 AM'; // Nilai default
+  }
+
+  // Setter (fungsi) untuk memperbarui index waktu yang dipilih
+  void _updateSelectedTimeIndex(String time12Format) {
+    final state = context.read<ServiceBloc>().state;
+    if (state is ServiceLoaded) {
+      try {
+        final service = state.services.firstWhere(
+          (service) => service.id == widget.serviceId,
+          orElse: () => state.services.first,
+        );
+
+        if (service.time.isNotEmpty) {
+          // Konversi waktu ke format 24 jam untuk perbandingan
+          final time24Format = convert12To24Format(time12Format);
+
+          // Cari index waktu yang cocok
+          final index = service.time.indexWhere((t) =>
+              convert24To12Format(t) == time12Format || t == time24Format);
+
+          if (index >= 0) {
+            setState(() {
+              _selectedTimeIndex = index;
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        // Jika error, gunakan index 0
+      }
+    }
+
+    setState(() {
+      _selectedTimeIndex = 0;
+    });
+  }
+
+  // Fungsi untuk mengkonversi format waktu 24 jam ke 12 jam
+  String convert24To12Format(String time24) {
+    try {
+      final timeParts = time24.split(':');
+      if (timeParts.length < 2) {
+        return time24; // Jika format tidak valid, kembalikan string asli
+      }
+
+      int hour = int.tryParse(timeParts[0]) ?? 0;
+      final minute = timeParts[1];
+      final period = hour >= 12 ? 'PM' : 'AM';
+
+      // Konversi jam ke format 12 jam
+      hour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+
+      return '${hour.toString().padLeft(2, '0')}:$minute $period';
+    } catch (e) {
+      return time24; // Jika terjadi error, kembalikan string asli
     }
   }
 
-  // Future<void> _selectTime() async {
-  //   final TimeOfDay? pickedTime = await showTimePicker(
-  //     context: context,
-  //     initialTime: TimeOfDay.now(),
-  //   );
+  // Fungsi untuk mengkonversi format waktu 12 jam ke 24 jam
+  String convert12To24Format(String time12) {
+    try {
+      // Cek jika sudah dalam format 24 jam
+      if (!time12.contains('AM') && !time12.contains('PM')) {
+        return time12;
+      }
 
-  //   if (pickedTime != null && pickedTime != selectedTime) {
-  //     setState(() {
-  //       selectedTime = pickedTime;
-  //     });
-  //   }
-  // }
+      final isPM = time12.contains('PM');
+      final timeWithoutPeriod =
+          time12.replaceAll(' AM', '').replaceAll(' PM', '');
+      final timeParts = timeWithoutPeriod.split(':');
+
+      if (timeParts.length < 2) {
+        return time12; // Jika format tidak valid, kembalikan string asli
+      }
+
+      int hour = int.tryParse(timeParts[0]) ?? 0;
+      final minute = timeParts[1];
+
+      // Konversi jam ke format 24 jam
+      if (isPM && hour < 12) {
+        hour += 12;
+      } else if (!isPM && hour == 12) {
+        hour = 0;
+      }
+
+      return '${hour.toString().padLeft(2, '0')}:$minute';
+    } catch (e) {
+      return time12; // Jika terjadi error, kembalikan string asli
+    }
+  }
+
+  Future<void> _selectDate() async {
+    // Dapatkan service dari state saat ini
+    final state = context.read<ServiceBloc>().state;
+    if (state is ServiceLoaded) {
+      final service = state.services.firstWhere(
+        (service) => service.id == widget.serviceId,
+        orElse: () => state.services.first,
+      );
+
+      final DateTime? picked = await showModalBottomSheet<DateTime>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (BuildContext context) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: CustomCalendar(
+                service: service,
+                onDateSelected: (DateTime selected) {
+                  Navigator.of(context).pop(selected);
+                },
+              ),
+            ),
+          );
+        },
+      );
+
+      if (picked != null && picked != selectedDate) {
+        setState(() {
+          selectedDate = picked;
+        });
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tunggu service sedang dimuat...')),
+      );
+    }
+  }
 
   Future<void> _refreshData() async {
     context.read<ServiceBloc>().add(GetServiceIdEvent(id: widget.serviceId));
@@ -198,7 +331,6 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
         ),
         child: IconButton(
           onPressed: () {
-            // Muat ulang semua service saat kembali ke Meeting Screen
             context.read<ServiceBloc>().add(GetServiceEvent());
             Navigator.pop(context);
           },
@@ -286,30 +418,83 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
   }
 
   Widget _buildDatePicker() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildPickerButton(
-            onTap: _selectDate,
-            iconPath: 'assets/icons/icon-calendar.svg',
-            text: selectedDate != null
-                ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
-                : 'Select Date',
-          ),
-        ),
-        SizedBox(width: 8.0),
-        Expanded(
-          child: DropdownTime(
-            selectedValue: selectedTime,
-            items: ['08:00 AM', '09:00 AM', '10:00 AM'],
-            onChanged: (value) {
-              setState(() {
-                selectedTime = value!;
-              });
-            },
-          ),
-        ),
-      ],
+    return BlocBuilder<ServiceBloc, ServiceState>(
+      builder: (context, state) {
+        if (state is ServiceLoaded) {
+          // Ambil service dengan ID yang sesuai
+          final service = state.services.firstWhere(
+            (service) => service.id == widget.serviceId,
+            orElse: () => state.services.first,
+          );
+
+          // Konversi daftar waktu dari format 24 jam ke 12 jam jika diperlukan
+          List<String> timeOptions = service.time.isNotEmpty
+              ? service.time.map((time) => convert24To12Format(time)).toList()
+              : ['08:00 AM', '09:00 AM', '10:00 AM'];
+
+          // Set nilai default untuk selectedTime jika belum dipilih
+          if (timeOptions.isNotEmpty &&
+              selectedTime == '08:00 AM' &&
+              !timeOptions.contains('08:00 AM')) {
+            setState(() {
+              _selectedTimeIndex = 0;
+            });
+          }
+
+          return Row(
+            children: [
+              Expanded(
+                child: _buildPickerButton(
+                  onTap: _selectDate,
+                  iconPath: 'assets/icons/icon-calendar.svg',
+                  text: selectedDate != null
+                      ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                      : 'Select Date',
+                ),
+              ),
+              SizedBox(width: 8.0),
+              Expanded(
+                child: DropdownTime(
+                  selectedValue: selectedTime,
+                  items: timeOptions,
+                  onChanged: (value) {
+                    setState(() {
+                      _updateSelectedTimeIndex(value!);
+                    });
+                  },
+                ),
+              ),
+            ],
+          );
+        }
+
+        // Tampilkan default widget saat loading atau error
+        return Row(
+          children: [
+            Expanded(
+              child: _buildPickerButton(
+                onTap: _selectDate,
+                iconPath: 'assets/icons/icon-calendar.svg',
+                text: selectedDate != null
+                    ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                    : 'Select Date',
+              ),
+            ),
+            SizedBox(width: 8.0),
+            Expanded(
+              child: DropdownTime(
+                selectedValue: selectedTime,
+                items: ['08:00 AM', '09:00 AM', '10:00 AM'],
+                onChanged: (value) {
+                  setState(() {
+                    _updateSelectedTimeIndex(value!);
+                  });
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -424,7 +609,9 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         border: Border.all(
-                            width: 2, color: ColorPallete.backgroundBody),
+                          width: 2,
+                          color: ColorPallete.backgroundBody,
+                        ),
                         borderRadius: BorderRadius.circular(16.0),
                       ),
                       child: Row(
@@ -518,6 +705,19 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
           ),
         ),
         onPressed: () {
+          // Dapatkan waktu dalam format 12 jam dari getter
+          final String displayTime = selectedTime;
+
+          // Konversi waktu ke format 24 jam untuk dikirim ke server
+          final String timeIn24Format = convert12To24Format(displayTime);
+
+          // Log informasi booking (untuk pengembangan)
+          print('Booking appointment:');
+          print('Date: $selectedDate');
+          print('Time (display): $displayTime');
+          print('Time (server): $timeIn24Format');
+
+          // Navigasi ke halaman sukses
           Navigator.push(
             context,
             MaterialPageRoute(

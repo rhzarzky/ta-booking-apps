@@ -16,6 +16,40 @@ class DataService {
       );
 }
 
+List<DateTime> generateDateRange({
+  required String startDate,
+  required String endDate,
+  required List<String> activeDays, 
+}) {
+  final start = DateTime.parse(startDate);
+  final end = DateTime.parse(endDate);
+  List<DateTime> selectedDates = [];
+
+  for (DateTime date = start;
+      date.isBefore(end.add(const Duration(days: 1)));
+      date = date.add(const Duration(days: 1))) {
+    final weekdayName = _getWeekdayName(date.weekday);
+    if (activeDays.contains(weekdayName)) {
+      selectedDates.add(date);
+    }
+  }
+
+  return selectedDates;
+}
+
+String _getWeekdayName(int weekday) {
+  const days = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ];
+  return days[weekday - 1];
+}
+
 class Service {
   final int id;
   final String image;
@@ -26,6 +60,7 @@ class Service {
   final String startDate;
   final String endDate;
   final String? notes;
+  final List<String> time;
 
   Service({
     required this.id,
@@ -37,6 +72,7 @@ class Service {
     required this.startDate,
     required this.endDate,
     this.notes,
+    required this.time,
   });
 
   factory Service.fromModel(Map<String, dynamic> json) {
@@ -60,6 +96,16 @@ class Service {
       return [];
     }
 
+    // Menangani time yang bisa berupa string atau list
+    List<String> parseTime() {
+      if (json['time'] is List) {
+        return List<String>.from(json['time'].map((item) => item.toString()));
+      } else if (json['time'] is String) {
+        return [json['time']];
+      }
+      return [];
+    }
+
     return Service(
       id: json['id'] ?? 0,
       image: json['image']?.toString() ?? "",
@@ -70,6 +116,7 @@ class Service {
       startDate: json['start_date']?.toString() ?? "",
       endDate: json['end_date']?.toString() ?? "",
       notes: json['notes']?.toString(),
+      time: parseTime(),
     );
   }
 }

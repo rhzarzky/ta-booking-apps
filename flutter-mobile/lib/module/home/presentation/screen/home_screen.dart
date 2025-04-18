@@ -2,7 +2,6 @@
 
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/home/presentation/widget/chart_status.dart';
-import 'package:Appointly/module/home/presentation/widget/search_bar_anchor.dart';
 import 'package:Appointly/module/home/presentation/widget/status_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
