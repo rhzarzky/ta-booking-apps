@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/field_location_offline.dart';
@@ -11,7 +9,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:Appointly/module/meetings/model/service_model.dart';
-import '';
 
 class DetailMeetingScreen extends StatefulWidget {
   final int serviceId;
@@ -156,22 +153,20 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (BuildContext context) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.85,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: CustomCalendar(
-                service: service,
-                onDateSelected: (DateTime selected) {
-                  Navigator.of(context).pop(selected);
-                },
-              ),
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.70,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.horizontal(
+              left: Radius.circular(24),
+              right: Radius.circular(24),
+            )),
+            child: CustomCalendar(
+              service: service,
+              onDateSelected: (DateTime selected) {
+                setState(() {
+                  selectedDate = selected;
+                });
+              },
             ),
           );
         },
