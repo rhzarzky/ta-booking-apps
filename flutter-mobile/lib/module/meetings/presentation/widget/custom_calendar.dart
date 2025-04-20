@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:logger/logger.dart';
 
 class CustomCalendar extends StatefulWidget {
   final Service service;
@@ -20,6 +21,7 @@ class CustomCalendar extends StatefulWidget {
 }
 
 class _CustomCalendarState extends State<CustomCalendar> {
+  final Logger _logger = Logger();
   late final List<DateTime> highlightDates;
   DateTime selectedDay = DateTime.now();
   DateTime today = DateTime.now();
@@ -40,7 +42,9 @@ class _CustomCalendarState extends State<CustomCalendar> {
         dates.add(date);
       }
     } catch (e) {
-      print('Error parsing dates: $e');
+      
+
+      _logger.e('Error parsing dates: $e');
     }
     return dates;
   }

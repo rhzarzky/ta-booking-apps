@@ -3,12 +3,14 @@ import 'package:Appointly/module/meetings/repository/service_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:logger/logger.dart';
 
 part 'service_event.dart';
 part 'service_state.dart';
 
 class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
   final ServiceRepository serviceRepository;
+  final Logger _logger = Logger();
 
   ServiceBloc({required this.serviceRepository}) : super(ServiceInitial()) {
     // all service
@@ -64,7 +66,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
           serviceRepository.updateToken(token);
         }
       } catch (e) {
-        print('Error updating token: ${e.toString()}');
+        _logger.e('Error updating token: ${e.toString()}');
       }
     });
 

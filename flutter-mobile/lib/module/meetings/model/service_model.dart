@@ -1,3 +1,7 @@
+import 'package:logger/logger.dart';
+
+final Logger _logger = Logger();
+
 class DataService {
   final List<Service> services;
 
@@ -61,7 +65,7 @@ class Service {
   final String endDate;
   final String? notes;
   final List<String> time;
-  final List<Map<String, String>> dates; 
+  final List<Map<String, String>> dates;
 
   Service({
     required this.id,
@@ -74,7 +78,7 @@ class Service {
     required this.endDate,
     this.notes,
     required this.time,
-    required this.dates, 
+    required this.dates,
   });
 
   factory Service.fromModel(Map<String, dynamic> json) {
@@ -131,7 +135,7 @@ class Service {
                   };
                 }
               } catch (e) {
-                print('Error parsing date entry: $e');
+                _logger.e('Error parsing date entry: $e');
               }
               return null;
             })

@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/home/presentation/widget/chart_status.dart';
 import 'package:Appointly/module/home/presentation/widget/status_card.dart';
