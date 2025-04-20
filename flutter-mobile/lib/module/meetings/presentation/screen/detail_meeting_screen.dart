@@ -1,6 +1,5 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
-import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/meetings/presentation/widget/custom_calendar.dart';
 import 'package:Appointly/module/meetings/presentation/widget/dropdown_time.dart';
 import 'package:Appointly/module/meetings/presentation/widget/success_state.dart';
@@ -765,7 +764,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
 
           // Show success dialog
           Navigator.push(
-              context, MaterialPageRoute(builder: (context) => DetailMeetingSuccess()));
+              context, MaterialPageRoute(builder: (context) => SuccessState()));
         },
         child: Text(
           'Book Appointment Now',
