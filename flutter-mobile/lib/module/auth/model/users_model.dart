@@ -1,3 +1,7 @@
+
+import 'package:logger/logger.dart';
+
+final Logger _logger = Logger();
 class UsersModel {
   final int id;
   final String name;
@@ -17,7 +21,7 @@ class UsersModel {
 
   factory UsersModel.fromJson(Map<String, dynamic> json) {
     final userData = json['user'] as Map<String, dynamic>;
-
+    
     return UsersModel(
         id: userData['id'],
         name: userData['name'],

@@ -4,6 +4,8 @@ import 'package:Appointly/module/home/presentation/widget/status_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:Appointly/module/auth/repository/auth_repository.dart';
+import 'package:logger/logger.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +15,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final Logger _logger = Logger();
+  String? userName;
+  final AuthRepository _authRepository = AuthRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    displayUserInfo();
+  }
+
+  Future<void> displayUserInfo() async {
+    final user = await _authRepository.getUserData();
+    if (user != null) {
+      setState(() {
+        userName = user.name;
+      });
+    }
+    _logger.d(userName);
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget header() {
@@ -173,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
               header(),
               SizedBox(height: 16),
               Text(
-                'Welcome back User👋',
+                'Welcome back $userName👋',
                 style: GoogleFonts.ubuntu(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
