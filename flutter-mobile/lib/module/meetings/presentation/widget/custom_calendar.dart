@@ -28,59 +28,20 @@ class _CustomCalendarState extends State<CustomCalendar> {
   @override
   void initState() {
     super.initState();
-    highlightDates = generateDateRange(
-      startDate: widget.service.startDate,
-      endDate: widget.service.endDate,
-      activeDays: widget.service.days,
-    );
+    highlightDates = _getHighlightDates();
   }
 
-  // Fungsi untuk menghasilkan daftar tanggal berdasarkan rentang dan hari aktif
-  List<DateTime> generateDateRange({
-    required String startDate,
-    required String endDate,
-    required List<String> activeDays,
-  }) {
+  List<DateTime> _getHighlightDates() {
     List<DateTime> dates = [];
-
     try {
-      // Parse tanggal mulai dan akhir
-      final start = DateTime.parse(startDate);
-      final end = DateTime.parse(endDate);
-
-      // Mapping nama hari ke index hari (0 = Minggu, 1 = Senin, dst)
-      final Map<String, int> dayToIndex = {
-        'Sunday': DateTime.sunday,
-        'Monday': DateTime.monday,
-        'Tuesday': DateTime.tuesday,
-        'Wednesday': DateTime.wednesday,
-        'Thursday': DateTime.thursday,
-        'Friday': DateTime.friday,
-        'Saturday': DateTime.saturday,
-      };
-
-      // Konversi nama hari ke index
-      final List<int> activeWeekdays = activeDays
-          .map((day) => dayToIndex[day] ?? -1)
-          .where((day) => day != -1)
-          .toList();
-
-      // Jika tidak ada hari aktif, kembalikan list kosong
-      if (activeWeekdays.isEmpty) return [];
-
-      // Iterate dari tanggal mulai sampai tanggal akhir
-      for (DateTime date = start;
-          date.isBefore(end) || date.isAtSameMomentAs(end);
-          date = date.add(Duration(days: 1))) {
-        // Cek apakah hari ini adalah hari aktif
-        if (activeWeekdays.contains(date.weekday)) {
-          dates.add(date);
-        }
+      // Menggunakan dates dari JSON
+      for (var dateMap in widget.service.dates) {
+        final date = DateTime.parse(dateMap['date']!);
+        dates.add(date);
       }
     } catch (e) {
-      print('Error generating date range: $e');
+      print('Error parsing dates: $e');
     }
-
     return dates;
   }
 
@@ -89,7 +50,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  // Implement calendar day selection
+  // Implement calendar day selection with date validation
   void _onDaySelected(DateTime day, DateTime focusedDay) {
     setState(() {
       selectedDay = day;
@@ -257,6 +218,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                             final isHighlighted =
                                 highlightDates.any((d) => isSameDay(d, date));
                             final isSunday = date.weekday == DateTime.sunday;
+
                             return Container(
                               decoration: BoxDecoration(
                                 color: isHighlighted

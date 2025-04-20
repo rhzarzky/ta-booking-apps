@@ -47,8 +47,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
 
         final result = await serviceRepository.getServiceById(event.id);
 
-          emit(ServiceLoaded(result.services));
-       
+        emit(ServiceLoaded(result.services));
       } catch (e) {
         emit(ServiceFailure(failure: e.toString()));
       }
@@ -66,6 +65,32 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         }
       } catch (e) {
         print('Error updating token: ${e.toString()}');
+      }
+    });
+
+    // booking service
+    on<BookService>((event, emit) async {
+      emit(ServiceLoading());
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('token');
+
+        if (token != null && token.isNotEmpty) {
+          serviceRepository.updateToken(token);
+        }
+
+        await serviceRepository.postService(
+          event.serviceId,
+          time: event.time,
+          day: event.days,
+          note: event.notes,
+          option: event.option,
+        );
+
+        final result = await serviceRepository.getServiceById(event.serviceId);
+        emit(ServiceSucees(result.services.first));
+      } catch (e) {
+        emit(ServiceFailure(failure: e.toString()));
       }
     });
   }

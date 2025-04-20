@@ -97,4 +97,36 @@ class ServiceRepository {
       rethrow;
     }
   }
+
+  Future<DataService> postService(
+    int id, {
+    required String time,
+    required String day,
+    required String note,
+    required String option,
+  }) async {
+    try {
+      if (!_dio.options.headers.containsKey('Authorization')) {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('token');
+        if (token != null && token.isNotEmpty) {
+          updateToken(token);
+        }
+      }
+      final response = await _dio.post('/service/$id/book', data: {
+        'time': time,
+        'day': day,
+        'note': note,
+        'option': option,
+      });
+
+      if (response.statusCode == 200) {
+        return DataService.fromJson(response.data);
+      } else {
+        throw Exception('Failed to post service: ${response.statusMessage}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

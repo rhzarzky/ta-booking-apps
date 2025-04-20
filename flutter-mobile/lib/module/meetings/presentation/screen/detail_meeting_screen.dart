@@ -1,6 +1,6 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
-import 'package:Appointly/module/meetings/presentation/screen/field_location_offline.dart';
+import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/meetings/presentation/widget/custom_calendar.dart';
 import 'package:Appointly/module/meetings/presentation/widget/dropdown_time.dart';
 import 'package:Appointly/module/meetings/presentation/widget/success_state.dart';
@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:Appointly/module/meetings/model/service_model.dart';
+import 'package:intl/intl.dart';
 
 class DetailMeetingScreen extends StatefulWidget {
   final int serviceId;
@@ -23,10 +24,13 @@ class DetailMeetingScreen extends StatefulWidget {
 }
 
 class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
+  String selectedOption = 'Offline';
+  final TextEditingController _noteController = TextEditingController();
+
   DateTime? selectedDate;
-  // Menyimpan index waktu yang dipilih alih-alih menyimpan string waktu
   int _selectedTimeIndex = 0;
 
+  // Menyimpan index waktu yang dipilih alih-alih menyimpan string waktu
   // Getter untuk mendapatkan waktu yang dipilih dari service
   String get selectedTime {
     final state = context.read<ServiceBloc>().state;
@@ -150,23 +154,34 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
 
       final DateTime? picked = await showModalBottomSheet<DateTime>(
         context: context,
+        isDismissible: true,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (BuildContext context) {
-          return Container(
-            height: MediaQuery.of(context).size.height * 0.70,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.horizontal(
-              left: Radius.circular(24),
-              right: Radius.circular(24),
-            )),
-            child: CustomCalendar(
-              service: service,
-              onDateSelected: (DateTime selected) {
-                setState(() {
-                  selectedDate = selected;
-                });
-              },
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => Navigator.of(context).pop(),
+            child: GestureDetector(
+              onTap: () => Navigator.of(context)
+                  .pop(), // Prevents tap from propagating to parent
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.70,
+                decoration: BoxDecoration(
+                  color: Colors.white, // Adding background color
+                  borderRadius: BorderRadius.horizontal(
+                    left: Radius.circular(24),
+                    right: Radius.circular(24),
+                  ),
+                ),
+                child: CustomCalendar(
+                  service: service,
+                  onDateSelected: (DateTime selected) {
+                    setState(() {
+                      selectedDate = selected;
+                    });
+                  },
+                ),
+              ),
             ),
           );
         },
@@ -346,9 +361,9 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
             SizedBox(height: 24),
             _buildScheduleSection(),
             SizedBox(height: 16),
-            _buildLocationSection(),
+            _buildLocationSection(service),
             SizedBox(height: 16),
-            _buildNoteSection(),
+            _buildNoteSection(service),
             SizedBox(height: 16),
             _buildButtonSend()
           ],
@@ -443,7 +458,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                   onTap: _selectDate,
                   iconPath: 'assets/icons/icon-calendar.svg',
                   text: selectedDate != null
-                      ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                      ? DateFormat('d MMM yyyy').format(selectedDate!)
                       : 'Select Date',
                 ),
               ),
@@ -471,7 +486,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                 onTap: _selectDate,
                 iconPath: 'assets/icons/icon-calendar.svg',
                 text: selectedDate != null
-                    ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                    ? DateFormat('d MMMM yyyy').format(selectedDate!)
                     : 'Select Date',
               ),
             ),
@@ -527,7 +542,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
     );
   }
 
-  Widget _buildLocationSection() {
+  Widget _buildLocationSection(Service service) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -552,82 +567,114 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
             children: [
               Row(
                 children: [
-                  // In-Person Field
                   Expanded(
-                    child: Container(
-                      height: 54.0,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(
-                            width: 2, color: ColorPallete.backgroundBody),
-                        borderRadius: BorderRadius.circular(16.0),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset('assets/icons/icon-location.svg',
-                              height: 24),
-                          TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        FieldLocationOffline(),
-                                  ),
-                                );
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          selectedOption = 'Offline';
+                        });
+                      },
+                      child: Container(
+                        height: 54.0,
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(
+                              width: 2, color: ColorPallete.backgroundBody),
+                          borderRadius: BorderRadius.circular(16.0),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Radio<String>(
+                              value: service.option.firstWhere(
+                                (option) => option.toString() == 'Offline',
+                                orElse: () => 'Offline',
+                              ),
+                              activeColor: ColorPallete.primaryColor,
+                              groupValue: selectedOption,
+                              visualDensity:
+                                  VisualDensity(horizontal: -4, vertical: -4),
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedOption = value ?? 'Offline';
+                                });
                               },
-                              child: Text(
-                                'In-Person',
-                                style: GoogleFonts.ubuntu(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w400,
-                                  color: ColorPallete.darkBlack,
-                                ),
-                              )),
-                        ],
+                            ),
+                            const SizedBox(width: 4.0),
+                            SvgPicture.asset('assets/icons/icon-location.svg',
+                                height: 24),
+                            const SizedBox(width: 8.0),
+                            Text(
+                              'In Person',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: ColorPallete.darkBlack,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   SizedBox(width: 8.0),
                   // Online Field
                   Expanded(
-                    child: Container(
-                      height: 54.0,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14.0,
-                        vertical: 8.0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(
-                          width: 2,
-                          color: ColorPallete.backgroundBody,
-                        ),
-                        borderRadius: BorderRadius.circular(16.0),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset('assets/icons/icon-video.svg',
-                              height: 24),
-                          SizedBox(width: 8.0),
-                          Text(
-                            'Online',
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              color: ColorPallete.darkBlack,
-                            ),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          selectedOption = 'Online';
+                        });
+                      },
+                      child: Container(
+                        height: 54.0,
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(
+                            width: 2,
+                            color: ColorPallete.backgroundBody,
                           ),
-                        ],
+                          borderRadius: BorderRadius.circular(16.0),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Radio<String>(
+                              value: service.option.firstWhere(
+                                (option) => option.toString() == 'Online',
+                                orElse: () => 'Online',
+                              ),
+                              groupValue: selectedOption,
+                              activeColor: ColorPallete.primaryColor,
+                              visualDensity:
+                                  VisualDensity(horizontal: -4, vertical: -4),
+                              onChanged: (value) {
+                                setState(() {
+                                  selectedOption = value ?? 'Online';
+                                });
+                              },
+                            ),
+                            SizedBox(
+                              width: 8.0,
+                            ),
+                            SvgPicture.asset('assets/icons/icon-video.svg',
+                                height: 24),
+                            SizedBox(width: 8.0),
+                            Text(
+                              'Online',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                color: ColorPallete.darkBlack,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+                  )
                 ],
               ),
             ],
@@ -637,14 +684,14 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
     );
   }
 
-  Widget _buildNoteSection() {
+  Widget _buildNoteSection(Service service) {
     return Container(
       decoration: BoxDecoration(color: Colors.white),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Note',
+            service.notes ?? 'Note',
             style: GoogleFonts.ubuntu(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -664,6 +711,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
               height: 90,
               width: double.infinity,
               child: TextField(
+                controller: _noteController,
                 cursorColor: ColorPallete.primaryColor,
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
@@ -691,6 +739,34 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: TextButton(
+        onPressed: () {
+          if (selectedDate == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Please select a date')),
+            );
+            return;
+          }
+          // Format selected date
+          final formattedDay = DateFormat('EEEE').format(selectedDate!);
+
+          // Get the time in 24-hour format
+          final time24 = convert12To24Format(selectedTime);
+
+          // Get note from controller
+          final note = _noteController.text.trim();
+
+          context.read<ServiceBloc>().add(BookService(
+                serviceId: widget.serviceId,
+                option: selectedOption,
+                days: formattedDay,
+                notes: note,
+                time: time24,
+              ));
+
+          // Show success dialog
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => DetailMeetingSuccess()));
+        },
         child: Text(
           'Book Appointment Now',
           style: GoogleFonts.ubuntu(
@@ -699,27 +775,6 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
-        onPressed: () {
-          // Dapatkan waktu dalam format 12 jam dari getter
-          final String displayTime = selectedTime;
-
-          // Konversi waktu ke format 24 jam untuk dikirim ke server
-          final String timeIn24Format = convert12To24Format(displayTime);
-
-          // Log informasi booking (untuk pengembangan)
-          print('Booking appointment:');
-          print('Date: $selectedDate');
-          print('Time (display): $displayTime');
-          print('Time (server): $timeIn24Format');
-
-          // Navigasi ke halaman sukses
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SuccessState(),
-            ),
-          );
-        },
       ),
     );
   }
