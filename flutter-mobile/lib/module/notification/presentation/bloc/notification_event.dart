@@ -1,4 +1,28 @@
 part of 'notification_bloc.dart';
 
 @immutable
-sealed class NotificationEvent {}
+abstract class NotificationEvent {}
+
+class AddNotification extends NotificationEvent {
+  final String title;
+  final String body;
+  final String status;
+  final String time;
+  final String userId;
+
+  AddNotification({
+    required this.title,
+    required this.body,
+    required this.status,
+    required this.time,
+    required this.userId,
+  });
+}
+
+class ClearNotifications extends NotificationEvent {
+  final String userId;
+
+  ClearNotifications({
+    required this.userId,
+  });
+}

@@ -13,7 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MeetingsScreen extends StatefulWidget {
-  const MeetingsScreen({super.key});
+  final String userId;
+  const MeetingsScreen({super.key, required this.userId});
 
   @override
   State<MeetingsScreen> createState() => _MeetingsScreenState();
@@ -148,13 +149,13 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                                     .add(GetServiceIdEvent(id: service.id));
 
                                 Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DetailMeetingScreen(
-                                      serviceId: service.id,
-                                    ),
-                                  ),
-                                );
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DetailMeetingScreen(
+                                        serviceId: service.id,
+                                        userId: widget.userId,
+                                      ),
+                                    ));
                               },
                             ),
                           );

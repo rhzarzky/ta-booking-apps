@@ -1,4 +1,6 @@
+import 'package:Appointly/module/notification/presentation/bloc/notification_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:Appointly/main.dart' show flutterLocalNotificationsPlugin;
 import 'package:Appointly/module/notification/presentation/screen/notification_screen.dart';
@@ -10,6 +12,7 @@ class NotificationHelper {
     required String date,
     required String time,
     required String option,
+    required String userId,
   }) async {
     final title = 'Booking Confirmed!';
     final body =
@@ -26,17 +29,19 @@ class NotificationHelper {
           importance: Importance.max,
           priority: Priority.high,
           showWhen: true,
-          
         ),
       ),
     );
 
-    // Tambahkan notifikasi ke NotificationScreen state
-    NotificationScreen.addNotification(
-      title: title,
-      body: body,
-      status: 'confirmed',
-      time: DateTime.now().toString(),
+    // Use BlocProvider.of instead of context.read
+    BlocProvider.of<NotificationBloc>(context, listen: false).add(
+      AddNotification(
+        title: title,
+        body: body,
+        status: 'confirmed',
+        time: DateTime.now().toString(),
+        userId:userId,
+      ),
     );
   }
 }

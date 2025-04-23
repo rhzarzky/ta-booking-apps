@@ -13,10 +13,12 @@ import 'package:Appointly/module/notification/utils/notification_helper.dart';
 
 class DetailMeetingScreen extends StatefulWidget {
   final int serviceId;
+  final String userId;
 
   const DetailMeetingScreen({
     super.key,
     required this.serviceId,
+    required this.userId,
   });
 
   @override
@@ -780,6 +782,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
               date: formattedDate,
               time: selectedTime,
               option: selectedOption,
+              userId: widget.userId,
             );
 
             // Show success dialog

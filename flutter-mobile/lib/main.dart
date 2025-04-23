@@ -5,7 +5,8 @@ import 'package:Appointly/module/auth/repository/auth_repository.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/repository/service_repository.dart';
 import 'package:Appointly/module/onboarding/presentation/screen/onboarding_screen.dart';
-import 'package:Appointly/module/onboarding/repository/onboarding_repository.dart'; // Import ServiceBloc
+import 'package:Appointly/module/onboarding/repository/onboarding_repository.dart';
+import 'package:Appointly/module/notification/presentation/bloc/notification_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -86,8 +87,11 @@ class _MainAppState extends State<MainApp> {
         BlocProvider(
           create: (context) => AuthBloc(
             AuthRepository(),
-            context.read<ServiceBloc>(), // Pastikan ServiceBloc sudah ada
+            context.read<ServiceBloc>(),
           )..add(CheckAuthStatus()),
+        ),
+        BlocProvider<NotificationBloc>(
+          create: (context) => NotificationBloc(),
         ),
       ],
       child: MaterialApp(

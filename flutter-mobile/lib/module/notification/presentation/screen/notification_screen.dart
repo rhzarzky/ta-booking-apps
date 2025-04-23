@@ -1,4 +1,6 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/presentation/widget/empty_state.dart';
+import 'package:Appointly/module/notification/presentation/bloc/notification_bloc.dart';
 import 'package:Appointly/module/notification/presentation/widget/notification_item.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,27 +8,15 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logger/logger.dart';
 import 'package:Appointly/main.dart' show flutterLocalNotificationsPlugin;
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class NotificationScreen extends StatefulWidget {
-  const NotificationScreen({super.key});
+  final String userId;
 
-  // Static variable untuk menyimpan notifikasi
-  static List<Map<String, dynamic>> _notifications = [];
-
-  // Static method untuk menambah notifikasi
-  static void addNotification({
-    required String title,
-    required String body,
-    required String status,
-    required String time,
-  }) {
-    _notifications.insert(0, {
-      'title': title,
-      'body': body,
-      'status': status,
-      'time': time,
-    });
-  }
+  const NotificationScreen({
+    super.key,
+    required this.userId,
+  });
 
   @override
   State<NotificationScreen> createState() => _NotificationScreenState();
@@ -37,7 +27,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   List<Map<String, dynamic>> get notifications =>
-      NotificationScreen._notifications;
+      context.read<NotificationBloc>().state.notifications;
 
   @override
   void initState() {
@@ -51,7 +41,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     String? token = await _firebaseMessaging.getToken();
     _logger.d('FCM Token: $token');
 
-    // foregraound message
+    // foreground message
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       final title = message.notification?.title ?? 'No Title';
       final body = message.notification?.body ?? 'No Body';
@@ -59,14 +49,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
       _showNotification(title, body);
 
-      setState(() {
-        NotificationScreen.addNotification(
-          title: title,
-          body: body,
-          status: 'pending',
-          time: DateTime.now().toString(),
-        );
-      });
+      context.read<NotificationBloc>().add(AddNotification(
+            title: title,
+            body: body,
+            status: 'pending',
+            time: DateTime.now().toString(),
+            userId : widget.userId,
+          ));
     });
   }
 
@@ -90,87 +79,55 @@ class _NotificationScreenState extends State<NotificationScreen> {
       platformChannelSpecifics,
     );
 
-    setState(() {
-      NotificationScreen.addNotification(
-        title: title,
-        body: body,
-        status: 'pending',
-        time: DateTime.now().toString(),
-      );
-    });
-  }
-
-  // Static method to be called from other screens
-  static Future<void> showBookingNotification(
-    BuildContext context, {
-    required String serviceName,
-    required String date,
-    required String time,
-    required String option,
-  }) async {
-    final title = 'Booking Confirmed!';
-    final body =
-        'Your appointment for $serviceName has been scheduled for $date at $time ($option)';
-
-    // Get the instance of NotificationScreen's state
-    final state = context.findAncestorStateOfType<_NotificationScreenState>();
-    if (state != null) {
-      await state._showNotification(title, body);
-    } else {
-      // If state is not found, show notification directly
-      await flutterLocalNotificationsPlugin.show(
-        DateTime.now().millisecondsSinceEpoch.remainder(100000),
-        title,
-        body,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'appointly_channel',
-            'Appointly Notifications',
-            importance: Importance.max,
-            priority: Priority.high,
-            showWhen: true,
-          ),
-        ),
-      );
-    }
+    context.read<NotificationBloc>().add(AddNotification(
+          title: title,
+          body: body,
+          status: 'pending',
+          time: DateTime.now().toString(),
+          userId: widget.userId,
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ColorPallete.backgroundBody,
-      appBar: _buildAppBar(),
-      body: Padding(
-        padding: const EdgeInsets.only(
-          left: 16.0,
-          right: 16.0,
-          top: 16.0,
-        ),
-        child: notifications.isEmpty
-            ? Center(
-                child: Text(
-                  'No notifications yet',
-                  style: GoogleFonts.sourceSans3(
-                    fontSize: 16,
-                    color: ColorPallete.darkBlack,
-                  ),
+    return BlocBuilder<NotificationBloc, NotificationState>(
+        builder: (context, state) {
+      _logger.d('NotificationState: ${state.runtimeType}');
+      _logger.d('All notifications: ${state.notifications.length}');
+
+      final filteredNotifications = state.notifications
+          .where((notif) => notif['userId'] == widget.userId)
+          .toList();
+
+      return Scaffold(
+        backgroundColor: ColorPallete.backgroundBody,
+        appBar: _buildAppBar(),
+        body: Padding(
+          padding: const EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 16.0,
+          ),
+          child: filteredNotifications.isEmpty
+              ? Center(
+                  child: EmptyState(),
+                )
+              : ListView.builder(
+                  cacheExtent: 500.0,
+                  itemCount: filteredNotifications.length,
+                  itemBuilder: (context, index) {
+                    final item = filteredNotifications[index];
+                    return NotificationItem(
+                      title: item['title'] ?? '',
+                      indicatorStatus: item['status'] ?? 'pending',
+                      timeStamp: item['time'] ?? '',
+                      onTap: () {},
+                    );
+                  },
                 ),
-              )
-            : ListView.builder(
-                cacheExtent: 500.0,
-                itemCount: notifications.length,
-                itemBuilder: (context, index) {
-                  final item = notifications[index];
-                  return NotificationItem(
-                    title: item['title'] ?? '',
-                    indicatorStatus: item['status'] ?? 'pending',
-                    timeStamp: item['time'] ?? '',
-                    onTap: () {},
-                  );
-                },
-              ),
-      ),
-    );
+        ),
+      );
+    });
   }
 
   PreferredSizeWidget _buildAppBar() {
