@@ -1,43 +1,43 @@
-import api from "./api"
-import { authServices } from "../services/auth-services"
+import api from './api';
+import { ref } from 'vue';
+import { authServices } from '../services/auth-services';
 
-// ✅ Login API
+export const loading = ref(false);
+export const errors = ref({});
+
+// Fungsi login
 export const login = async (credentials) => {
   try {
     if (!credentials.email || !credentials.password) {
-      errors.value = {
-        email: !credentials.email
-          ? ["The email field is required."]
-          : undefined,
-        password: !credentials.password
-          ? ["The password field is required."]
-          : undefined,
-      };
-      throw new Error("Validation failed");
+      throw new Error("Email dan password harus diisi.");
     }
 
-    const response = await api.post("/login", credentials);
+    // Mengirim request login ke server
+    const response = await api.post('/login', credentials);
 
-    if (response.data.token) {
+    // Menyimpan token dan userId jika login sukses
+    if (response.data && response.data.token && response.data.user) {
       authServices.setToken(response.data.token);
-      authServices.setUserId(response.data.id);
+      authServices.setUserId(response.data.user.id);
     }
+    
 
     return response.data;
   } catch (error) {
     console.error("Login error:", error.response?.data || error.message);
+    errors.value = error.response?.data?.error || "Terjadi kesalahan";
     throw error;
   }
 };
 
-
-// ✅ Register API
+// Fungsi register (opsional, jika backend kamu menyediakan endpoint)
 export const register = async (userData) => {
   try {
-    const response = await api.post("/register", userData);
-    if (response.data.token) {
-      authServices.setToken(response.data.token);
-    }
+    const response = await api.post('/register', userData);
+    // if (response.data.token && response.data.user) {
+    //   authServices.setToken(response.data.token);
+    //   authServices.setUserId(response.data.user.id);
+    // }
     return response.data;
   } catch (error) {
     console.error("Register error:", error.response?.data || error.message);
@@ -45,31 +45,14 @@ export const register = async (userData) => {
   }
 };
 
-
-
-
+// Fungsi logout
 export const logout = async () => {
   try {
-    // Kalau kamu ingin kasih tahu backend:
-    await api.post('/logout') // opsional tergantung backend kamu
-  } catch (err) {
-    console.warn("Logout error (ignored):", err)
-  } finally {
-    authServices.clearToken()
-    authServices.clearUser()
+    await api.post('/logout');
+    authServices.removeToken();
+    authServices.removeUserId();
+  } catch (error) {
+    console.error("Logout error:", error.response?.data || error.message);
+    throw error;
   }
-}
-
-export const userProfile = async () => {
-  try {
-    const response = await api.get("/user")
-    return response.data
-  } catch (err) {
-    console.error("Failed to fetch user profile:", err)
-    throw err
-  }
-}
-
-// setup 
-export { register as RegisterClient, login as LoginClient, logout as LogoutClient }
-
+};

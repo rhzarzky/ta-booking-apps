@@ -1,74 +1,86 @@
 const storageUtil = {
+
   get(key) {
     try {
       return localStorage.getItem(key);
     } catch (err) {
-      console.error(`Failed to retrieve ${key}:`, err);
+      console.error(`[storageUtil] Failed to get "${key}":`, err);
       return null;
     }
   },
-
+  
+  // Menyimpan nilai ke localStorage berdasarkan key
   set(key, value) {
     try {
       localStorage.setItem(key, value);
     } catch (err) {
-      console.error(`Failed to set ${key}:`, err);
+      console.error(`[storageUtil] Failed to set "${key}":`, err);
     }
   },
-
+  
+  // Menghapus nilai dari localStorage berdasarkan key
   remove(key) {
     try {
       localStorage.removeItem(key);
     } catch (err) {
-      console.error(`Failed to remove ${key}:`, err);
+      console.error(`[storageUtil] Failed to remove "${key}":`, err);
     }
   },
 };
 
+// authServices untuk menangani operasi terkait autentikasi
 export const authServices = {
-  // Simpan token ke localStorage
-  setToken(token) {
-    localStorage.setItem('token', token)
-  },
-
+  // Mengambil token dari localStorage
   getToken() {
-    return localStorage.getItem('token')
+    return storageUtil.get("token");
   },
-
+  
+  // Menyimpan token ke localStorage
+  setToken(token) {
+    storageUtil.set("token", token);
+  },
+  
+  // Menghapus token dari localStorage
   removeToken() {
-    localStorage.removeItem('token')
+    storageUtil.remove("token");
   },
-
-  // Simpan data user
-  setUser(user) {
-    localStorage.setItem('user', JSON.stringify(user))
-  },
-
-  getUser() {
-    const user = localStorage.getItem('user')
-    return user ? JSON.parse(user) : null
-  },
-
-  removeUser() {
-    localStorage.removeItem('user')
-  },
-
-  // ✅ Tambahan untuk ID user
-  setUserId(id) {
-    localStorage.setItem('user_id', id)
-  },
+  
+  // Mengambil userId dari localStorage
   getUserId() {
-    return localStorage.getItem('user_id')
+    return storageUtil.get("userId");
   },
+  
+  // Menyimpan userId ke localStorage
+  setUserId(userId) {
+    storageUtil.set("userId", userId);
+  },
+  
+  // Menghapus userId dari localStorage
   removeUserId() {
-    localStorage.removeItem('user_id')
+    storageUtil.remove("userId");
   },
-
-  // ✅ Cek login
-  isLoggedIn() {
-    return !!this.getToken()
-  }
-}
-
-// 🔍 Log untuk memastikan semua fungsi tersedia
-console.log('[authServices] Available methods:', Object.keys(authServices))
+  
+  /**
+   * Mengambil API key dari environment, jika digunakan
+   * Digunakan untuk header axios seperti `x-api-key`
+   */
+  getApiKey() {
+    return import.meta.env.VITE_API_KEY || null;
+  },
+  
+  /**
+   * Memeriksa apakah pengguna sudah terautentikasi dengan memeriksa keberadaan token
+   * @returns {boolean} True jika pengguna terautentikasi
+   */
+  isAuthenticated() {
+    return !!this.getToken(); // Memeriksa apakah token ada
+  },
+  
+  /**
+   * Membersihkan semua data autentikasi terkait (token dan userId)
+   */
+  clearAuthData() {
+    this.removeToken();
+    this.removeUserId();
+  },
+};

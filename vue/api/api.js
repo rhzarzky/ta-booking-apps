@@ -1,24 +1,40 @@
-import axios from 'axios'
-import { useAuthStore } from '@/stores/auth'
+import axios from "axios";
+import { authServices } from "../services/auth-services";
 
+// Membuat instance Axios dengan konfigurasi default
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/v1',
-})
+  baseURL: `${import.meta.env.VITE_BASE_URL}${import.meta.env.VITE_API_PATH}`, // Menggunakan environment variables untuk base URL dan API path
+  timeout: 17000, // Waktu timeout request
+  headers: {
+    "Content-Type": "application/json", // Jenis konten JSON
+    "x-api-key": authServices.getApiKey?.() || "", // Opsional: Hanya jika menggunakan API key
+  },
+  withCredentials: false, // Tidak menggunakan cookie
+});
 
-api.interceptors.request.use((config) => {
-  // Panggil store DI DALAM interceptor
-  const authStore = useAuthStore()
-  const token = authStore?.token
+// Interceptor REQUEST: Menambahkan Authorization header jika token tersedia
+api.interceptors.request.use(
+  (config) => {
+    const token = authServices.getToken(); // Mengambil token dari authServices
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`; // Menambahkan token ke header Authorization
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-  // Jangan tambahkan token untuk login & register
-  if (token && !['/login', '/register'].includes(config.url)) {
-    config.headers.Authorization = `Bearer ${token}`
-    console.log('[Request Interceptor] Token DITAMBAHKAN:', config.url)
-  } else {
-    console.log('[Request Interceptor] Token TIDAK ditambahkan:', config.url)
+// Interceptor RESPONSE: Menangani error global seperti 401 (Unauthorized)
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      authServices.removeToken(); // Hapus token jika 401 Unauthorized
+      // Optional: Redirect ke halaman login
+      // window.location.href = "/login"; 
+    }
+    return Promise.reject(error);
   }
+);
 
-  return config
-}, error => Promise.reject(error))
-
-export default api
+export default api;

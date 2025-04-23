@@ -10,7 +10,7 @@ const router = createRouter({
 
 // Route Guard
 router.beforeEach((to, from, next) => {
-  const isLoggedIn = !!authServices.getToken(); // Cek token dari authServices
+  const isLoggedIn = authServices.isAuthenticated();
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
   if (requiresAuth && !isLoggedIn) {
