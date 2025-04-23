@@ -13,7 +13,10 @@ final class ServiceLoaded extends ServiceState {
 
 final class ServiceLoading extends ServiceState {}
 
-final class ServiceSuccess extends ServiceState {}
+final class ServiceSucees extends ServiceState {
+  final Service service;
+  ServiceSucees(this.service);
+}
 
 final class ServiceFailure extends ServiceState {
   final String failure;

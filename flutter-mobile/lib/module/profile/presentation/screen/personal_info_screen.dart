@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:logger/logger.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -17,6 +18,7 @@ class PersonalInfoScreen extends StatefulWidget {
 }
 
 class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
+    final Logger _logger = Logger();
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final fullNameController = TextEditingController();
@@ -34,7 +36,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         });
       }
     } catch (e) {
-      print("Error picking image from gallery: $e");
+      _logger.e("Error picking image from gallery: $e");
     }
   }
 
@@ -50,7 +52,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         });
       }
     } catch (e) {
-      print("Error picking image from camera: $e");
+      _logger.e("Error picking image from camera: $e");
     }
   }
 

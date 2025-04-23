@@ -49,7 +49,7 @@ class BookingController extends Controller
         $validated = $request->validate([
             'day' => 'required|string|max:255',
             'time' => 'required|date_format:H:i',
-            'note' => 'nullable|string|maks:255',
+            'note' => 'nullable|string|max:255',
             'option' => 'required|string|in:' . implode(',', $availableOptions), // Only allow options set by admin
         ]);
 
@@ -85,7 +85,6 @@ class BookingController extends Controller
                     'title' => $service->title,
                     'description' => $service->description,
                     'option' => json_decode($service->option),
-                    'start_date' => $service->start_date,
                 ],
                 'user' => [
                     'id' => $user->id,

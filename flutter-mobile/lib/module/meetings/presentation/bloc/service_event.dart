@@ -16,3 +16,19 @@ class UpdateTokenEvent extends ServiceEvent {
 
   UpdateTokenEvent(this.token);
 }
+
+class BookService extends ServiceEvent {
+  final int serviceId;
+  final String option;
+  final String days;
+  final String notes;
+  final String time;
+
+  BookService({
+    required this.serviceId,
+    required this.option,
+    required this.days,
+    required this.notes,
+    required this.time,
+  });
+}

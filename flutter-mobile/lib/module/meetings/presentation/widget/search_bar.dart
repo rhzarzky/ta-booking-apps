@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 
 class CustomSearchBar extends StatefulWidget {
   const CustomSearchBar({super.key});
@@ -9,6 +10,7 @@ class CustomSearchBar extends StatefulWidget {
 
 class _CustomSearchBarState extends State<CustomSearchBar> {
   final SearchController _controller = SearchController();
+  final Logger _logger = Logger();
 
   @override
   void dispose() {
@@ -40,7 +42,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
       viewConstraints: const BoxConstraints(maxHeight: 350),
       onChanged: (text) {
         // Add your search logic here
-        print('Searching: $text');
+        _logger.d('Searching: $text');
       },
       viewLeading: IconButton(
         icon: Icon(Icons.arrow_back),

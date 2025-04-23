@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:Appointly/module/auth/model/users_model.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:logger/logger.dart';
 
 class AuthRepository {
+  final Logger _logger = Logger();
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: 'http://192.168.100.18:8000/v1',
@@ -31,6 +35,7 @@ class AuthRepository {
       if (res.statusCode == 201) {
         UsersModel user = UsersModel.fromJson(res.data);
         await _saveToken(user.token);
+        await saveUserData(user);
         return user;
       } else {
         String errorMessage = 'Registration failed';
@@ -70,6 +75,7 @@ class AuthRepository {
       if (res.statusCode == 200) {
         UsersModel user = UsersModel.fromJson(res.data);
         await _saveToken(user.token);
+        await saveUserData(user);
         return user;
       } else {
         throw Exception(res.data['message']);
@@ -102,6 +108,7 @@ class AuthRepository {
   Future<void> logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
+    await prefs.remove('user_data');
   }
 
   // Save token
@@ -113,5 +120,40 @@ class AuthRepository {
   Future<String?> getToken() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
+  }
+
+  // Save user data
+  Future<void> saveUserData(UsersModel user) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final userData = {
+      'user': {
+        'id': user.id,
+        'name': user.name,
+        'email': user.email,
+        'role': user.role,
+        'status': user.status,
+      },
+      'token': user.token,
+    };
+    await prefs.setString('user_data', jsonEncode(userData));
+  }
+
+  // Get user data
+  Future<UsersModel?> getUserData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userData = prefs.getString('user_data');
+    if (userData != null) {
+      try {
+        Map<String, dynamic> jsonData = jsonDecode(userData);
+        _logger.d(
+            "Retrieved user data: $jsonData"); // Tambahkan log untuk debugging
+        return UsersModel.fromJson(jsonData);
+      } catch (e) {
+        _logger.e("Error parsing user data: $e"); // Log error
+        await prefs.remove('user_data');
+        return null;
+      }
+    }
+    return null;
   }
 }

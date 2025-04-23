@@ -1,9 +1,11 @@
 import 'package:Appointly/module/meetings/model/service_model.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:logger/logger.dart';
 
 class ServiceRepository {
   final Dio _dio;
+  final Logger _logger = Logger();
 
   ServiceRepository()
       : _dio = Dio(
@@ -34,7 +36,7 @@ class ServiceRepository {
         if (token != null && token.isNotEmpty) {
           updateToken(token);
         } else {
-          print('WARNING: No token available for service request');
+          _logger.w('No token available for service request');
         }
       }
 
@@ -59,7 +61,6 @@ class ServiceRepository {
           updateToken(token);
         }
       }
-
 
       // Pertama, coba dapatkan semua services
       final allServicesResponse = await _dio.get('/service');
@@ -92,7 +93,39 @@ class ServiceRepository {
         throw Exception('Failed to load service: ${response.statusMessage}');
       }
     } catch (e) {
-      print("Error in getServiceById: $e");
+      _logger.w('Error in getServiceById: $e');
+      rethrow;
+    }
+  }
+
+  Future<DataService> postService(
+    int id, {
+    required String time,
+    required String day,
+    required String note,
+    required String option,
+  }) async {
+    try {
+      if (!_dio.options.headers.containsKey('Authorization')) {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('token');
+        if (token != null && token.isNotEmpty) {
+          updateToken(token);
+        }
+      }
+      final response = await _dio.post('/service/$id/book', data: {
+        'time': time,
+        'day': day,
+        'note': note,
+        'option': option,
+      });
+
+      if (response.statusCode == 200) {
+        return DataService.fromJson(response.data);
+      } else {
+        throw Exception('Failed to post service: ${response.statusMessage}');
+      }
+    } catch (e) {
       rethrow;
     }
   }
