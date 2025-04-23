@@ -9,6 +9,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:Appointly/module/meetings/model/service_model.dart';
 import 'package:intl/intl.dart';
+import 'package:Appointly/module/notification/utils/notification_helper.dart';
 
 class DetailMeetingScreen extends StatefulWidget {
   final int serviceId;
@@ -738,15 +739,17 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: TextButton(
-        onPressed: () {
+        onPressed: () async {
           if (selectedDate == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Please select a date')),
             );
             return;
           }
+
           // Format selected date
           final formattedDay = DateFormat('EEEE').format(selectedDate!);
+          final formattedDate = DateFormat('d MMM yyyy').format(selectedDate!);
 
           // Get the time in 24-hour format
           final time24 = convert12To24Format(selectedTime);
@@ -754,17 +757,35 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
           // Get note from controller
           final note = _noteController.text.trim();
 
-          context.read<ServiceBloc>().add(BookService(
-                serviceId: widget.serviceId,
-                option: selectedOption,
-                days: formattedDay,
-                notes: note,
-                time: time24,
-              ));
+          // Get service details for notification
+          final state = context.read<ServiceBloc>().state;
+          if (state is ServiceLoaded) {
+            final service = state.services.firstWhere(
+              (service) => service.id == widget.serviceId,
+              orElse: () => state.services.first,
+            );
 
-          // Show success dialog
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => SuccessState()));
+            context.read<ServiceBloc>().add(BookService(
+                  serviceId: widget.serviceId,
+                  option: selectedOption,
+                  days: formattedDay,
+                  notes: note,
+                  time: time24,
+                ));
+
+            // Show notification with booking details
+            await NotificationHelper.showBookingNotification(
+              context: context,
+              serviceName: service.title,
+              date: formattedDate,
+              time: selectedTime,
+              option: selectedOption,
+            );
+
+            // Show success dialog
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => SuccessState()));
+          }
         },
         child: Text(
           'Book Appointment Now',

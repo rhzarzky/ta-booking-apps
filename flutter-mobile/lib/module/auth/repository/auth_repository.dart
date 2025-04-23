@@ -9,7 +9,7 @@ class AuthRepository {
   final Logger _logger = Logger();
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'http://192.168.100.18:8000/v1',
+      baseUrl: 'http://192.168.1.40:8000/v1',
       headers: {'Content-Type': 'application/json'},
       validateStatus: (status) => status! < 500,
       connectTimeout: Duration(seconds: 30),
