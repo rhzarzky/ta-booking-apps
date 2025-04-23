@@ -1,14 +1,13 @@
-// src/router/routes.js
-import LandingPage from '@/views/LandingPage.vue'
-import LoginClient from '@/views/LoginClient.vue'
-import RegisterClient from '@/views/RegisterClient.vue'
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import Dashboard from '@/views/Client/Dashboard.vue'
-import Meeting from '@/views/Client/Meeting.vue'
-import Activity from '@/views/Client/Activity.vue'
-import Profile from '@/views/Client/Profile.vue'
-import EditProfile from '@/views/Client/EditProfile.vue'
-import DetailBooking from '@/views/Client/DetailBooking.vue'
+import LandingPage from '@/views/LandingPage.vue';
+import LoginClient from '@/views/LoginClient.vue';
+import RegisterClient from '@/views/RegisterClient.vue';
+import DefaultLayout from '@/layouts/DefaultLayout.vue';
+import Dashboard from '@/views/Client/Dashboard.vue';
+import Meeting from '@/views/Client/Meeting.vue';
+import Activity from '@/views/Client/Activity.vue';
+import Profile from '@/views/Client/Profile.vue';
+import EditProfile from '@/views/Client/EditProfile.vue';
+import DetailBooking from '@/views/Client/DetailBooking.vue';
 
 const routes = [
   {
@@ -20,13 +19,11 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginClient,
-    meta: { guestOnly: true }, // Redirect ke dashboard kalau sudah login
   },
   {
     path: '/register',
     name: 'register',
     component: RegisterClient,
-    meta: { guestOnly: true },
   },
   {
     path: '/client',
@@ -65,6 +62,8 @@ const routes = [
       },
     ],
   },
-]
+];
 
-export default routes
+
+
+export default routes;
