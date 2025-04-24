@@ -14,6 +14,7 @@ class MainTabScreen extends StatefulWidget {
 }
 
 class _MainTabScreenState extends State<MainTabScreen> {
+  // get userId from auth repository
   final AuthRepository _authRepository = AuthRepository();
   String userId = '';
   int _selectedIndex = 0;
@@ -50,6 +51,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
     // Create screens list dynamically to use current userId
     final List<Widget> screens = [
       HomeScreen(),
+      // and pass it to meetings and notification screens
       MeetingsScreen(userId: userId),
       NotificationScreen(userId: userId),
       ProfileScreen(),

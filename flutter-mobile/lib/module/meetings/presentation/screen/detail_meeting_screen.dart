@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:Appointly/module/meetings/model/service_model.dart';
 import 'package:intl/intl.dart';
 import 'package:Appointly/module/notification/utils/notification_helper.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class DetailMeetingScreen extends StatefulWidget {
   final int serviceId;
@@ -224,8 +225,63 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
               BlocBuilder<ServiceBloc, ServiceState>(
                 builder: (context, state) {
                   if (state is ServiceLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
+                    return Skeletonizer(
+                      enabled: true,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            // Skeleton for background image
+                            Container(
+                              height: 300,
+                              color: Colors.grey[200],
+                            ),
+                            // Skeleton for content
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Title section skeleton
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: double.infinity,
+                                        height: 24,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Container(
+                                        width: double.infinity,
+                                        height: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 24),
+                                  // Schedule section skeleton
+                                  _buildSkeletonScheduleSection(),
+                                  SizedBox(height: 16),
+                                  // Location section skeleton
+                                  _buildSkeletonLocationSection(),
+                                  SizedBox(height: 16),
+                                  // Note section skeleton
+                                  _buildSkeletonNoteSection(),
+                                  SizedBox(height: 16),
+                                  // Button skeleton
+                                  Container(
+                                    width: double.infinity,
+                                    height: 50,
+                                    color: Colors.grey[200],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     );
                   } else if (state is ServiceFailure) {
                     return Center(
@@ -799,6 +855,116 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSkeletonScheduleSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 100,
+          height: 20,
+          color: Colors.white,
+        ),
+        SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: ColorPallete.concrete50,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonLocationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 100,
+          height: 20,
+          color: Colors.white,
+        ),
+        SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: ColorPallete.concrete50,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonNoteSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 100,
+          height: 20,
+          color: Colors.white,
+        ),
+        SizedBox(height: 8),
+        Container(
+          height: 120,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ],
     );
   }
 }

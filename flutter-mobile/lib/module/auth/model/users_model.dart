@@ -1,7 +1,4 @@
 
-import 'package:logger/logger.dart';
-
-final Logger _logger = Logger();
 class UsersModel {
   final int id;
   final String name;

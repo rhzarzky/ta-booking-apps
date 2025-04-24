@@ -7,19 +7,24 @@ part 'notification_state.dart';
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   NotificationBloc() : super(NotificationInitial()) {
     on<AddNotification>((event, emit) {
-      final currentNotifications =
-          List<Map<String, dynamic>>.from(state.notifications);
+      emit(NotificationLoading());
+      try {
+        final currentNotifications =
+            List<Map<String, dynamic>>.from(state.notifications);
 
-      // Add new notification at the beginning of the list
-      currentNotifications.insert(0, {
-        'title': event.title,
-        'body': event.body,
-        'status': event.status,
-        'time': event.time,
-        'userId': event.userId,
-      });
+        // Add new notification at the beginning of the list
+        currentNotifications.insert(0, {
+          'title': event.title,
+          'body': event.body,
+          'status': event.status,
+          'time': event.time,
+          'userId': event.userId,
+        });
 
-      emit(NotificationLoaded(currentNotifications));
+        emit(NotificationLoaded(currentNotifications));
+      } catch (e) {
+        emit(NotificationError(message: e.toString()));
+      }
     });
 
     on<ClearNotifications>((event, emit) {

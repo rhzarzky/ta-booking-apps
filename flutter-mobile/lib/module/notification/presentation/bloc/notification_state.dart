@@ -17,5 +17,10 @@ class NotificationLoaded extends NotificationState {
 
 class NotificationError extends NotificationState {
   final String message;
-  const NotificationError(this.message) : super(notifications: const []);
+  const NotificationError({required this.message})
+      : super(notifications: const []);
+}
+
+class NotificationLoading extends NotificationState {
+  const NotificationLoading() : super(notifications: const []);
 }

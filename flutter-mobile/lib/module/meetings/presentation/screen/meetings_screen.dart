@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class MeetingsScreen extends StatefulWidget {
   final String userId;
@@ -124,7 +125,29 @@ class _MeetingsScreenState extends State<MeetingsScreen>
               child: BlocBuilder<ServiceBloc, ServiceState>(
                 builder: (context, state) {
                   if (state is ServiceLoading) {
-                    return Center(child: CircularProgressIndicator());
+                    return Skeletonizer(
+                      effect: ShimmerEffect(
+                        baseColor: Colors.grey[200]!,
+                        highlightColor: Colors.grey[100]!,
+                        duration: Duration(seconds: 2),
+                      ),
+                      enabled: true,
+                      child: ListView.builder(
+                          itemCount: 7,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: 8.0),
+                              child: CardService(
+                                headService: 'Loading...',
+                                descService: 'Loading...',
+                                imageService: '',
+                                timeService: [],
+                                provideService: [],
+                                onTap: () {},
+                              ),
+                            );
+                          }),
+                    );
                   } else if (state is ServiceFailure) {
                     return Center(child: Text('Error: ${state.failure}'));
                   } else if (state is ServiceLoaded) {

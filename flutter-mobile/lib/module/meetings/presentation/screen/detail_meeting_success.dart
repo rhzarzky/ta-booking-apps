@@ -62,19 +62,6 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     }
   }
 
-  // Future<void> _selectTime() async {
-  //   final TimeOfDay? pickedTime = await showTimePicker(
-  //     context: context,
-  //     initialTime: TimeOfDay.now(),
-  //   );
-
-  //   if (pickedTime != null && pickedTime != selectedTime) {
-  //     setState(() {
-  //       selectedTime = pickedTime;
-  //     });
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

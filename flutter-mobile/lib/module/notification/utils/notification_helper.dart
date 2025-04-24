@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:Appointly/main.dart' show flutterLocalNotificationsPlugin;
-import 'package:Appointly/module/notification/presentation/screen/notification_screen.dart';
 
 class NotificationHelper {
   static Future<void> showBookingNotification({
