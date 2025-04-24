@@ -2,6 +2,7 @@ import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/widget/custom_calendar.dart';
 import 'package:Appointly/module/meetings/presentation/widget/dropdown_time.dart';
+import 'package:Appointly/module/meetings/presentation/widget/expanded_text.dart';
 import 'package:Appointly/module/meetings/presentation/widget/success_state.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -443,14 +444,10 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
           ),
         ),
         SizedBox(height: 2.0),
-        Text(
-          service.description,
-          style: GoogleFonts.ubuntu(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: ColorPallete.darkGreySilver,
-          ),
-        ),
+        ExpandedText(
+          text: service.description,
+          maxLine: 120,
+        )
       ],
     );
   }

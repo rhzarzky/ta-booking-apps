@@ -37,7 +37,6 @@ class CardService extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12.0),
                 image: DecorationImage(
-                  // Use NetworkImage for URLs instead of AssetImage
                   image: imageService.startsWith('http')
                       ? NetworkImage(imageService) as ImageProvider
                       : AssetImage(imageService),
@@ -58,6 +57,7 @@ class CardService extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color: ColorPallete.darkBlack,
                   ),
+                  textAlign: TextAlign.start,
                 ),
                 SizedBox(height: 8),
                 Text(
@@ -69,6 +69,7 @@ class CardService extends StatelessWidget {
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.start,
                 ),
               ],
             ),

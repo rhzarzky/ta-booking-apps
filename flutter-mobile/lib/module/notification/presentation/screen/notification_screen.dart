@@ -92,72 +92,62 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NotificationBloc, NotificationState>(
+    return Scaffold(
+      backgroundColor: ColorPallete.backgroundBody,
+      appBar: _buildAppBar(),
+      body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
-      if (state is NotificationLoading) {
-        return Skeletonizer(
-          enabled: true,
-          child: ListView.builder(
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.only(bottom: 8.0),
-                child: NotificationItem(
-                  title: 'Loading...',
-                  timeStamp: 'Loading...',
-                  indicatorStatus: 'Loading...',
+          if (state is NotificationLoading) {
+            return Skeletonizer(
+              enabled: true,
+              child: ListView.builder(
+                itemCount: 5,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: 8.0),
+                    child: NotificationItem(
+                      title: 'Loading...',
+                      timeStamp: 'Loading...',
+                      indicatorStatus: 'Loading...',
+                      onTap: () {},
+                    ),
+                  );
+                },
+              ),
+            );
+          } else if (state is NotificationError) {
+            return Center(
+              child: Text('Error: ${state.message}'),
+            );
+          } else if (state is NotificationLoaded) {
+            final filteredNotifications = state.notifications
+                .where((notif) => notif['userId'] == widget.userId)
+                .toList();
+
+            if (filteredNotifications.isEmpty) {
+              return Center(child: EmptyState());
+            }
+
+            return ListView.builder(
+              cacheExtent: 500.0,
+              itemCount: filteredNotifications.length,
+              itemBuilder: (context, index) {
+                final item = filteredNotifications[index];
+                return NotificationItem(
+                  title: item['title'] ?? '',
+                  indicatorStatus: item['status'] ?? 'pending',
+                  timeStamp: item['time'] ?? '',
                   onTap: () {},
-                ),
-              );
-            },
-          ),
-        );
-      } else if (state is NotificationError) {
-        return Center(
-          child: Text('Error: ${state.message}'),
-        );
-      } else if (state is NotificationLoaded) {
-        _logger.d('NotificationState: ${state.runtimeType}');
-        _logger.d('All notifications: ${state.notifications.length}');
-
-        final filteredNotifications = state.notifications
-            .where((notif) => notif['userId'] == widget.userId)
-            .toList();
-
-        return Scaffold(
-          backgroundColor: ColorPallete.backgroundBody,
-          appBar: _buildAppBar(),
-          body: Padding(
-            padding: const EdgeInsets.only(
-              left: 16.0,
-              right: 16.0,
-              top: 16.0,
-            ),
-            child: filteredNotifications.isEmpty
-                ? Center(
-                    child: EmptyState(),
-                  )
-                : ListView.builder(
-                    cacheExtent: 500.0,
-                    itemCount: filteredNotifications.length,
-                    itemBuilder: (context, index) {
-                      final item = filteredNotifications[index];
-                      return NotificationItem(
-                        title: item['title'] ?? '',
-                        indicatorStatus: item['status'] ?? 'pending',
-                        timeStamp: item['time'] ?? '',
-                        onTap: () {},
-                      );
-                    },
-                  ),
-          ),
-        );
-      }
-      return Center(
-        child: EmptyState(),
-      );
-    });
+                );
+              },
+            );
+          }
+          return Center(child: EmptyState());
+        },
+      ),
+    );
   }
 
   PreferredSizeWidget _buildAppBar() {
