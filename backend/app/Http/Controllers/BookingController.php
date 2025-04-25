@@ -54,7 +54,11 @@ class BookingController extends Controller
             'service' => $booking->map(function ($booking) {
                 return [
                     'id'=> $booking->id,
-                    'service_id' => $booking->service_id,
+                    'service' => [
+                        'id' => $booking->service->id,
+                        'title' => $booking->service->title,
+                        'description' => $booking->service->description,
+                    ],
                     'option' => $booking->option,
                     'day' => $booking->day,
                     'time' => $booking->time,
@@ -97,6 +101,11 @@ class BookingController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Service booked successfully, awaiting approval.',
+            'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
             'booking' => [
                 'id' => $booking->id,
                 'option' => $booking->option,
@@ -109,11 +118,6 @@ class BookingController extends Controller
                     'title' => $service->title,
                     'description' => $service->description,
                     'option' => json_decode($service->option),
-                ],
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
                 ],
             ],
         ], 201);
