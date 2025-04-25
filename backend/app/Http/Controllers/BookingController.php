@@ -122,4 +122,24 @@ class BookingController extends Controller
             ],
         ], 201);
     }
+    public function confirm(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:Approved,Declined',
+        ]);
+
+        $booking = Booking::findOrFail($id);
+
+        $booking->status = $request->status;
+        $booking->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Booking status updated successfully.',
+            'booking' => [
+                'id' => $booking->id,
+                'status' => $booking->status,
+            ],
+        ], 200);
+    }
 }

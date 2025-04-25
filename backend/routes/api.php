@@ -36,6 +36,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::post('/service/{id}/book', [BookingController::class, 'bookService']);
     Route::get('/booking', [BookingController::class, 'showAllBooking']);
     Route::get('/booking/{id}', [BookingController::class, 'showBooking']);
+    Route::post('/booking/{id}/confirm', [BookingController::class, 'confirm']);
 
     Route::get('/user', [UserController::class, 'userProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
