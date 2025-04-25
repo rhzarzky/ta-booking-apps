@@ -32,9 +32,10 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::get('/service/{id}', [ServiceController::class, 'showService']);
     Route::post('/service', [ServiceController::class, 'storeService']);
     Route::put('/service/{id}', [ServiceController::class, 'editService']);
+    
     Route::post('/service/{id}/book', [BookingController::class, 'bookService']);
-
-    Route::get('/booking', [BookingController::class, 'index']);
+    Route::get('/booking', [BookingController::class, 'showAllBooking']);
+    Route::get('/booking/{id}', [BookingController::class, 'showBooking']);
 
     Route::post('/logout', [AuthController::class, 'logout']);
 });

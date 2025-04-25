@@ -10,7 +10,7 @@ use App\Models\Service;
 
 class BookingController extends Controller
 {
-    public function index()
+    public function showAllBooking()
     {
         $bookings = Booking::with('user', 'service')
         ->get()
@@ -39,13 +39,37 @@ class BookingController extends Controller
             'services' => $bookings,
         ], 200);
     }
+   public function showBooking($id)
+    {
+        $user = Auth::user();
+        $booking = Booking::where('user_id', $id)->get();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Service retrieved successfully',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
+            'service' => $booking->map(function ($booking) {
+                return [
+                    'id'=> $booking->id,
+                    'service_id' => $booking->service_id,
+                    'option' => $booking->option,
+                    'day' => $booking->day,
+                    'time' => $booking->time,
+                    'note' => $booking->note,
+                    'status' => $booking->status,
+                ];
+            }),
+        ], 200);
+    }
+
    public function bookService(Request $request, $id)
     {
         $user = Auth::user();
         $service = Service::findOrFail($id);
-
         $availableOptions = json_decode($service->option, true);
-
         $validated = $request->validate([
             'day' => 'required|string|max:255',
             'time' => 'required|date_format:H:i',
