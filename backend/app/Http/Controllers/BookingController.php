@@ -12,37 +12,63 @@ class BookingController extends Controller
 {
     public function showAllBooking()
     {
-        $bookings = Booking::with('user', 'service')
-        ->get()
-        ->map(function ($booking) {
-            return [
-                'id_booking' => $booking->id,
-                'user' => [
-                    'id' => $booking->user->id,
-                    'email' => $booking->user->email,
-                    'name' => $booking->user->name,
-                ],
-                'service' => [
-                    'id' => $booking->service->id,
-                    'title' => $booking->service->title,
-                    'description' => $booking->service->description,
-                    'option' => $booking->option,
-                    'day' => $booking->day,
-                    'time' => $booking->time,
-                    'status' => $booking->status,
-                ],
-            ];
+        $bookings = Booking::with('user', 'service')->get();
+
+        $grouped = $bookings->groupBy('status')->map(function ($group) {
+            return $group->map(function ($booking) {
+                return [
+                    'id_booking' => $booking->id,
+                    'user' => [
+                        'id' => $booking->user->id,
+                        'email' => $booking->user->email,
+                        'name' => $booking->user->name,
+                    ],
+                    'service' => [
+                        'id' => $booking->service->id,
+                        'title' => $booking->service->title,
+                        'description' => $booking->service->description,
+                        'option' => $booking->option,
+                        'day' => $booking->day,
+                        'time' => $booking->time,
+                        'status' => $booking->status,
+                    ],
+                ];
+            });
         });
+
         return response()->json([
             'status' => 'success',
             'message' => 'Booking retrieved successfully',
-            'services' => $bookings,
+            'bookings' => $grouped,
         ], 200);
     }
+
    public function showBooking($id)
     {
         $user = Auth::user();
-        $booking = Booking::where('user_id', $id)->get();
+
+        $bookings = Booking::with('service')
+            ->where('user_id', $id)
+            ->get()
+            ->groupBy('status')
+            ->map(function ($group) {
+                return $group->map(function ($booking) {
+                    return [
+                        'id' => $booking->id,
+                        'service' => [
+                            'id' => $booking->service->id,
+                            'title' => $booking->service->title,
+                            'description' => $booking->service->description,
+                        ],
+                        'option' => $booking->option,
+                        'day' => $booking->day,
+                        'time' => $booking->time,
+                        'note' => $booking->note,
+                        'status' => $booking->status,
+                    ];
+                });
+            });
+
         return response()->json([
             'status' => 'success',
             'message' => 'Service retrieved successfully',
@@ -51,21 +77,7 @@ class BookingController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
             ],
-            'service' => $booking->map(function ($booking) {
-                return [
-                    'id'=> $booking->id,
-                    'service' => [
-                        'id' => $booking->service->id,
-                        'title' => $booking->service->title,
-                        'description' => $booking->service->description,
-                    ],
-                    'option' => $booking->option,
-                    'day' => $booking->day,
-                    'time' => $booking->time,
-                    'note' => $booking->note,
-                    'status' => $booking->status,
-                ];
-            }),
+            'services' => $bookings,
         ], 200);
     }
 
