@@ -10,7 +10,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::middleware([JwtMiddleware::class])->group(function () {
 
     Route::middleware(['permission:show user'])->group(function () {
-        Route::get('/user', [UserController::class, 'showUser']);
+        Route::get('/users', [UserController::class, 'showAllUser']);
     });
     Route::middleware(['permission:create role'])->group(function () {
         Route::post('/role', [RoleController::class, 'storeRole']);
@@ -32,10 +32,11 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::get('/service/{id}', [ServiceController::class, 'showService']);
     Route::post('/service', [ServiceController::class, 'storeService']);
     Route::put('/service/{id}', [ServiceController::class, 'editService']);
-    
+
     Route::post('/service/{id}/book', [BookingController::class, 'bookService']);
     Route::get('/booking', [BookingController::class, 'showAllBooking']);
     Route::get('/booking/{id}', [BookingController::class, 'showBooking']);
 
+    Route::get('/user', [UserController::class, 'userProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });

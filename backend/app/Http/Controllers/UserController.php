@@ -6,10 +6,11 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
-    public function showUser()
+    public function showAllUser()
     {
         $users = User::with('roles')->get();
 
@@ -89,5 +90,21 @@ class UserController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+    public function userProfile()
+    {
+        $user = Auth::user();
+
+        return response()->json([
+            'status' => 'success',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'status' => $user->status,
+                'email' => $user->email,
+                'role' => $user->roles->pluck('name')->toArray(),
+                'permissions' => $user->permissions->pluck('name')->toArray(), 
+            ],
+        ], 200);
     }
 }
