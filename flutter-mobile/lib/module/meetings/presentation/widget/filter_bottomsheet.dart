@@ -1,8 +1,8 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 
 class FilterBottomSheet {
   static void show(BuildContext context) {
@@ -24,10 +24,11 @@ class _FilterContentState extends State<_FilterContent> {
   String? _selectedValue;
 
   final List<Map<String, String>> filters = [
-    {'value': 'all', 'label': 'Show All'},
-    {'value': 'new', 'label': 'New Items'},
-    {'value': 'popular', 'label': 'Popular'},
-    {'value': 'featured', 'label': 'Featured'},
+    {'value': 'all', 'label': 'All Appointments'},
+    {'value': 'today', 'label': 'Today'},
+    {'value': 'weekly', 'label': '1 Week Ago'},
+    {'value': 'monthly', 'label': '30 Days Ago'},
+    {'value': 'lastThreeMonths', 'label': '90 Days Ago'},
   ];
 
   @override
@@ -70,90 +71,70 @@ class _FilterContentState extends State<_FilterContent> {
               },
             );
           }),
-          SizedBox(
-            height: 12,
-          ),
+          SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    setState(() {
+                      _selectedValue = null;
+                    });
+                    Navigator.pop(context, null);
+                  },
                   style: ElevatedButton.styleFrom(
-                    splashFactory: NoSplash.splashFactory,
                     backgroundColor: ColorPallete.primary50,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                     elevation: 0,
-                  ),
-                  child: Container(
-                    alignment: Alignment.center,
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: ColorPallete.primary50,
-                      borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Text(
+                    'Reset',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: ColorPallete.primaryColor,
                     ),
-                    child: TextButton(
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          'Reset',
-                          style: GoogleFonts.ubuntu(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: ColorPallete.primaryColor,
-                          ),
-                        )),
                   ),
                 ),
               ),
-              SizedBox(
-                width: 16.0,
-              ),
+              SizedBox(width: 16.0),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    if (_selectedValue != null) {
+                      context.read<BookingBloc>().add(
+                            FilterBookAppointmentEvent(
+                              filterType: _selectedValue,
+                            ),
+                          );
+                    }
+                    Navigator.pop(context, _selectedValue);
+                  },
                   style: ElevatedButton.styleFrom(
-                    splashFactory: NoSplash.splashFactory,
                     backgroundColor: ColorPallete.primaryColor,
                     shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                     elevation: 0,
-                  ),
-                  child: Container(
-                    alignment: Alignment.center,
                     padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: ColorPallete.primaryColor,
-                      borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Text(
+                    'Apply',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
-                    child: TextButton(
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        onPressed: () {},
-                        child: Text(
-                          'Apply',
-                          style: GoogleFonts.ubuntu(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        )),
                   ),
                 ),
-              )
+              ),
             ],
-          )
+          ),
         ],
       ),
     );

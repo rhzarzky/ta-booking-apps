@@ -6,7 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SuccessState extends StatelessWidget {
-  const SuccessState({super.key});
+  final int bookingId;
+
+  const SuccessState({
+    super.key,
+    required this.bookingId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +29,7 @@ class SuccessState extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Image.asset(
                   'assets/image/sucess-illus.png',
-                  width: 350, 
+                  width: 350,
                 ),
               ),
               const SizedBox(height: 16),
@@ -33,8 +38,7 @@ class SuccessState extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start, 
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Thanks, your booking has been recorded.',
@@ -60,7 +64,9 @@ class SuccessState extends StatelessWidget {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const DetailMeetingSuccess(),
+                            builder: (context) => DetailMeetingSuccess(
+                              bookingId: bookingId,
+                            ),
                           ),
                         ),
                         child: Container(

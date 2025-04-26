@@ -1,6 +1,7 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_screen.dart';
 import 'package:Appointly/module/meetings/presentation/screen/history_meeting.dart';
@@ -101,7 +102,10 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => HistoryMeetings(),
+                    builder: (context) => BlocProvider.value(
+                      value: context.read<BookingBloc>(),
+                      child: const HistoryMeetings(),
+                    ),
                   ),
                 );
               },

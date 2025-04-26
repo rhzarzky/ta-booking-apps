@@ -190,7 +190,7 @@ class CardAppointment extends StatelessWidget {
             ),
             const SizedBox(width: 8.0),
             Flexible(
-              child: _buildDetailItem('Duration:', duration),
+              child: _buildDetailItem('Time:', duration),
             ),
           ],
         ),

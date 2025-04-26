@@ -1,13 +1,21 @@
-import 'package:Appointly/core/common/main_tab_screen.dart';
-import 'package:Appointly/core/theme/color_pallete.dart';
-import 'package:Appointly/module/meetings/presentation/widget/dropdown_time.dart';
+import 'package:Appointly/module/meetings/presentation/widget/expanded_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:pulsator/pulsator.dart';
+import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
+import 'package:Appointly/core/common/main_tab_screen.dart';
+import 'package:Appointly/module/meetings/model/booking_detail_model.dart';
 
 class DetailMeetingSuccess extends StatefulWidget {
-  const DetailMeetingSuccess({super.key});
+  final int bookingId;
+
+  const DetailMeetingSuccess({
+    super.key,
+    required this.bookingId,
+  });
 
   @override
   State<DetailMeetingSuccess> createState() => _DetailMeetingSuccessState();
@@ -16,11 +24,7 @@ class DetailMeetingSuccess extends StatefulWidget {
 class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     with SingleTickerProviderStateMixin {
   DateTime? selectedDate;
-  // TimeOfDay? selectedTime;
-  String selectedTime = '08:00 AM';
-
   AnimationController? _controller;
-  Animation<double>? _animation;
 
   @override
   void initState() {
@@ -28,17 +32,14 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(
-        milliseconds: 1000,
-      ),
+      duration: Duration(milliseconds: 1000),
     );
 
-    _animation = Tween<double>(begin: 1.0, end: 1.2).animate(CurvedAnimation(
-      parent: _controller!,
-      curve: Curves.easeInOut,
-    ));
-
     _controller!.repeat(reverse: true);
+
+    context
+        .read<BookingBloc>()
+        .add(BookAppointmentByIdEvent(idBooking: widget.bookingId));
   }
 
   @override
@@ -47,34 +48,35 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     super.dispose();
   }
 
-  Future<void> _selectDate() async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
-    );
-
-    if (pickedDate != null && pickedDate != selectedDate) {
-      setState(() {
-        selectedDate = pickedDate;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildBackgroundImage(),
-            _buildContent(),
-          ],
-        ),
-      ),
+    return BlocBuilder<BookingBloc, BookingState>(
+      builder: (context, state) {
+        if (state is BookingLoading) {
+          return Center(child: CircularProgressIndicator());
+        } else if (state is BookingLoaded) {
+          final booking = state.bookingDetail!;
+          return Scaffold(
+            appBar: _buildAppBar(),
+            backgroundColor: Colors.white,
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildBackgroundImage(),
+                  _buildContent(booking),
+                ],
+              ),
+            ),
+          );
+        } else if (state is BookingFailure) {
+          return Center(
+            child: Text('Error: ${state.failure}'),
+          );
+        }
+        return Center(
+          child: Text('No booking details found'),
+        );
+      },
     );
   }
 
@@ -100,21 +102,21 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BookingDetail booking) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTitleSection(),
+          _buildTitleSection(booking.service),
           SizedBox(height: 24),
-          _buildScheduleSection(),
+          _buildScheduleSection(booking),
           SizedBox(height: 16),
-          _buildLocationSection(),
+          _buildLocationSection(booking.option),
           SizedBox(height: 16),
-          _buildStatus(),
+          _buildStatus(booking.status),
           SizedBox(height: 16),
-          _buildNoteSection(),
+          if (booking.note != null) _buildNoteSection(booking.note!),
           SizedBox(height: 16),
           _buildButtonSend(),
         ],
@@ -122,32 +124,27 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildTitleSection() {
+  Widget _buildTitleSection(Service service) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Service Electric 24/7 Available',
+          service.title,
           style: GoogleFonts.ubuntu(
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: ColorPallete.darkBlack,
           ),
         ),
-        SizedBox(height: 8),
-        Text(
-          'Service Electric 24/7 Available description.',
-          style: GoogleFonts.ubuntu(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: ColorPallete.darkGreySilver,
-          ),
-        ),
+        ExpandedText(
+          text: service.description,
+          maxLine: 120,
+        )
       ],
     );
   }
 
-  Widget _buildScheduleSection() {
+  Widget _buildScheduleSection(BookingDetail booking) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -165,111 +162,64 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           decoration: BoxDecoration(
             color: ColorPallete.concrete50,
             borderRadius: BorderRadius.circular(8),
-          ), // Added closing parenthesis for `decoration`
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDatePicker(),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDatePicker() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildPickerButton(
-            onTap: _selectDate,
-            iconPath: 'assets/icons/icon-calendar.svg',
-            text: selectedDate != null
-                ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
-                : 'Select Date',
-          ),
-        ),
-        SizedBox(width: 8),
-        Expanded(
-          child: DropdownTime(
-            selectedValue: selectedTime,
-            items: ['08:00 AM', '09:00 AM', '10:00 AM'],
-            onChanged: (value) {
-              setState(() {
-                selectedTime = value!;
-              });
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPickerButton({
-    required VoidCallback onTap,
-    required String iconPath,
-    required String text,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(width: 2, color: ColorPallete.backgroundBody),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SvgPicture.asset(iconPath, height: 20),
-            SizedBox(width: 8),
-            Text(
-              text,
-              style: GoogleFonts.ubuntu(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: ColorPallete.darkBlack,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Location',
-          style: GoogleFonts.ubuntu(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: ColorPallete.darkBlack,
-          ),
-        ),
-        SizedBox(height: 8),
-        Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: ColorPallete.concrete50,
-            borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
               Expanded(
-                child: _buildLocationButton(
-                  iconPath: 'assets/icons/icon-location.svg',
-                  text: 'In-person',
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                        width: 2, color: ColorPallete.backgroundBody),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset('assets/icons/icon-calendar.svg',
+                          height: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        booking.day,
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: ColorPallete.darkBlack,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(width: 8),
               Expanded(
-                child: _buildLocationButton(
-                  iconPath: 'assets/icons/icon-video.svg',
-                  text: 'Online',
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                        width: 2, color: ColorPallete.backgroundBody),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        booking.time,
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: ColorPallete.darkBlack,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -279,7 +229,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildStatus() {
+  Widget _buildStatus(String status) {
     return Column(
       children: [
         Stack(
@@ -314,7 +264,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                           ),
                         ),
                         child: Text(
-                          'Status',
+                          status,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.ubuntu(
                             fontSize: 24,
@@ -325,33 +275,6 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                       ),
                     ],
                   ),
-                  // Pulsating widget in the top-right corner
-                  Positioned(
-                    top: -4,
-                    right: -4,
-                    child: SizedBox(
-                      width: 50, // Explicit width
-                      height: 50, // Explicit height
-                      child: Pulsator(
-                        style: PulseStyle(
-                          color: Colors.blue,
-                          borderColor: Colors.white,
-                          borderWidth: 2.0,
-                          gradientStyle: PulseGradientStyle(
-                            start: 0.5,
-                            startColor: Colors.white,
-                            reverseColors: true,
-                          ),
-                        ),
-                        count: 5,
-                        duration: Duration(seconds: 2),
-                        repeat: 0,
-                        startFromScratch: true,
-                        autoStart: true,
-                        fit: PulseFit.contain,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -361,36 +284,62 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildLocationButton({
-    required String iconPath,
-    required String text,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(width: 2, color: ColorPallete.backgroundBody),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SvgPicture.asset(iconPath, height: 24),
-          SizedBox(width: 8),
-          Text(
-            text,
-            style: GoogleFonts.ubuntu(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: ColorPallete.darkBlack,
-            ),
+  Widget _buildLocationSection(String option) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Location',
+          style: GoogleFonts.ubuntu(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: ColorPallete.darkBlack,
           ),
-        ],
-      ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: ColorPallete.concrete50,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(
+                        width: 2, color: ColorPallete.backgroundBody),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset('assets/icons/icon-location.svg',
+                          height: 24),
+                      SizedBox(width: 8),
+                      Text(
+                        option,
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: ColorPallete.darkBlack,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildNoteSection() {
+  Widget _buildNoteSection(String note) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -404,19 +353,17 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
         ),
         SizedBox(height: 8),
         Container(
-          height: 120,
+          width: double.infinity,
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: ColorPallete.concrete50,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: TextField(
-            cursorColor: ColorPallete.primaryColor,
-            maxLines: null,
-            keyboardType: TextInputType.multiline,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(borderSide: BorderSide.none),
-              hintText: 'Optional Notes',
-              contentPadding: EdgeInsets.all(16),
+          child: Text(
+            note,
+            style: GoogleFonts.ubuntu(
+              fontSize: 14,
+              color: ColorPallete.darkBlack,
             ),
           ),
         ),

@@ -2,7 +2,9 @@ import 'package:Appointly/core/common/main_tab_screen.dart';
 import 'package:Appointly/module/auth/presentation/bloc/auth_bloc.dart';
 import 'package:Appointly/module/auth/presentation/screen/auth_signIn.dart';
 import 'package:Appointly/module/auth/repository/auth_repository.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
+import 'package:Appointly/module/meetings/repository/historyBooking_repository.dart';
 import 'package:Appointly/module/meetings/repository/service_repository.dart';
 import 'package:Appointly/module/onboarding/presentation/screen/onboarding_screen.dart';
 import 'package:Appointly/module/onboarding/repository/onboarding_repository.dart';
@@ -92,6 +94,11 @@ class _MainAppState extends State<MainApp> {
         ),
         BlocProvider<NotificationBloc>(
           create: (context) => NotificationBloc(),
+        ),
+        BlocProvider(
+          create: (context) => BookingBloc(
+            historybookingRepository: HistorybookingRepository(),
+          ),
         ),
       ],
       child: MaterialApp(

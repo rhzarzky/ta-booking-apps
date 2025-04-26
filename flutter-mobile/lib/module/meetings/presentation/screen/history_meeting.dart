@@ -1,9 +1,12 @@
 // ignore_for_file: depend_on_referenced_packages
 
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/model/booking_model.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/widget/card_appointment.dart';
 import 'package:Appointly/module/meetings/presentation/widget/filter_bottomsheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -15,90 +18,146 @@ class HistoryMeetings extends StatefulWidget {
 }
 
 class _HistoryMeetingsState extends State<HistoryMeetings> {
-  // Dummy data for demonstration
-  final List<Map<String, String>> approvedAppointments = [
-    {
-      'title': 'Team Meeting',
-      'description':
-          'Discuss project updates Discuss project updates Discuss project updates Discuss project updates Discuss project updates Discuss project updates Discuss project updates',
-      'date': '2023-10-15',
-      'location': 'Conference Room A',
-      'duration': '2 hours',
-      'note': 'Bring your laptops',
-      'status': 'Approved',
-    },
-    {
-      'title': 'Client Call',
-      'description': 'Discuss contract details',
-      'date': '2023-10-16',
-      'location': 'Online',
-      'duration': '1 hour',
-      'note': 'Prepare the contract draft',
-      'status': 'approved',
-    },
-    {
-      'title': 'Client Call',
-      'description': 'Discuss contract details',
-      'date': '2023-10-16',
-      'location': 'Online',
-      'duration': '1 hour',
-      'note': 'Prepare the contract draft',
-      'status': 'approved',
-    },
-    {
-      'title': 'Client Call',
-      'description': 'Discuss contract details',
-      'date': '2023-10-16',
-      'location': 'Online',
-      'duration': '1 hour',
-      'note': 'Prepare the contract draft',
-      'status': 'approved',
-    },
-    {
-      'title': 'Client Call',
-      'description': 'Discuss contract details',
-      'date': '2023-10-16',
-      'location': 'Online',
-      'duration': '1 hour',
-      'note': 'Prepare the contract draft',
-      'status': 'approved',
-    },
-  ];
-
-  final List<Map<String, String>> pendingAppointments = [
-    {
-      'title': 'Interview',
-      'description': 'Candidate screening',
-      'date': '2023-10-17',
-      'location': 'HR Office',
-      'duration': '1.5 hours',
-      'note': 'Review the resume beforehand',
-      'status': 'pending',
-    },
-  ];
-
-  final List<Map<String, String>> rejectedAppointments = [
-    {
-      'title': 'Workshop',
-      'description': 'Flutter workshop for beginners',
-      'date': '2023-10-18',
-      'location': 'Training Room',
-      'duration': '3 hours',
-      'note': 'Cancelled due to low attendance',
-      'status': 'declined',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Fetch bookings when screen loads
+    context.read<BookingBloc>().add(GetBookingEvent());
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColorPallete.backgroundBody,
       appBar: _buildAppBar(context),
-      body: _buildTabBar(),
+      body: BlocBuilder<BookingBloc, BookingState>(
+        builder: (context, state) {
+          if (state is BookingLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is BookingLoaded) {
+            return _buildTabBar(
+              approved: state.approved,
+              pending: state.pending,
+              declined: state.declined,
+            );
+          } else if (state is BookingFailure) {
+            return Center(child: Text(state.failure));
+          }
+          return const Center(child: Text('No bookings found'));
+        },
+      ),
     );
   }
 
-  Widget _buildTabBar() {
+  Widget _emptyBooking({required String title, required String message}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 80.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Center(
+            child: Image.asset(
+              'assets/image/not-found-history.png',
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 16, right: 16),
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.start,
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: ColorPallete.darkBlack,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    message,
+                    textAlign: TextAlign.start,
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: ColorPallete.darkGreySilver,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppointmentList(List<Booking> appointments, String tabName) {
+    if (appointments.isEmpty) {
+      String title;
+      String message;
+      switch (tabName) {
+        case 'Approved':
+          title = 'No Approved Meetings';
+          message =
+              'You don\'t have any approved meetings yet. They will appear here once approved.';
+          break;
+        case 'Under Review':
+          title = 'No Pending Meetings';
+          message =
+              'You don\'t have any meetings under review. Book a meeting to get started!';
+          break;
+        case 'Declined':
+          title = 'No Declined Meetings';
+          message = 'Good news! You don\'t have any declined meetings.';
+          break;
+        default:
+          title = 'No Meetings Found';
+          message = 'No meetings found in this category.';
+      }
+      return _emptyBooking(title: title, message: message);
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: appointments.length,
+      itemBuilder: (context, index) {
+        final booking = appointments[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: CardAppointment(
+            titleCard: booking.service.title,
+            descCard: booking.service.description,
+            dateCard: booking.service.day,
+            locationCard: booking.service.option,
+            durationCard: booking.service.time,
+            linkCard: () {
+              // Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //         builder: (context) => DetailMeetingScreen(serviceId: service.id,)));
+            },
+            noteCard: '',
+            statusCard: booking.service.status,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTabBar({
+    required List<Booking> approved,
+    required List<Booking> pending,
+    required List<Booking> declined,
+  }) {
     return DefaultTabController(
       length: 3,
       child: Column(
@@ -107,9 +166,9 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
           Expanded(
             child: TabBarView(
               children: [
-                _buildAppointmentList(approvedAppointments),
-                _buildAppointmentList(pendingAppointments),
-                _buildAppointmentList(rejectedAppointments),
+                _buildAppointmentList(approved, 'Approved'),
+                _buildAppointmentList(pending, 'Under Review'),
+                _buildAppointmentList(declined, 'Declined'),
               ],
             ),
           ),
@@ -140,34 +199,6 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
           Tab(text: 'Declined'),
         ],
       ),
-    );
-  }
-
-  Widget _buildAppointmentList(List<Map<String, String>> appointments) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
-      itemCount: appointments.length,
-      itemBuilder: (context, index) {
-        final appointment = appointments[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12.0),
-          child: CardAppointment(
-            titleCard: appointment['title']!,
-            descCard: appointment['description']!,
-            dateCard: appointment['date']!,
-            locationCard: appointment['location']!,
-            durationCard: appointment['duration']!,
-            linkCard: () {
-              // Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //         builder: (context) => DetailMeetingScreen(serviceId: service.id,)));
-            },
-            noteCard: appointment['note']!,
-            statusCard: appointment['status']!,
-          ),
-        );
-      },
     );
   }
 

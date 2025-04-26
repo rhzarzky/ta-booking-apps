@@ -132,6 +132,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
             return ListView.builder(
               cacheExtent: 500.0,
+              padding: EdgeInsets.only(
+                bottom: 8.0,
+                top: 16.0,
+                left: 16.0,
+                right: 16.0,
+              ),
               itemCount: filteredNotifications.length,
               itemBuilder: (context, index) {
                 final item = filteredNotifications[index];

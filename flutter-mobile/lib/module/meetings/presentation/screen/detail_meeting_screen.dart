@@ -839,8 +839,14 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
             );
 
             // Show success dialog
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => SuccessState()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SuccessState(
+                  bookingId: widget.serviceId,
+                ),
+              ),
+            );
           }
         },
         child: Text(
