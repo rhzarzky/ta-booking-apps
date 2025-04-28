@@ -56,3 +56,14 @@ export const logout = async () => {
     throw error;
   }
 };
+
+// Fungsi fetchProfile
+export const fetchProfile = async () => {
+  try {
+    const response = await api.get('/user')
+    return response.data
+  } catch (error) {
+    console.error("Fetch profile error:", error.response?.data || error.message);
+    throw error;
+  }
+};

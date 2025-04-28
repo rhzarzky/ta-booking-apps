@@ -78,7 +78,7 @@ export default {
       console.log('Saved profile data:', this.form);
 
       // Redirect ke halaman profile (jika pakai vue-router)
-      this.$router.push('/profile');
+      this.$router.push('/client/profile');
     },
   },
 };
