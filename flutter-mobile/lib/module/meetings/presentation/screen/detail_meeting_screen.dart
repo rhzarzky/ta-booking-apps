@@ -349,7 +349,12 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
       return Container(
         height: 300,
         color: ColorPallete.concrete50,
-        child: Center(child: Text('Tidak ada gambar')),
+        child: Center(
+          child: Image.asset(
+            'assets/image/404page.png',
+            fit: BoxFit.cover,
+          ),
+        ),
       );
     }
 
@@ -661,7 +666,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                                 height: 24),
                             const SizedBox(width: 8.0),
                             Text(
-                              'In Person',
+                              'Offline',
                               style: GoogleFonts.ubuntu(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,
@@ -714,8 +719,11 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                             SizedBox(
                               width: 8.0,
                             ),
-                            SvgPicture.asset('assets/icons/icon-video.svg',
-                                height: 24),
+                            Icon(
+                              Icons.wifi_tethering_rounded,
+                              color: ColorPallete.darkBlack,
+                              size: 24,
+                            ),
                             SizedBox(width: 8.0),
                             Text(
                               'Online',

@@ -14,8 +14,24 @@ class ColorPallete {
   static const Color primaryDark = Color(0xff4028AB);
   static const Color primary400 = Color(0xff7D79FF);
   static const Color primary50 = Color(0xffEDEFFF);
+  static const Color primary200 = Color(0xffD0C6FF);
   static const Color secondColor = Color(0xffFDC743);
   static const Color accentColor = Color(0xffCBD87D);
   static const Color accentDark = Color(0xff3E481F);
   static const Color accent400 = Color(0xffB4C655);
+  static LinearGradient get gradientPrimary => LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            ColorPallete.primaryDark,
+            ColorPallete.primary400,
+          ]);
+
+  static LinearGradient get gradientAccent => LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            ColorPallete.primary200,
+            ColorPallete.primary50,
+          ]);
 }

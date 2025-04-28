@@ -128,6 +128,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
             Expanded(
               child: BlocBuilder<ServiceBloc, ServiceState>(
                 builder: (context, state) {
+                  // In MeetingsScreen where you create skeleton placeholders
                   if (state is ServiceLoading) {
                     return Skeletonizer(
                       effect: ShimmerEffect(
@@ -142,11 +143,16 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                             return Padding(
                               padding: EdgeInsets.only(bottom: 8.0),
                               child: CardService(
-                                headService: 'Loading...',
-                                descService: 'Loading...',
-                                imageService: '',
-                                timeService: [],
-                                provideService: [],
+                                headService: 'Loading Service',
+                                descService: 'Service description loading...',
+                                imageService:
+                                    '', // Empty is fine, your widget handles it
+                                timeService: [
+                                  'Monday'
+                                ], // Provide at least one item in the list
+                                provideService: [
+                                  'Online'
+                                ], // Provide at least one item
                                 onTap: () {},
                               ),
                             );

@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:pulsator/pulsator.dart';
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/core/common/main_tab_screen.dart';
 import 'package:Appointly/module/meetings/model/booking_detail_model.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class DetailMeetingSuccess extends StatefulWidget {
   final int bookingId;
@@ -25,6 +26,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     with SingleTickerProviderStateMixin {
   DateTime? selectedDate;
   AnimationController? _controller;
+  final TextEditingController _controllerText = TextEditingController();
 
   @override
   void initState() {
@@ -56,6 +58,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           return Center(child: CircularProgressIndicator());
         } else if (state is BookingLoaded) {
           final booking = state.bookingDetail!;
+          _controllerText.text = booking.option ?? '';
           return Scaffold(
             appBar: _buildAppBar(),
             backgroundColor: Colors.white,
@@ -112,9 +115,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           SizedBox(height: 24),
           _buildScheduleSection(booking),
           SizedBox(height: 16),
-          _buildLocationSection(booking.option),
-          SizedBox(height: 16),
-          _buildStatus(booking.status),
+          _buildLocationWithStatus(booking),
           SizedBox(height: 16),
           if (booking.note != null) _buildNoteSection(booking.note!),
           SizedBox(height: 16),
@@ -145,6 +146,14 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
   }
 
   Widget _buildScheduleSection(BookingDetail booking) {
+    String formattedDate = '';
+    try {
+      final date = DateTime.parse(booking.day);
+      formattedDate = DateFormat('d MMMM yyyy').format(date);
+    } catch (e) {
+      formattedDate = 'Invalid date';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -229,65 +238,11 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildStatus(String status) {
-    return Column(
-      children: [
-        Stack(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: ColorPallete.concrete50,
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Stack(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(
-                            width: 2,
-                            color: ColorPallete.backgroundBody,
-                          ),
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(12.0),
-                          ),
-                        ),
-                        child: Text(
-                          status,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.ubuntu(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: ColorPallete.primaryColor,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLocationSection(String option) {
+  Widget _buildLocationWithStatus(BookingDetail booking) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Location title
         Text(
           'Location',
           style: GoogleFonts.ubuntu(
@@ -297,39 +252,131 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           ),
         ),
         SizedBox(height: 8),
+        // Container for both status and location
         Container(
           padding: EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: ColorPallete.concrete50,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(
-                        width: 2, color: ColorPallete.backgroundBody),
-                    borderRadius: BorderRadius.circular(12),
+              // Status section
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SvgPicture.asset('assets/icons/icon-location.svg',
-                          height: 24),
-                      SizedBox(width: 8),
-                      Text(
-                        option,
-                        style: GoogleFonts.ubuntu(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          color: ColorPallete.darkBlack,
+                ),
+                child: Stack(
+                  children: [
+                    Align(
+                      child: Container(
+                        width: double.maxFinite,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 6.0),
+                        decoration: BoxDecoration(
+                          color: ColorPallete.primaryColor,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(12.0),
+                            topRight: Radius.circular(12.0),
+                            bottomRight: Radius.circular(4.0),
+                            topLeft: Radius.circular(4.0),
+                          ),
+                        ),
+                        child: Text(
+                          booking.status,
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+              // Location section
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.only(
+                  top: 12,
+                  left: 12,
+                  right: 12,
+                  bottom: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
                   ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        booking.option == 'Offline'
+                            ? SvgPicture.asset(
+                                'assets/icons/icon-location.svg',
+                                height: 24,
+                              )
+                            : Icon(
+                                Icons.wifi_tethering_rounded,
+                                color: ColorPallete.darkBlack,
+                                size: 24,
+                              ),
+                        SizedBox(width: 8),
+                        Text(
+                          booking.option,
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: ColorPallete.darkBlack,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 12,
+                    ),
+                    Container(
+                        width: double.infinity,
+                        height: 80,
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: ColorPallete.concrete50,
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                        child: Column(
+                          children: [
+                            InkWell(
+                              onTap: () async {
+                                final textToCopy = _controllerText.text;
+                                if (textToCopy.isNotEmpty) {
+                                  await Clipboard.setData(
+                                      ClipboardData(text: textToCopy));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Copied!')),
+                                  );
+                                }
+                              },
+                              child: Text(
+                                'Tap to copy: ${booking.option == 'Offline' ? booking.option ?? 'Online' : 'https://zoom.us/j/123456789'}',
+                                style: TextStyle(
+                                  color: ColorPallete.greySilverChalice,
+                                ),
+                                textAlign: TextAlign.left,
+                              ),
+                            ),
+                          ],
+                        ))
+                  ],
                 ),
               ),
             ],

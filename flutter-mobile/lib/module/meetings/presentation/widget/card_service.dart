@@ -34,17 +34,25 @@ class CardService extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.0),
-                image: DecorationImage(
-                  image: imageService.startsWith('http')
-                      ? NetworkImage(imageService) as ImageProvider
-                      : AssetImage(imageService),
-                  fit: BoxFit.cover,
-                ),
-              ),
               width: 400,
               height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12.0),
+                image: (imageService != null && imageService.isNotEmpty)
+                    ? DecorationImage(
+                        image: imageService.startsWith('http')
+                            ? NetworkImage(imageService)
+                            : AssetImage(imageService) as ImageProvider,
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child: (imageService == null || imageService.isEmpty)
+                  ? Image.asset(
+                      'assets/image/404page.png',
+                      fit: BoxFit.contain,
+                    )
+                  : null,
             ),
             SizedBox(height: 16),
             Column(
@@ -73,106 +81,212 @@ class CardService extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4.0),
-                  color: ColorPallete.backgroundBody),
-              padding: EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Available Now',
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: ColorPallete.darkBlack,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            provideService.join(', '),
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: ColorPallete.greenMalachite,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 40,
-                        child: VerticalDivider(
-                          thickness: 1,
-                          color: ColorPallete.greySilverChalice,
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Schedule From',
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: ColorPallete.darkBlack,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            timeService.join(', '),
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: ColorPallete.greenMalachite,
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
+            SizedBox(height: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        ColorPallete.primaryDark,
+                        ColorPallete.primary400,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24.0),
                   ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: onTap,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorPallete.primaryColor,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                  child: Container(
+                    margin: EdgeInsets.all(1.5), // Border thickness
+                    decoration: BoxDecoration(
+                      gradient: ColorPallete.gradientAccent,
+                      borderRadius: BorderRadius.circular(22.0),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 8.0,
+                        horizontal: 16.0,
                       ),
                       child: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center, // Pusatkan elemen
+                        mainAxisSize: MainAxisSize
+                            .min, // <<< ADD THIS to make container wrap content
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Text(
-                            'Book Appointment',
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(width: 8),
                           Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            color: Colors.white,
-                            size: 20,
+                            Icons.calendar_today_outlined,
+                            color: ColorPallete.primaryDark,
+                            size: 16,
+                          ),
+                          SizedBox(width: 4),
+                          // In CardService class
+                          Text(
+                            'Beginning on : ${timeService.isNotEmpty ? timeService.first : "N/A"}',
+                            style: GoogleFonts.ubuntu(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: ColorPallete.primaryDark,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  )
-                ],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (provideService.contains('Offline'))
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              ColorPallete.primaryDark,
+                              ColorPallete.primary400,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24.0),
+                        ),
+                        child: Container(
+                          margin: EdgeInsets.all(1.5),
+                          decoration: BoxDecoration(
+                            gradient: ColorPallete.gradientAccent,
+                            borderRadius: BorderRadius.circular(22.0),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8.0,
+                              horizontal: 16.0,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.pin_drop_outlined,
+                                  color: ColorPallete.primaryDark,
+                                  size: 16,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Offline',
+                                  style: GoogleFonts.ubuntu(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: ColorPallete.primaryDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (provideService.contains('Offline') &&
+                        provideService.contains('Online'))
+                      SizedBox(width: 8),
+                    if (provideService.contains('Online'))
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              ColorPallete.primaryDark,
+                              ColorPallete.primary400,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24.0),
+                        ),
+                        child: Container(
+                          margin: EdgeInsets.all(1.5),
+                          decoration: BoxDecoration(
+                            gradient: ColorPallete.gradientAccent,
+                            borderRadius: BorderRadius.circular(22.0),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: 8.0,
+                              horizontal: 16.0,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.wifi_tethering_rounded,
+                                  color: ColorPallete.primaryDark,
+                                  size: 16,
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Online',
+                                  style: GoogleFonts.ubuntu(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: ColorPallete.primaryDark,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                )
+              ],
+            ),
+            SizedBox(
+              height: 20,
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      ColorPallete.primaryDark,
+                      ColorPallete.primary400,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ElevatedButton(
+                  onPressed: onTap,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Book Appointment',
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             )
           ],
