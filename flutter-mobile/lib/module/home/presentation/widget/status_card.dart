@@ -84,7 +84,7 @@ class StatusCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '${difference > 0 ? '+' : ''}$difference',
+                      '${difference >= 0 ? '+' : ''}$difference',
                       style: GoogleFonts.ubuntu(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,

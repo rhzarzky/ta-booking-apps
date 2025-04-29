@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/meetings/presentation/widget/empty_state.dart';
 import 'package:Appointly/module/notification/presentation/bloc/notification_bloc.dart';
 import 'package:Appointly/module/notification/presentation/widget/notification_item.dart';
@@ -12,6 +13,7 @@ import 'package:logger/logger.dart';
 import 'package:Appointly/main.dart' show flutterLocalNotificationsPlugin;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 
 class NotificationScreen extends StatefulWidget {
   final String userId;
@@ -36,6 +38,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
   void initState() {
     super.initState();
     _initFirebaseMessaging();
+
+  
   }
 
   void _initFirebaseMessaging() async {
@@ -83,12 +87,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
 
     context.read<NotificationBloc>().add(AddNotification(
-          title: title,
-          body: body,
-          status: 'pending',
-          time: DateTime.now().toString(),
-          userId: widget.userId,
-        ));
+        title: title,
+        body: body,
+        status: 'pending',
+        time: DateTime.now().toString(),
+        userId: widget.userId,
+    ));
   }
 
   @override
@@ -145,7 +149,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   title: item['title'] ?? '',
                   indicatorStatus: item['status'] ?? 'pending',
                   timeStamp: item['time'] ?? '',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetailMeetingSuccess(
+                          bookingId: item['bookingId'],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             );

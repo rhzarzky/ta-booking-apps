@@ -3,6 +3,7 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/model/booking_model.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/meetings/presentation/widget/card_appointment.dart';
 import 'package:Appointly/module/meetings/presentation/widget/filter_bottomsheet.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class HistoryMeetings extends StatefulWidget {
-  const HistoryMeetings({super.key});
+  final int bookingId;
+  const HistoryMeetings({
+    super.key,
+    required this.bookingId,
+  });
 
   @override
   State<HistoryMeetings> createState() => _HistoryMeetingsState();
@@ -23,6 +28,10 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
     super.initState();
     // Fetch bookings when screen loads
     context.read<BookingBloc>().add(GetBookingEvent());
+
+    context
+        .read<BookingBloc>()
+        .add(BookAppointmentByIdEvent(idBooking: widget.bookingId));
   }
 
   @override
@@ -140,10 +149,14 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             locationCard: booking.service.option,
             durationCard: booking.service.time,
             linkCard: () {
-              // Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //         builder: (context) => DetailMeetingScreen(serviceId: service.id,)));
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetailMeetingSuccess(
+                    bookingId: booking.service.id,
+                  ),
+                ),
+              );
             },
             noteCard: '',
             statusCard: booking.service.status,

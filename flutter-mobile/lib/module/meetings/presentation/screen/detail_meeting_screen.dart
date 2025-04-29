@@ -795,10 +795,10 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: 16,
-        vertical: 8,
+        vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: ColorPallete.primaryColor,
+        gradient: ColorPallete.gradientPrimary,
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: TextButton(

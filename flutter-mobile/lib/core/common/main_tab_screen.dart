@@ -17,6 +17,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
   // get userId from auth repository
   final AuthRepository _authRepository = AuthRepository();
   String userId = '';
+  int bookingId = 0;
   int _selectedIndex = 0;
   bool _isLoading = true;
 
@@ -52,8 +53,12 @@ class _MainTabScreenState extends State<MainTabScreen> {
     final List<Widget> screens = [
       HomeScreen(),
       // and pass it to meetings and notification screens
-      MeetingsScreen(userId: userId),
-      NotificationScreen(userId: userId),
+      MeetingsScreen(
+        userId: userId,
+        bookingId: bookingId,
+      ),
+      NotificationScreen(
+        userId: userId,      ),
       ProfileScreen(),
     ];
 

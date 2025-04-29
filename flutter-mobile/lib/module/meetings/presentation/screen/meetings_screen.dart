@@ -16,7 +16,12 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 class MeetingsScreen extends StatefulWidget {
   final String userId;
-  const MeetingsScreen({super.key, required this.userId});
+  final int bookingId;
+  const MeetingsScreen({
+    super.key,
+    required this.userId,
+    required this.bookingId,
+  });
 
   @override
   State<MeetingsScreen> createState() => _MeetingsScreenState();
@@ -104,7 +109,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                   MaterialPageRoute(
                     builder: (context) => BlocProvider.value(
                       value: context.read<BookingBloc>(),
-                      child: const HistoryMeetings(),
+                      child: HistoryMeetings(bookingId: widget.bookingId),
                     ),
                   ),
                 );

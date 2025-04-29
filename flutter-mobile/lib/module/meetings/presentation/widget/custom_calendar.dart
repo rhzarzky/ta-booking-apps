@@ -42,8 +42,6 @@ class _CustomCalendarState extends State<CustomCalendar> {
         dates.add(date);
       }
     } catch (e) {
-      
-
       _logger.e('Error parsing dates: $e');
     }
     return dates;
@@ -146,7 +144,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                           ),
                           markerDecoration: BoxDecoration(
                             color: ColorPallete.primary400,
-                            shape: BoxShape.circle,
+                            shape: BoxShape.rectangle,
                           ),
                           weekendTextStyle: TextStyle(
                             fontFamily: 'sourceSans3',
@@ -225,13 +223,15 @@ class _CustomCalendarState extends State<CustomCalendar> {
 
                             return Container(
                               decoration: BoxDecoration(
+                                shape: BoxShape.rectangle,
                                 color: isHighlighted
-                                    ? ColorPallete.primary400
+                                    ? ColorPallete.primary200
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               margin: EdgeInsets.all(4),
-                              padding: EdgeInsets.symmetric(vertical: 2),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 1, horizontal: 14),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -282,7 +282,91 @@ class _CustomCalendarState extends State<CustomCalendar> {
                 ),
               ),
             ),
-
+            Container(
+              margin: EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 8),
+              child: Row(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: ColorPallete.primaryColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Text(
+                        'Selected Date',
+                        style: GoogleFonts.sourceSans3(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: ColorPallete.darkBlack,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    width: 12,
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: ColorPallete.primary200,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Text(
+                        'Available Date',
+                        style: GoogleFonts.sourceSans3(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: ColorPallete.darkBlack,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    width: 12,
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: ColorPallete.darkBlack,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 8,
+                      ),
+                      Text(
+                        'Today',
+                        style: GoogleFonts.sourceSans3(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: ColorPallete.darkBlack,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 16,
+            ),
             // Bottom Selection Section
             Container(
               width: double.infinity,

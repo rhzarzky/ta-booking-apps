@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:Appointly/module/profile/model/profile_model.dart';
+import 'package:Appointly/module/profile/presentation/bloc/profile_bloc.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -37,6 +39,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'titleColor': ColorPallete.redCinnabar,
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Trigger profile loading when the screen initializes
+    context.read<ProfileBloc>().add(GetProfileEvent());
+  }
 
   void completeOnboarding() {
     setState(() {
@@ -121,11 +130,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Scaffold(
         backgroundColor: ColorPallete.backgroundBody,
         appBar: _buildAppBar(),
-        body: ListView(
-          children: [
-            _buildProfileHeader(),
-            _buildAccountSettings(),
-          ],
+        body: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, state) {
+            if (state is ProfileLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is ProfileError) {
+              return Center(child: Text('Error: ${state.failure}'));
+            } else if (state is ProfileLoaded) {
+              return ListView(
+                children: [
+                  _buildProfileHeader(state.profile),
+                  _buildAccountSettings(),
+                ],
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
         ),
       ),
     );
@@ -146,7 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(ProfileModel profile) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -174,7 +194,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'John Doe',
+                    profile.name,
                     style: GoogleFonts.ubuntu(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
@@ -183,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'JohnDoe@gmail.com',
+                    profile.email,
                     style: GoogleFonts.ubuntu(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,

@@ -37,6 +37,16 @@ class BookAppointmentEvent extends BookingEvent {
   });
 }
 
+class FilterBookingsByDateRangeEvent extends BookingEvent {
+  final DateTime startDate;
+  final DateTime endDate;
+
+  FilterBookingsByDateRangeEvent({
+    required this.startDate,
+    required this.endDate,
+  });
+}
+
 class FilterBookAppointmentEvent extends BookingEvent {
   final String? filterType;
 
