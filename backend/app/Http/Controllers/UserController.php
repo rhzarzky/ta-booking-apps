@@ -128,8 +128,8 @@ class UserController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8|confirmed',
             'current_password' => 'required_with:password|string',
-            'password' => 'sometimes|string|min:8|confirmed'
         ]);
 
         if ($validate->fails()) {
@@ -140,6 +140,7 @@ class UserController extends Controller
         }
 
         try {
+            // Handle password update
             if ($request->filled('password')) {
                 if (!Hash::check($request->current_password, $user->password)) {
                     return response()->json([
@@ -150,6 +151,7 @@ class UserController extends Controller
                 $user->password = Hash::make($request->password);
             }
 
+            // Update name and email
             if ($request->has('name')) {
                 $user->name = $request->name;
             }
@@ -158,23 +160,24 @@ class UserController extends Controller
                 $user->email = $request->email;
             }
 
+            // Handle image upload
             if ($request->hasFile('image')) {
                 $path = $request->file('image')->store('profile_images', 'public');
                 $user->image = $path;
-            }   
+            }
 
             $user->save();
 
             return response()->json([
-                'status'=> 'success',   
-                'message'=> 'Profile updated successfully',
+                'status' => 'success',
+                'message' => 'Profile updated successfully',
                 'user' => [
                     'id' => $user->id,
+                    'image' => $user->image ? asset('storage/' . $user->image) : null,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'image' => $user->image ? asset('storage/' . $user->image) : null,
                 ],
-            ],200);
+            ], 200);
 
         } catch (Exception $e) {
             return response()->json([
