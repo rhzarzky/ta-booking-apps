@@ -1,85 +1,91 @@
-<template>
-  <div class="p-8 bg-gray-100 min-h-screen">
-    <div class="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-md">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6">Edit Profile</h2>
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
 
-      <form @submit.prevent="saveProfile" class="space-y-6">
-        <!-- Full Name -->
-        <div>
-          <label for="fullName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-          <input
-            type="text"
-            id="fullName"
-            v-model="form.fullName"
-            class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            required
-          />
-        </div>
+const auth = useAuthStore();
+const router = useRouter();
 
-        <!-- Email -->
-        <div>
-          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input
-            type="email"
-            id="email"
-            v-model="form.email"
-            class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            required
-          />
-        </div>
+const name = ref('');
+const email = ref('');
+const image = ref(null);
+const current_password = ref('');
+const password = ref('');
+const password_confirmation = ref('');
 
-        <!-- Password -->
-        <div>
-          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input
-            type="password"
-            id="password"
-            v-model="form.password"
-            class="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Enter new password"
-          />
-        </div>
+onMounted(() => {
+  // Isi form dengan data user yang sudah login
+  if (auth.user) {
+    name.value = auth.user.name;
+    email.value = auth.user.email;
+  }
+});
 
-        <!-- Buttons -->
-        <div class="flex justify-end space-x-4">
-          <router-link
-            to="/profile"
-            class="px-4 py-2 border rounded-md text-gray-600 hover:bg-gray-100"
-          >
-            Cancel
-          </router-link>
-          <button
-            type="submit"
-            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-          >
-            Save Changes
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</template>
+const submitForm = async () => {
+  const formData = new FormData();
+  formData.append('name', name.value);
+  formData.append('email', email.value);
 
-<script>
-export default {
-  name: 'EditProfile',
-  data() {
-    return {
-      form: {
-        fullName: 'Alexandri Jeen',
-        email: 'AlexandriJeen@mail.com',
-        password: '',
-      },
-    };
-  },
-  methods: {
-    saveProfile() {
-      // Simulasikan proses penyimpanan data
-      console.log('Saved profile data:', this.form);
+  if (image.value) {
+    formData.append('image', image.value);
+  }
 
-      // Redirect ke halaman profile (jika pakai vue-router)
-      this.$router.push('/client/profile');
-    },
-  },
+  // Kirim password hanya jika ada perubahan
+  if (current_password.value && password.value && password_confirmation.value) {
+    formData.append('current_password', current_password.value);
+    formData.append('password', password.value);
+    formData.append('password_confirmation', password_confirmation.value);
+  }
+
+  try {
+    const res = await auth.updateProfile(formData);
+    console.log('Update success:', res);
+    router.push('/client/profile');
+  } catch (err) {
+    console.error('Failed to update profile:', err);
+  }
 };
 </script>
+
+<template>
+  <div class="p-8 max-w-xl mx-auto">
+    <h1 class="text-2xl font-semibold mb-6">Edit Profile</h1>
+    <form @submit.prevent="submitForm" class="space-y-4 bg-white p-6 rounded shadow">
+      <div>
+        <label class="block text-sm font-medium mb-1">Name</label>
+        <input v-model="name" type="text" class="w-full border rounded px-3 py-2" required />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Email</label>
+        <input v-model="email" type="email" class="w-full border rounded px-3 py-2" required />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Profile Image</label>
+        <input type="file" @change="e => image.value = e.target.files[0]" class="w-full" />
+      </div>
+
+      <hr class="my-4" />
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Current Password</label>
+        <input v-model="current_password" type="password" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">New Password</label>
+        <input v-model="password" type="password" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Confirm New Password</label>
+        <input v-model="password_confirmation" type="password" class="w-full border rounded px-3 py-2" />
+      </div>
+
+      <button type="submit" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Save Changes
+      </button>
+    </form>
+  </div>
+</template>

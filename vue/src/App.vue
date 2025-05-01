@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <router-view />
+    <router-view :key="$route.fullPath" />
   </div>
 </template>
 
@@ -10,6 +10,3 @@ export default {
 };
 </script>
 
-<style>
-/* Tambahkan gaya global jika diperlukan */
-</style>

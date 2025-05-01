@@ -25,6 +25,19 @@ export default {
           900: "#240F82",
           950: "#15075B",
         },
+        danger: {
+          50: "#fff1f2",
+          100: "#ffe4e6",
+          200: "#fecdd3",
+          300: "#fda4af",
+          400: "#fb7185",
+          500: "#f43f5e",
+          600: "#e11d48", // utama
+          700: "#be123c",
+          800: "#9f1239",
+          900: "#881337",
+          950: "#4c0519",
+        },
         whiteBgPrimary: {
           100: "#EEEEEE",
         },
@@ -62,7 +75,6 @@ export default {
           950: "#152856",
         },
         success: "#006E2F",
-        danger: "#72000F",
         warning: "#FFA70B",
         skeltonBg: {
           50: "#f0f0f0",
