@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
+
+use Exception;
 
 class UserController extends Controller
 {
@@ -19,6 +23,7 @@ class UserController extends Controller
             'users' => $users->map(function ($user) {
                 return [
                     'id' => $user->id,
+                    'image' => $user->image ? asset('storage/' . $user->image) : null,
                     'name' => $user->name,
                     'email' => $user->email,
                     'status' => $user->status,
@@ -99,6 +104,7 @@ class UserController extends Controller
             'status' => 'success',
             'user' => [
                 'id' => $user->id,
+                'image' => $user->image ? asset('storage/' . $user->image) : null,
                 'name' => $user->name,
                 'status' => $user->status,
                 'email' => $user->email,
@@ -106,5 +112,82 @@ class UserController extends Controller
                 'permissions' => $user->permissions->pluck('name')->toArray(), 
             ],
         ], 200);
+    }
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+            if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
+
+        if (!$user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
+
+        $validate = Validator::make($request->all(), [
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+            'current_password' => 'required_with:password|string',
+            'password' => 'sometimes|string|min:8|confirmed'
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validate->errors(),
+            ], 422);
+        }
+
+        try {
+            if ($request->filled('password')) {
+                if (!Hash::check($request->current_password, $user->password)) {
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'The current password is incorrect',
+                    ], 403);
+                }
+                $user->password = Hash::make($request->password);
+            }
+
+            if ($request->has('name')) {
+                $user->name = $request->name;
+            }
+
+            if ($request->has('email')) {
+                $user->email = $request->email;
+            }
+
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('profile_images', 'public');
+                $user->image = $path;
+            }   
+
+            $user->save();
+
+            return response()->json([
+                'status'=> 'success',   
+                'message'=> 'Profile updated successfully',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'image' => $user->image ? asset('storage/' . $user->image) : null,
+                ],
+            ],200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

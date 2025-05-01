@@ -14,7 +14,7 @@ class ServiceController extends Controller
     public function showAllService()
     {
         $services = Service::with('schedule')
-            ->select('id', 'image', 'title', 'description', 'option') 
+            ->select('id', 'image', 'title', 'description','location', 'option') 
             ->get()
             ->map(function ($service) {
                 return [
@@ -22,6 +22,7 @@ class ServiceController extends Controller
                     'image' => $service->image ? asset('storage/' . $service->image) : null,
                     'title' => $service->title,
                     'description' => $service->description,
+                    'location'  => $service->location,
                     'option' => json_decode($service->option, true),
                     'time' => $service->schedule ? json_decode($service->schedule->time, true) : null,
                     'days' => $service->schedule ? json_decode($service->schedule->days, true) : null,
@@ -48,6 +49,7 @@ class ServiceController extends Controller
                 'image' => $service->image ? asset('storage/' . $service->image) : null,
                 'title' => $service->title,
                 'description' => $service->description,
+                'location'  => $service->location,
                 'option' => json_decode($service->option, true),
                 'time' => $service->schedule ? json_decode($service->schedule->time, true) : null,
                 'days' => $service->schedule ? json_decode($service->schedule->days, true) : null,
@@ -62,6 +64,7 @@ class ServiceController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:255',
+            'location'  => 'required|string|max:255',
             'option' => 'required|array',
             'option.*' => 'in:Offline,Online',
             'days' => 'required|array',
@@ -115,6 +118,7 @@ class ServiceController extends Controller
                 'image' => $service->image ? asset('storage/' . $service->image) : null,
                 'title' => $service->title,
                 'description' => $service->description,
+                'location'  => $service->location,
                 'option' => json_decode($service->option),
                 'days' => json_decode($schedule->days),
                 'time' => json_decode($schedule->time),
@@ -129,6 +133,7 @@ class ServiceController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string|max:255',
+            'location'  => 'sometimes|string|max:255',
             'option' => 'sometimes|array',
             'option.*' => 'in:Offline,Online',
             'days' => 'sometimes|array',
@@ -205,6 +210,7 @@ class ServiceController extends Controller
                     'image' => $service->image ? asset('storage/' . $service->image) : null,
                     'title' => $service->title,
                     'description' => $service->description,
+                    'location'  => $service->location,
                     'option' => json_decode($service->option, true),
                     'days' => json_decode($service->days, true),
                     'time' => json_decode($service->schedule->time, true),

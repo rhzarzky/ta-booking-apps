@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('title');
             $table->text('description');
+            $table->string('location');
             $table->json('option'); 
             $table->timestamps();
         });

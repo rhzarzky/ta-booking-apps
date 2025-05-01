@@ -19,17 +19,20 @@ class BookingController extends Controller
                 return [
                     'id_booking' => $booking->id,
                     'user' => [
-                        'id' => $booking->user->id,
+                        'id_user' => $booking->user->id,
                         'email' => $booking->user->email,
                         'name' => $booking->user->name,
                     ],
                     'service' => [
-                        'id' => $booking->service->id,
+                        'id_service' => $booking->service->id,
+                        'image' => $booking->service->image,
                         'title' => $booking->service->title,
                         'description' => $booking->service->description,
+                        'location'  => $booking->service->location,
                         'option' => $booking->option,
                         'day' => $booking->day,
                         'time' => $booking->time,
+                        'note' => $booking->note,
                         'status' => $booking->status,
                     ],
                 ];
@@ -54,17 +57,24 @@ class BookingController extends Controller
             ->map(function ($group) {
                 return $group->map(function ($booking) {
                     return [
-                        'id' => $booking->id,
+                        'id_booking' => $booking->id,
+                        'user' => [
+                            'id_user' => $booking->user->id,
+                            'email' => $booking->user->email,
+                            'name' => $booking->user->name,
+                        ],
                         'service' => [
-                            'id' => $booking->service->id,
+                            'id_service' => $booking->service->id,
+                            'image' => $booking->service->image,
                             'title' => $booking->service->title,
                             'description' => $booking->service->description,
+                            'location'  => $booking->service->location,
+                            'option' => $booking->option,
+                            'day' => $booking->day,
+                            'time' => $booking->time,
+                            'note' => $booking->note,
+                            'status' => $booking->status,
                         ],
-                        'option' => $booking->option,
-                        'day' => $booking->day,
-                        'time' => $booking->time,
-                        'note' => $booking->note,
-                        'status' => $booking->status,
                     ];
                 });
             });
@@ -114,12 +124,12 @@ class BookingController extends Controller
             'status' => 'success',
             'message' => 'Service booked successfully, awaiting approval.',
             'user' => [
-                    'id' => $user->id,
+                    'id_user' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                 ],
             'booking' => [
-                'id' => $booking->id,
+                'id_booking' => $booking->id,
                 'option' => $booking->option,
                 'day' => $booking->day,
                 'time' => $booking->time,
@@ -129,6 +139,7 @@ class BookingController extends Controller
                     'id' => $service->id,
                     'title' => $service->title,
                     'description' => $service->description,
+                    'location'  => $booking->service->location,
                     'option' => json_decode($service->option),
                 ],
             ],
@@ -149,7 +160,7 @@ class BookingController extends Controller
             'status' => 'success',
             'message' => 'Booking status updated successfully.',
             'booking' => [
-                'id' => $booking->id,
+                'id_booking' => $booking->id,
                 'status' => $booking->status,
             ],
         ], 200);
