@@ -117,13 +117,6 @@ class UserController extends Controller
     {
         $user = Auth::user();
 
-            if (!$user) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthenticated',
-            ], 401);
-        }
-
         if (!$user) {
             return response()->json([
                 'status' => 'error',
