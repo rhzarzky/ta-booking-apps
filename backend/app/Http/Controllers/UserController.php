@@ -182,7 +182,7 @@ class UserController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage(),
+                'message' => 'An error occurred while updating the profile',
             ], 500);
         }
     }
