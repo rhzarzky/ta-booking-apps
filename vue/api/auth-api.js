@@ -60,10 +60,29 @@ export const logout = async () => {
 // Fungsi fetchProfile
 export const fetchProfile = async () => {
   try {
-    const response = await api.get('/user')
+    const response = await api.get('/user/profile')
     return response.data
   } catch (error) {
     console.error("Fetch profile error:", error.response?.data || error.message);
     throw error;
   }
 };
+
+// Fungsi updateProfile
+// Fungsi update profile
+export const updateProfile = async (formData) => {
+  try {
+    const response = await api.put('/user/profile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Update profile error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+
