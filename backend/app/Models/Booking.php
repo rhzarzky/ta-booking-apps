@@ -14,7 +14,7 @@ class Booking extends Model {
         'status',
         'option',
         'note',
-        'day',
+        'date',
         'time'
     ];
 

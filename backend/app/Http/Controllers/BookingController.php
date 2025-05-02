@@ -92,7 +92,6 @@ class BookingController extends Controller
 
         $booking = Booking::with(['service', 'user'])->findOrFail($id);
 
-        // Check if the authenticated user owns the booking
         if ($booking->user_id !== $user->id) {
             return response()->json([
                 'status' => 'error',
@@ -126,7 +125,7 @@ class BookingController extends Controller
     public function bookService(Request $request, $id)
     {
         $user = Auth::user();
-        $service = Service::findOrFail($id);
+        $service = Service::with('schedule')->findOrFail($id);
 
         $availableOption = json_decode($service->option, true);
         $availableTime = json_decode($service->schedule->time, true);
@@ -138,13 +137,19 @@ class BookingController extends Controller
             'date' => 'required|date|in:'. implode(',', $availableDate),
             'time' => 'required|date_format:H:i|in:'. implode(',', $availableTime),
             'note' => 'nullable|string|max:255',
-            'option' => 'required|string|in:' . implode(',', $availableOption), // Only allow options set by admin
+            'option' => 'required|string|in:' . implode(',', $availableOption),
         ]); 
 
-        if (Booking::where('service_id', $service->id)->where('user_id', $user->id)->exists()) {
+        $alreadyBooked = Booking::where('service_id', $service->id)
+        ->where('user_id', $user->id)
+        ->where('date', $validated['date'])
+        ->where('time', $validated['time'])
+        ->exists();
+
+        if ($alreadyBooked) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'You have already booked this service.',
+                'message' => 'You have already booked this service at the selected date and time.',
             ], 400);
         }
 
@@ -154,7 +159,7 @@ class BookingController extends Controller
             'option' => $validated['option'],
             'date' => $validated['date'],
             'time' => $validated['time'],
-            'note' => $validated['note'],
+            'note' => $validated['note'] ?? null,
             'status' => 'Pending',
         ]);
 
