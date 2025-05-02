@@ -44,8 +44,8 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::get('/service/{id}', [ServiceController::class, 'showService']);
 
     Route::post('/service/{id}/book', [BookingController::class, 'bookService']);
-    
-    Route::get('/booking/{id}', [BookingController::class, 'showBooking']);
+    Route::get('/booking/{id}', [BookingController::class, 'showDetailBooking']); 
+    Route::get('/user/booking', [BookingController::class, 'showUserBooking']);
     
     Route::get('/user/profile', [UserController::class, 'userProfile']);
     Route::put('/user/profile', [UserController::class, 'updateProfile']);

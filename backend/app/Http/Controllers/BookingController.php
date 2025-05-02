@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Booking;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Service;
+use App\Models\Schedule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class BookingController extends Controller
 {
@@ -45,36 +47,30 @@ class BookingController extends Controller
             'bookings' => $grouped,
         ], 200);
     }
-
-   public function showBooking($id)
+    public function showUserBooking()
     {
         $user = Auth::user();
 
         $bookings = Booking::with('service')
-            ->where('user_id', $id)
+            ->where('user_id', $user->id)
             ->get()
             ->groupBy('status')
             ->map(function ($group) {
                 return $group->map(function ($booking) {
                     return [
                         'id_booking' => $booking->id,
-                        'user' => [
-                            'id_user' => $booking->user->id,
-                            'email' => $booking->user->email,
-                            'name' => $booking->user->name,
-                        ],
                         'service' => [
                             'id_service' => $booking->service->id,
                             'image' => $booking->service->image,
                             'title' => $booking->service->title,
                             'description' => $booking->service->description,
                             'location'  => $booking->service->location,
-                            'option' => $booking->option,
-                            'day' => $booking->day,
-                            'time' => $booking->time,
-                            'note' => $booking->note,
-                            'status' => $booking->status,
                         ],
+                        'option' => $booking->option,
+                        'day' => $booking->day,
+                        'time' => $booking->time,
+                        'note' => $booking->note,
+                        'status' => $booking->status,
                     ];
                 });
             });
@@ -83,25 +79,67 @@ class BookingController extends Controller
             'status' => 'success',
             'message' => 'Service retrieved successfully',
             'user' => [
-                'id' => $user->id,
+                'id_user' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
             ],
             'services' => $bookings,
         ], 200);
     }
+    public function showDetailBooking($id)
+    {
+        $user = Auth::user();
 
-   public function bookService(Request $request, $id)
+        $booking = Booking::with(['service', 'user'])->findOrFail($id);
+
+        // Check if the authenticated user owns the booking
+        if ($booking->user_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'You are not authorized to view this booking.',
+            ], 403);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Booking retrieved successfully',
+            'id_booking' => $booking->id,
+            'user' => [
+                'id' => $booking->user->id,
+                'name' => $booking->user->name,
+                'email' => $booking->user->email,
+            ],
+            'service' => [
+                'id_service' => $booking->service->id,
+                'image' => $booking->service->image,
+                'title' => $booking->service->title,
+                'description' => $booking->service->description,
+                'location'  => $booking->service->location,
+                'option' => $booking->option,
+                'day' => $booking->day,
+                'time' => $booking->time,
+                'note' => $booking->note,
+                'status' => $booking->status,
+            ],
+        ], 200);
+    }
+    public function bookService(Request $request, $id)
     {
         $user = Auth::user();
         $service = Service::findOrFail($id);
-        $availableOptions = json_decode($service->option, true);
+
+        $availableOption = json_decode($service->option, true);
+        $availableTime = json_decode($service->schedule->time, true);
+
+        $scheduleDates = json_decode($service->schedule->date, true);
+        $availableDate= collect($scheduleDates)->pluck('date')->toArray();
+
         $validated = $request->validate([
-            'day' => 'required|string|max:255',
-            'time' => 'required|date_format:H:i',
+            'date' => 'required|date|in:'. implode(',', $availableDate),
+            'time' => 'required|date_format:H:i|in:'. implode(',', $availableTime),
             'note' => 'nullable|string|max:255',
-            'option' => 'required|string|in:' . implode(',', $availableOptions), // Only allow options set by admin
-        ]);
+            'option' => 'required|string|in:' . implode(',', $availableOption), // Only allow options set by admin
+        ]); 
 
         if (Booking::where('service_id', $service->id)->where('user_id', $user->id)->exists()) {
             return response()->json([
@@ -114,7 +152,7 @@ class BookingController extends Controller
             'service_id' => $service->id,
             'user_id' => $user->id,
             'option' => $validated['option'],
-            'day' => $validated['day'],
+            'date' => $validated['date'],
             'time' => $validated['time'],
             'note' => $validated['note'],
             'status' => 'Pending',
@@ -131,7 +169,7 @@ class BookingController extends Controller
             'booking' => [
                 'id_booking' => $booking->id,
                 'option' => $booking->option,
-                'day' => $booking->day,
+                'date' => $booking->date,
                 'time' => $booking->time,
                 'note' => $booking->note,
                 'status' => $booking->status,
