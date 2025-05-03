@@ -6,9 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Service;
-use App\Models\Schedule;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class BookingController extends Controller
 {
@@ -32,7 +30,7 @@ class BookingController extends Controller
                         'description' => $booking->service->description,
                         'location'  => $booking->service->location,
                         'option' => $booking->option,
-                        'day' => $booking->day,
+                        'date' => $booking->date,
                         'time' => $booking->time,
                         'note' => $booking->note,
                         'status' => $booking->status,
@@ -67,7 +65,7 @@ class BookingController extends Controller
                             'location'  => $booking->service->location,
                         ],
                         'option' => $booking->option,
-                        'day' => $booking->day,
+                        'date' => $booking->date,
                         'time' => $booking->time,
                         'note' => $booking->note,
                         'status' => $booking->status,
@@ -115,7 +113,7 @@ class BookingController extends Controller
                 'description' => $booking->service->description,
                 'location'  => $booking->service->location,
                 'option' => $booking->option,
-                'day' => $booking->day,
+                'date' => $booking->date,
                 'time' => $booking->time,
                 'note' => $booking->note,
                 'status' => $booking->status,
