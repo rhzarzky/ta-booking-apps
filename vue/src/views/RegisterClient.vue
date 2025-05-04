@@ -147,7 +147,7 @@
 
 <script>
 import Swal from 'sweetalert2'
-import { register } from '/api/auth-api'
+import { register } from '@/api/auth-api'
 
 export default {
   name: 'RegisterClient',

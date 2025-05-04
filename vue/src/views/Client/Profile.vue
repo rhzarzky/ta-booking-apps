@@ -1,5 +1,5 @@
 <script>
-import { fetchProfile } from '../../../api/auth-api'
+import { fetchProfile } from '../../api/auth-api'
 import { ref, onMounted } from 'vue'
 
 export default {

@@ -95,7 +95,7 @@
 </template>
 
 <script>
-import { logout } from '/api/auth-api'
+import { logout } from '@/api/auth-api'
 
 export default {
   name: 'SidebarArea',

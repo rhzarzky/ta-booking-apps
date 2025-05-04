@@ -8,7 +8,7 @@
       <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded">Schedule From</span>
     </div>
     <div class="text-xs text-gray-500 mb-4 flex justify-between">
-      <span>3+ Ways to Meet</span> 
+      <span>2 Ways to Meet</span> 
       <span class="ml-2">{{ date }}</span>
     </div>
     <button

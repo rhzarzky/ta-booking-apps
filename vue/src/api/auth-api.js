@@ -68,7 +68,6 @@ export const fetchProfile = async () => {
   }
 };
 
-// Fungsi updateProfile
 // Fungsi update profile
 export const updateProfile = async (formData) => {
   try {
