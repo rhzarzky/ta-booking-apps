@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Service;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
@@ -159,6 +160,9 @@ class BookingController extends Controller
             'time' => $validated['time'],
             'note' => $validated['note'] ?? null,
             'status' => 'Pending',
+            'location' => $validated['option'] === 'Online' 
+                ? 'Waiting for video meeting URL' 
+                : $service->location,
         ]);
 
         return response()->json([
@@ -175,13 +179,11 @@ class BookingController extends Controller
                 'date' => $booking->date,
                 'time' => $booking->time,
                 'note' => $booking->note,
+                'location'  => $booking->location,
                 'status' => $booking->status,
                 'service' => [
-                    'id' => $service->id,
+                    'id_service' => $service->id,
                     'title' => $service->title,
-                    'description' => $service->description,
-                    'location'  => $booking->service->location,
-                    'option' => json_decode($service->option),
                 ],
             ],
         ], 201);
@@ -192,9 +194,19 @@ class BookingController extends Controller
             'status' => 'required|in:Approved,Declined',
         ]);
 
-        $booking = Booking::findOrFail($id);
-
+        $booking = Booking::with('service', 'user')->findOrFail($id);
         $booking->status = $request->status;
+
+        if (
+            $request->status === 'Approved' &&
+            $booking->option === 'Online'
+        ) {
+            $slug = Str::slug($booking->service->title);
+            $dateTimeSlug = Str::slug($booking->date . '-' . $booking->time);
+            $roomName = "{$slug}-{$booking->user->id}-{$dateTimeSlug}";
+            $booking->location = "https://meet.jit.si/{$roomName}";
+        }
+
         $booking->save();
 
         return response()->json([
@@ -203,6 +215,7 @@ class BookingController extends Controller
             'booking' => [
                 'id_booking' => $booking->id,
                 'status' => $booking->status,
+                'location' => $booking->location,
             ],
         ], 200);
     }

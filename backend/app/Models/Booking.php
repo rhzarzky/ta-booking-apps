@@ -15,6 +15,7 @@ class Booking extends Model {
         'option',
         'note',
         'date',
+        'location',
         'time'
     ];
 
