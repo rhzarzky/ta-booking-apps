@@ -12,6 +12,7 @@ use Spatie\Permission\Models\Permission;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 Use Illuminate\Http\JsonResponse;
+use App\Notifications\VerifyEmailNotification;
 
 use Exception;
 
@@ -23,7 +24,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'nullable|string|exists:roles,name', 
+            'role' => 'nullable|string|exists:roles,name',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|exists:permissions,name',
             'status' => 'nullable|string|in:Active,Inactive',
@@ -33,7 +34,7 @@ class AuthController extends Controller
             return response()->json([
                 'status' => 'error',
                 'errors' => $dataValidation->errors()
-            ], 401);
+            ], 422);
         }
 
         try {
@@ -41,26 +42,30 @@ class AuthController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'status' => $request->status ?? 'Active',
+                'status' => $request->status ?? 'Inactive', // default to Inactive until verified
             ]);
 
+            Log::info('User created successfully: ' . $user->email);
+
+            // Assign role
             $roleName = $request->role ?? 'user';
             $role = Role::where('name', $roleName)->first();
-
             if ($role) {
                 $user->assignRole($role);
             }
 
+            // Assign permissions
             if ($request->has('permissions')) {
                 $permissions = Permission::whereIn('name', $request->permissions)->get();
                 $user->givePermissionTo($permissions);
             }
 
-            $token = JWTAuth::fromUser($user);
+            // Send verification email with signed link
+            $user->notify(new VerifyEmailNotification());
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'User registered successfully',
+                'message' => 'User registered successfully. Please verify your email.',
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
@@ -68,17 +73,16 @@ class AuthController extends Controller
                     'role' => $user->getRoleNames(),
                     'status' => $user->status,
                 ],
-                'token' => $token
             ], 201);
 
         } catch (Exception $e) {
             Log::error('Registration Error: ' . $e->getMessage());
             return response()->json([
-                'error' => 'An error occurred while registering the user',
+                'status' => 'error',
+                'message' => 'An error occurred during registration. ' . $e->getMessage(),
             ], 500);
         }
-    } 
-
+    }
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([

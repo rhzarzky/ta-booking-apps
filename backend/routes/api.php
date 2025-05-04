@@ -1,11 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{AuthController, RoleController, ServiceController, UserController, BookingController};
+use App\Http\Controllers\{AuthController, RoleController, ServiceController, 
+    UserController, BookingController, VerificationController};
 use App\Http\Middleware\JwtMiddleware;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify.jwt');
 
 Route::middleware([JwtMiddleware::class])->group(function () {
 
