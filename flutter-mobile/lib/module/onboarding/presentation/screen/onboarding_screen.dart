@@ -4,14 +4,24 @@ import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/auth/presentation/screen/auth_register.dart';
 import 'package:Appointly/module/auth/presentation/screen/auth_signIn.dart';
 import 'package:Appointly/module/onboarding/presentation/widget/onboard_button_filled.dart';
+import 'package:Appointly/module/onboarding/repository/onboarding_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 class OnboardingScreen extends StatelessWidget {
-  final VoidCallback onComplete;
+  final VoidCallback? onComplete;
 
-  const OnboardingScreen({super.key, required this.onComplete});
+  const OnboardingScreen({
+    super.key,
+    this.onComplete,
+  });
+
+  Future<void> _markOnboardingComplete() async {
+    final onBoardingRepo = OnboardingRepository();
+    await onBoardingRepo.completeOnboarding();
+    // Notify parent widget that onboarding is complete
+    onComplete?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +30,7 @@ class OnboardingScreen extends StatelessWidget {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/image/onboard-img.png',
+              'assets/image/onboarding-2.png',
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => const Placeholder(),
             ),
@@ -62,39 +72,55 @@ class OnboardingScreen extends StatelessWidget {
                     children: [
                       OnboardButton(
                         text: 'Create an account',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AuthRegister(),
-                            ),
-                          ).then((_) {
-                            // Optionally call onComplete when returning from AuthRegister
-                            onComplete();
-                          });
+                        onTap: () async {
+                          await _markOnboardingComplete();
+                          if (context.mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AuthRegister(),
+                              ),
+                            );
+                          }
                         },
                       ),
                       const SizedBox(height: 12),
                       OnboardButton(
                         text: 'Sign In',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AuthSignin(),
-                            ),
-                          ).then((_) {
-                            // Optionally call onComplete when returning from AuthSignin
-                            onComplete();
-                          });
+                        onTap: () async {
+                          await _markOnboardingComplete();
+                          if (context.mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const AuthSignin(),
+                              ),
+                            );
+                          }
                         },
                         isOutline: true,
                       ),
-                      // const SizedBox(height: 12),
-                      // // Or simply add a "Skip" button that directly completes onboarding:
+                      const SizedBox(height: 12),
                       // TextButton(
-                      //   onPressed: onComplete,
-                      //   child: const Text('Skip'),
+                      //   onPressed: () async {
+                      //     await _markOnboardingComplete();
+                      //     if (context.mounted) {
+                      //       Navigator.pushReplacement(
+                      //         context,
+                      //         MaterialPageRoute(
+                      //           builder: (context) => const AuthSignin(),
+                      //         ),
+                      //       );
+                      //     }
+                      //   },
+                      //   child: Text(
+                      //     'Skip',
+                      //     style: GoogleFonts.ubuntu(
+                      //       fontSize: 16,
+                      //       fontWeight: FontWeight.w500,
+                      //       color: ColorPallete.primaryColor,
+                      //     ),
+                      //   ),
                       // ),
                     ],
                   ),

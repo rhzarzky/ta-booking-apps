@@ -8,6 +8,7 @@ class CardService extends StatelessWidget {
   final String imageService;
   final String headService;
   final String descService;
+  final String locationService;
   final List<String> timeService;
   final List<String> provideService;
   final VoidCallback onTap;
@@ -16,6 +17,7 @@ class CardService extends StatelessWidget {
     super.key,
     required this.imageService,
     required this.descService,
+    required this.locationService,
     required this.headService,
     required this.timeService,
     required this.provideService,
@@ -110,8 +112,7 @@ class CardService extends StatelessWidget {
                         horizontal: 16.0,
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize
-                            .min, // <<< ADD THIS to make container wrap content
+                        mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Icon(
@@ -122,7 +123,7 @@ class CardService extends StatelessWidget {
                           SizedBox(width: 4),
                           // In CardService class
                           Text(
-                            'Beginning on : ${timeService.isNotEmpty ? timeService.first : "N/A"}',
+                            'Beginning on:  ${timeService.isNotEmpty ? timeService.first : "N/A"} at $locationService  ',
                             style: GoogleFonts.ubuntu(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,

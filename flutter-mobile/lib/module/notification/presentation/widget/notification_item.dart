@@ -38,7 +38,7 @@ class NotificationItem extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title ?? 'Service Electric 24/7 Available ',
+                title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.ubuntu(
@@ -51,7 +51,7 @@ class NotificationItem extends StatelessWidget {
                 height: 4.0,
               ),
               Text(
-                timeStamp ?? '2 minutes ago',
+                timeStamp,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.ubuntu(

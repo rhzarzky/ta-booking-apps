@@ -89,8 +89,9 @@ class ChartStatus extends StatelessWidget {
                             showTitles: true,
                             getTitlesWidget: (double value, TitleMeta meta) {
                               final index = value.toInt();
-                              if (index >= chartData.length)
+                              if (index >= chartData.length) {
                                 return const SizedBox();
+                              }
 
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
@@ -144,7 +145,6 @@ class ChartStatus extends StatelessWidget {
     );
   }
 
-  // Calculate the maximum Y value for the chart
   double _calculateMaxY(List<DailyAppointmentData> chartData) {
     double maxValue = 0;
     for (var data in chartData) {
@@ -153,11 +153,9 @@ class ChartStatus extends StatelessWidget {
         maxValue = total.toDouble();
       }
     }
-    // Add some padding to the max value
     return maxValue > 0 ? (maxValue * 1.2) : 5;
   }
 
-  // Get the bar groups for the chart
   List<BarChartGroupData> _getBarGroups(List<DailyAppointmentData> chartData) {
     return List.generate(chartData.length, (index) {
       final data = chartData[index];
@@ -184,79 +182,55 @@ class ChartStatus extends StatelessWidget {
     });
   }
 
-  // Process booking data to get the last 7 days
   List<DailyAppointmentData> _processDataForLastSevenDays(
     List<Booking> approved,
     List<Booking> pending,
     List<Booking> declined,
   ) {
-    // Create a map to store the count for each day
     final Map<String, DailyAppointmentData> dailyData = {};
-
-    // Get the date for the last 7 days
     final now = DateTime.now();
     final List<String> last7Days = [];
-    final List<String> dayLabels = [];
 
     for (int i = 6; i >= 0; i--) {
       final date = now.subtract(Duration(days: i));
       final dateStr = DateFormat('yyyy-MM-dd').format(date);
-      final dayLabel = DateFormat('E d').format(date); // e.g., "Mon 5"
+      final dayLabel = DateFormat('E d').format(date);
 
       last7Days.add(dateStr);
-      dayLabels.add(dayLabel);
-
-      // Initialize with zero counts
       dailyData[dateStr] = DailyAppointmentData(
         date: dateStr,
         dayLabel: dayLabel,
-        approved: 0, // Initialize with zero
-        pending: 0, // Initialize with zero
-        declined: 0, // Initialize with zero
+        approved: 0,
+        pending: 0,
+        declined: 0,
       );
     }
 
-    // Count approved appointments by day
     for (var booking in approved) {
-      final dateStr = _extractDateFromService(booking.service);
+      final dateStr = booking.date;
       if (dailyData.containsKey(dateStr)) {
         dailyData[dateStr]!.approved++;
       }
     }
 
-    // Count pending appointments by day
     for (var booking in pending) {
-      final dateStr = _extractDateFromService(booking.service);
+      final dateStr = booking.date;
       if (dailyData.containsKey(dateStr)) {
         dailyData[dateStr]!.pending++;
       }
     }
 
-    // Count declined appointments by day
     for (var booking in declined) {
-      final dateStr = _extractDateFromService(booking.service);
+      final dateStr = booking.date;
       if (dailyData.containsKey(dateStr)) {
         dailyData[dateStr]!.declined++;
       }
     }
 
-    // Convert map to sorted list
     return last7Days.map((date) => dailyData[date]!).toList();
-  }
-
-  // Helper method to extract date from ServiceBooking
-  String _extractDateFromService(ServiceBooking service) {
-    try {
-      // Assuming the day is already in 'yyyy-MM-dd' format
-      return service.day;
-    } catch (e) {
-      // If there's an error, return today's date as fallback
-      return DateFormat('yyyy-MM-dd').format(DateTime.now());
-    }
   }
 }
 
-// Data class to hold appointment counts for each day
 class DailyAppointmentData {
   final String date;
   final String dayLabel;

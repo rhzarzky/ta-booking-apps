@@ -15,12 +15,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart'; // for kDebugMode
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // OPTIONAL: Reset onboarding status in debug mode
+  if (kDebugMode) {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(
+        'onboarding_complete'); 
+  }
+
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/launcher_icon');
 
@@ -30,7 +41,6 @@ void main() async {
 
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-  // Create the notification channel
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'appointly_channel',
     'Appointly Notifications',
@@ -54,8 +64,8 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  bool showOnboarding = true;
-  String? token;
+  bool isOnboardingCompleted = false;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -65,17 +75,11 @@ class _MainAppState extends State<MainApp> {
 
   Future<void> _checkOnboardingStatus() async {
     final onBoardingRepo = OnboardingRepository();
-    final isOnboardingComplete = await onBoardingRepo.isOnboardingComplete();
-    setState(() {
-      showOnboarding = !isOnboardingComplete;
-    });
-  }
+    final isComplete = await onBoardingRepo.isOnboardingComplete();
 
-  void completeOnboarding() async {
-    final onboardingRepo = OnboardingRepository();
-    await onboardingRepo.completeOnboarding();
     setState(() {
-      showOnboarding = false;
+      isOnboardingCompleted = isComplete;
+      isLoading = false;
     });
   }
 
@@ -110,18 +114,32 @@ class _MainAppState extends State<MainApp> {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, state) {
-            if (showOnboarding) {
-              return OnboardingScreen(onComplete: completeOnboarding);
-            } else if (state is AuthAuthenticated) {
-              return const MainTabScreen();
-            } else {
-              return const AuthSignin();
-            }
-          },
-        ),
+        home: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _buildHomeScreen(),
       ),
     );
+  }
+
+  Widget _buildHomeScreen() {
+    if (!isOnboardingCompleted) {
+      return OnboardingScreen(
+        onComplete: () {
+          setState(() {
+            isOnboardingCompleted = true;
+          });
+        },
+      );
+    } else {
+      return BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, state) {
+          if (state is AuthAuthenticated) {
+            return const MainTabScreen();
+          } else {
+            return const AuthSignin();
+          }
+        },
+      );
+    }
   }
 }

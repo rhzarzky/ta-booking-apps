@@ -1,14 +1,16 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/profile/model/profile_model.dart';
+import 'package:Appointly/module/profile/presentation/bloc/profile_bloc.dart';
 import 'package:Appointly/module/profile/presentation/screen/profile_screen.dart';
 import 'package:Appointly/module/profile/presentation/widget/button.dart';
 import 'package:Appointly/module/profile/presentation/widget/field_profile.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:logger/logger.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -18,21 +20,75 @@ class PersonalInfoScreen extends StatefulWidget {
 }
 
 class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
-    final Logger _logger = Logger();
+  final Logger _logger = Logger();
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final fullNameController = TextEditingController();
-  XFile? _selectedImage; // To store the selected image
+  final oldPassword = TextEditingController();
+  final newPassword = TextEditingController();
+  final confirmPassword = TextEditingController();
+  XFile? _selectedImage; // For newly selected images
+  String? _currentProfileImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    emailController.addListener(_updateButtonVisibility);
+    fullNameController.addListener(_updateButtonVisibility);
+    oldPassword.addListener(_updateButtonVisibility);
+    newPassword.addListener(_updateButtonVisibility);
+
+    context.read<ProfileBloc>().add(GetProfileEvent());
+  }
+
+  @override
+  void dispose() {
+    emailController.removeListener(_updateButtonVisibility);
+    fullNameController.removeListener(_updateButtonVisibility);
+    oldPassword.removeListener(_updateButtonVisibility);
+    newPassword.removeListener(_updateButtonVisibility);
+    emailController.dispose();
+    fullNameController.dispose();
+    oldPassword.dispose();
+    newPassword.dispose();
+    super.dispose();
+  }
+
+  void _updateButtonVisibility() {
+    setState(() {});
+  }
+
+  bool _areFieldsFilled() {
+    return fullNameController.text.isNotEmpty &&
+        emailController.text.isNotEmpty &&
+        // Either all password fields are empty OR all are filled
+        ((oldPassword.text.isEmpty &&
+                newPassword.text.isEmpty &&
+                confirmPassword.text.isEmpty) ||
+            (oldPassword.text.isNotEmpty &&
+                newPassword.text.isNotEmpty &&
+                confirmPassword.text.isNotEmpty));
+  }
+
+  bool _arePasswordFieldsFilled() {
+    return newPassword.text.isNotEmpty && oldPassword.text.isNotEmpty;
+  }
 
   // Method to pick an image from the gallery
   Future<void> pickImageFromGallery() async {
     final imagePicker = ImagePicker();
     try {
-      final pickedFile =
-          await imagePicker.pickImage(source: ImageSource.gallery);
+      final pickedFile = await imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800, // Optional: resize gambar
+        maxHeight: 800, // Optional: resize gambar
+        imageQuality: 85, // Kualitas gambar (0-100)
+      );
+
       if (pickedFile != null) {
         setState(() {
           _selectedImage = pickedFile;
+          _currentProfileImageUrl = pickedFile.path;
         });
       }
     } catch (e) {
@@ -40,15 +96,20 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     }
   }
 
-  // Method to pick an image from the camera
   Future<void> pickImageFromCamera() async {
     final imagePicker = ImagePicker();
     try {
-      final pickedFile =
-          await imagePicker.pickImage(source: ImageSource.camera);
+      final pickedFile = await imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
       if (pickedFile != null) {
         setState(() {
           _selectedImage = pickedFile;
+          _currentProfileImageUrl = pickedFile.path;
         });
       }
     } catch (e) {
@@ -136,45 +197,108 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    emailController.addListener(_updateButtonVisibility);
-    fullNameController.addListener(_updateButtonVisibility);
+  void _updateProfile({bool updatePassword = false}) {
+    final profile = ProfileModel(
+      name: fullNameController.text,
+      email: emailController.text,
+      //image: _currentProfileImageUrl,
+      currentPassword: updatePassword ? oldPassword.text : null,
+      password: updatePassword ? newPassword.text : null,
+      passwordConfirmation: updatePassword ? confirmPassword.text : null,
+    );
+
+    context.read<ProfileBloc>().add(UpdateProfileEvent(
+          profile: profile,
+          imagePath: _selectedImage != null
+              ? _selectedImage!.path
+              : null, // Kirim file gambar langsung
+        ));
   }
 
-  @override
-  void dispose() {
-    emailController.removeListener(_updateButtonVisibility);
-    fullNameController.removeListener(_updateButtonVisibility);
-    emailController.dispose();
-    fullNameController.dispose();
-    super.dispose();
-  }
+  void _confirmChangePassword() {
+    if (_arePasswordFieldsFilled() &&
+        newPassword.text != confirmPassword.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('New password and confirmation do not match'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-  void _updateButtonVisibility() {
-    setState(() {});
-  }
-
-  bool _areFieldsFilled() {
-    return fullNameController.text.isNotEmpty &&
-        emailController.text.isNotEmpty;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Confirm Changes'),
+          content: Text('Are you sure you want to save these changes?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _updateProfile(
+                  updatePassword: _arePasswordFieldsFilled(),
+                );
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
 
-    return Scaffold(
-      backgroundColor: ColorPallete.backgroundBody,
-      appBar: _buildAppBar(),
-      body: ListView(
-        children: [
-          _buildProfileHeader(),
-          _fieldItem(isKeyboardVisible),
-        ],
-      ),
-    );
+    return BlocConsumer<ProfileBloc, ProfileState>(builder: (context, state) {
+      return Scaffold(
+        backgroundColor: ColorPallete.backgroundBody,
+        appBar: _buildAppBar(),
+        body: state is ProfileLoading
+            ? Center(child: CircularProgressIndicator())
+            : ListView(
+                children: [
+                  _buildProfileHeader(),
+                  _fieldItem(isKeyboardVisible),
+                  _passwordFields(isKeyboardVisible),
+                ],
+              ),
+      );
+    }, listener: (context, state) {
+      if (state is ProfileLoaded) {
+        fullNameController.text = state.profile.name;
+        emailController.text = state.profile.email;
+
+        setState(() {
+          _currentProfileImageUrl = state.profile.image;
+        });
+      } else if (state is ProfileSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Profile updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(
+          context,
+          MaterialPageRoute(builder: (context) => ProfileScreen()),
+        );
+      } else if (state is ProfileError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${state.failure}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
   }
 
   PreferredSizeWidget _buildAppBar() {
@@ -206,6 +330,17 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     );
   }
 
+  ImageProvider _getProfileImage() {
+    if (_selectedImage != null) {
+      return FileImage(File(_selectedImage!.path));
+    } else if (_currentProfileImageUrl != null &&
+        _currentProfileImageUrl!.isNotEmpty) {
+      return NetworkImage(_currentProfileImageUrl!);
+    } else {
+      return AssetImage('assets/image/avatar.png') as ImageProvider;
+    }
+  }
+
   Widget _buildProfileHeader() {
     return Stack(
       clipBehavior: Clip.none,
@@ -225,19 +360,35 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
           child: Column(
             children: [
               GestureDetector(
-                onTap: _showImagePickerDialog, // Show the image picker dialog
+                onTap: _showImagePickerDialog,
                 child: CircleAvatar(
-                  backgroundImage: _selectedImage != null
-                      ? FileImage(
-                          File(_selectedImage!.path)) // Use selected image
-                      : AssetImage('assets/image/avatar.png')
-                          as ImageProvider, // Default image
+                  backgroundImage: _getProfileImage(),
                   radius: 64,
+                  child: ClipOval(
+                    child: _selectedImage != null
+                        ? Image.file(
+                            File(_selectedImage!.path),
+                            width: 128,
+                            height: 128,
+                            fit: BoxFit.cover,
+                          )
+                        : (_currentProfileImageUrl != null &&
+                                _currentProfileImageUrl!.isNotEmpty)
+                            ? CachedNetworkImage(
+                                imageUrl: _currentProfileImageUrl!,
+                                width: 128,
+                                height: 128,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) =>
+                                    CircularProgressIndicator(),
+                                errorWidget: (context, url, error) =>
+                                    Icon(Icons.error),
+                              )
+                            : Image.asset('assets/image/avatar.png'),
+                  ),
                 ),
               ),
-              SizedBox(
-                height: 8.0,
-              ),
+              SizedBox(height: 8.0),
               Text(
                 'Edit my profile',
                 style: GoogleFonts.sourceSans3(
@@ -277,22 +428,74 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
               hintText: 'JohnDoe@gmail.com',
               controller: emailController,
             ),
-            SizedBox(
-              height: isKeyboardVisible ? 24.0 : 320.0,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _passwordFields(bool isKeyboardVisible) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.only(
+          bottom: 24.0,
+          left: 16.0,
+          right: 16.0,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FieldProfile(
+              labelText: 'Old Password',
+              hintText: 'Min.8 Characters',
+              controller: oldPassword,
+              isPassword: true,
+              isOptional: true,
             ),
-            Visibility(
-              visible: _areFieldsFilled(),
-              child: Button(
-                text: 'Save Changes',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfileScreen(),
+            SizedBox(
+              height: 24.0,
+            ),
+            FieldProfile(
+              labelText: 'New Password',
+              hintText: 'Min.8 Characters',
+              controller: newPassword,
+              isPassword: true,
+              isOptional: true,
+            ),
+            SizedBox(
+              height: 24.0,
+            ),
+            FieldProfile(
+              labelText: 'Confirm Password',
+              hintText: 'Min.8 Characters',
+              controller: confirmPassword,
+              isPassword: true,
+              isOptional: true,
+            ),
+            SizedBox(
+              height: isKeyboardVisible ? 24.0 : 24.0,
+            ),
+            SizedBox(height: isKeyboardVisible ? 24.0 : 24.0),
+            // Replace both Visibility widgets with this single button
+            Button(
+              text: 'Save Changes',
+              onTap: () {
+                if (_arePasswordFieldsFilled()) {
+                  // If password fields are filled, confirm password change first
+                  _confirmChangePassword();
+                } else if (_areFieldsFilled()) {
+                  // If only profile fields are filled, update profile directly
+                  _updateProfile();
+                } else {
+                  // Show error if nothing is filled (shouldn't happen since button would be disabled)
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Please fill in at least name and email'),
+                      backgroundColor: Colors.red,
                     ),
                   );
-                },
-              ),
+                }
+              },
             ),
           ],
         ),

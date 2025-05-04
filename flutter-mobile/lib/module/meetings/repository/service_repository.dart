@@ -101,7 +101,7 @@ class ServiceRepository {
   Future<DataService> postService(
     int id, {
     required String time,
-    required String day,
+    required String date,
     required String note,
     required String option,
   }) async {
@@ -115,8 +115,8 @@ class ServiceRepository {
       }
       final response = await _dio.post('/service/$id/book', data: {
         'time': time,
-        'day': day,
         'note': note,
+        'date': date,
         'option': option,
       });
 

@@ -109,7 +109,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                   MaterialPageRoute(
                     builder: (context) => BlocProvider.value(
                       value: context.read<BookingBloc>(),
-                      child: HistoryMeetings(bookingId: widget.bookingId),
+                      child: HistoryMeetings(bookingId: widget.bookingId,),
                     ),
                   ),
                 );
@@ -152,9 +152,9 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                                 descService: 'Service description loading...',
                                 imageService:
                                     '', // Empty is fine, your widget handles it
-                                timeService: [
-                                  'Monday'
-                                ], // Provide at least one item in the list
+                                timeService: ['Monday'],
+                                locationService:
+                                    '', // Provide at least one item in the list
                                 provideService: [
                                   'Online'
                                 ], // Provide at least one item
@@ -180,6 +180,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                               descService: service.description,
                               imageService: service.image,
                               timeService: service.days,
+                              locationService: service.location,
                               provideService: service.option,
                               onTap: () {
                                 context
@@ -190,6 +191,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => DetailMeetingScreen(
+                                        bookingId: widget.bookingId,
                                         serviceId: service.id,
                                         userId: widget.userId,
                                       ),

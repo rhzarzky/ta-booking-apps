@@ -34,5 +34,30 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         );
       }
     });
+
+    on<UpdateProfileEvent>((event, emit) async {
+      emit(ProfileLoading());
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('token');
+
+        // Set token sebelum melakukan request
+        if (token != null && token.isNotEmpty) {
+          profileRepository.updateToken(token);
+        }
+
+        final response = await profileRepository.updateProfile(
+          event.profile,
+          event.imagePath,
+        );
+        emit(ProfileSuccess(response));
+      } catch (e) {
+        emit(
+          ProfileError(
+            failure: e.toString(),
+          ),
+        );
+      }
+    });
   }
 }

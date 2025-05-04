@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/model/booking_model.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
@@ -10,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 
 class HistoryMeetings extends StatefulWidget {
   final int bookingId;
@@ -28,10 +27,6 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
     super.initState();
     // Fetch bookings when screen loads
     context.read<BookingBloc>().add(GetBookingEvent());
-
-    context
-        .read<BookingBloc>()
-        .add(BookAppointmentByIdEvent(idBooking: widget.bookingId));
   }
 
   @override
@@ -140,26 +135,35 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
       itemCount: appointments.length,
       itemBuilder: (context, index) {
         final booking = appointments[index];
+        final DateTime bookingDate = DateTime.parse(booking.date);
+
+        String formattedDate;
+        try {
+          formattedDate = DateFormat('EEE, d MMMM yyyy').format(bookingDate);
+        } catch (e) {
+          // Fallback format if localization isn't initialized
+          formattedDate = DateFormat('yyyy-MM-dd').format(bookingDate);
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
           child: CardAppointment(
             titleCard: booking.service.title,
             descCard: booking.service.description,
-            dateCard: booking.service.day,
-            locationCard: booking.service.option,
-            durationCard: booking.service.time,
+            dateCard: formattedDate,
+            locationCard: booking.option,
+            durationCard: booking.time,
             linkCard: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => DetailMeetingSuccess(
-                    bookingId: booking.service.id,
+                    bookingId: booking.idBooking,
                   ),
                 ),
               );
             },
-            noteCard: '',
-            statusCard: booking.service.status,
+            noteCard: booking.note ?? '',
+            statusCard: booking.status,
           ),
         );
       },

@@ -27,76 +27,110 @@ class CardAppointment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: ColorPallete.concreteWhite,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       shadowColor: Colors.white,
-      color: Colors.white,
-      child: Stack(
-        children: [
-          // Status Chip
-          Positioned(
-            top: 0,
-            left: 290,
-            right: 0,
-            child: _buildGetStatus(),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _getStatusColor().withOpacity(0.3),
+            width: 1.5,
           ),
-          // Title and Description
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Text(
-                  titleCard,
-                  style: GoogleFonts.ubuntu(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: ColorPallete.darkBlack,
-                  ),
-                  textAlign: TextAlign.left,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with Title and Status
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
                 ),
-                const SizedBox(height: 4.0),
-                Text(
-                  descCard,
-                  style: GoogleFonts.ubuntu(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: ColorPallete.darkGreySilver,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.left,
-                ),
-                const SizedBox(height: 12.0),
-
-                // Details Grid
-                _buildDetailsGrid(dateCard, locationCard, durationCard),
-                const SizedBox(height: 16.0),
-                // Note Section
-                _buildNoteSection(noteCard),
-                const SizedBox(height: 8.0),
-                // View Appointment Button
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    InkWell(
-                      onTap: linkCard,
-                      child: Text(
-                        'View Appointment',
-                        style: GoogleFonts.ubuntu(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: ColorPallete.primaryColor,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          titleCard,
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: ColorPallete.darkBlack,
+                          ),
                         ),
-                      ),
+                        Text(
+                          descCard,
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: ColorPallete.darkGreySilver,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    Icon(
-                      Icons.keyboard_arrow_right_rounded,
-                      weight: 12,
-                      color: ColorPallete.primaryColor,
-                    )
-                  ],
-                ),
-              ],
+                  ),
+                  _buildStatusChip(),
+                ],
+              ),
+            ),
+
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Info boxes with icons
+                  _buildInfoGrid(),
+
+                  const SizedBox(height: 16),
+
+                  // Note Section
+                  if (noteCard.isNotEmpty) _buildNoteSection(),
+
+                  const SizedBox(height: 12),
+
+                  // View Button
+                  _buildViewButton(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: _getStatusColor(),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _getStatusIcon(),
+          const SizedBox(width: 4),
+          Text(
+            statusCard,
+            style: GoogleFonts.ubuntu(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
         ],
@@ -104,142 +138,160 @@ class CardAppointment extends StatelessWidget {
     );
   }
 
-  Widget _buildGetStatus() {
+  Widget _getStatusIcon() {
     switch (statusCard.toLowerCase()) {
       case 'approved':
-        return _buildStatusSucess(statusCard);
+        return const Icon(Icons.check_circle, size: 14, color: Colors.white);
       case 'pending':
-        return _buildStatusUnderReview(statusCard);
+        return const Icon(Icons.access_time, size: 14, color: Colors.white);
       case 'declined':
-        return _buildStatusDeclined(statusCard);
+        return const Icon(Icons.cancel, size: 14, color: Colors.white);
       default:
-        return _buildStatusSucess(statusCard);
+        return const Icon(Icons.check_circle, size: 14, color: Colors.white);
     }
   }
 
-  Widget _buildStatusSucess(String status) {
+  Color _getStatusColor() {
+    switch (statusCard.toLowerCase()) {
+      case 'approved':
+        return ColorPallete.primaryColor;
+      case 'pending':
+        return ColorPallete.accent400;
+      case 'declined':
+        return ColorPallete.greySilverChalice;
+      default:
+        return ColorPallete.primaryColor;
+    }
+  }
+
+  Widget _buildInfoGrid() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       decoration: BoxDecoration(
-        color: ColorPallete.primaryColor,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(8.0),
-          topRight: Radius.circular(8.0),
-        ),
+        color: ColorPallete.concrete50,
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        status,
-        style: GoogleFonts.ubuntu(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoItem(
+                  Icons.calendar_today_rounded,
+                  'Date',
+                  dateCard,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildInfoItem(
+                  Icons.access_time_rounded,
+                  'Time',
+                  durationCard,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildInfoItem(
+            Icons.location_on_rounded,
+            'Location',
+            locationCard,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatusUnderReview(String status) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        color: ColorPallete.accent400,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(8.0),
-          topRight: Radius.circular(8.0),
-        ),
-      ),
-      child: Text(
-        status,
-        style: GoogleFonts.ubuntu(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusDeclined(String status) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        color: ColorPallete.greySilverChalice,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(8.0),
-          topRight: Radius.circular(8.0),
-        ),
-      ),
-      child: Text(
-        status,
-        style: GoogleFonts.ubuntu(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailsGrid(String date, String location, String duration) {
-    return Column(
+  Widget _buildInfoItem(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Flexible(
-              child: _buildDetailItem('Date:', date),
-            ),
-            const SizedBox(width: 8.0),
-            Flexible(
-              child: _buildDetailItem('Time:', duration),
-            ),
-          ],
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: ColorPallete.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: ColorPallete.primaryColor,
+          ),
         ),
-        const SizedBox(height: 8.0),
-        Row(
-          children: [
-            Flexible(
-              child: _buildDetailItem('Location:', location),
-            ),
-          ],
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.ubuntu(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  color: ColorPallete.darkGreySilver,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: GoogleFonts.ubuntu(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: ColorPallete.darkBlack,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildDetailItem(String label, String value) {
+  Widget _buildNoteSection() {
     return Container(
-      padding: const EdgeInsets.all(8.0),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.0),
+        color: ColorPallete.concrete50,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: ColorPallete.backgroundBody,
-          width: 2,
+          width: 1,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label Text
+          Row(
+            children: [
+              Icon(
+                Icons.sticky_note_2_outlined,
+                size: 16,
+                color: ColorPallete.darkGreySilver,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Notes',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: ColorPallete.darkGreySilver,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           Text(
-            label,
+            noteCard,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.ubuntu(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w400,
               color: ColorPallete.darkBlack,
-            ),
-          ),
-          const SizedBox(width: 4.0),
-          // Value Text
-          Expanded(
-            child: Text(
-              value,
-              style: GoogleFonts.ubuntu(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: ColorPallete.darkBlack,
-              ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
             ),
           ),
         ],
@@ -247,21 +299,31 @@ class CardAppointment extends StatelessWidget {
     );
   }
 
-  Widget _buildNoteSection(String note) {
-    return Container(
-      height: 90,
-      width: double.infinity,
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: ColorPallete.concrete50,
-        borderRadius: BorderRadius.circular(4.0),
-      ),
-      child: Text(
-        note,
-        style: GoogleFonts.ubuntu(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          color: ColorPallete.darkGreySilver,
+  Widget _buildViewButton() {
+    return InkWell(
+      onTap: linkCard,
+      child: Container(
+        width: double.infinity,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: ColorPallete.primaryColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: ColorPallete.primaryColor.withOpacity(0.2),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Text(
+          'View Details',
+          style: GoogleFonts.ubuntu(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
         ),
       ),
     );

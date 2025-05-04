@@ -120,9 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => OnboardingScreen(
-                onComplete: completeOnboarding,
-              ),
+              builder: (context) => OnboardingScreen(),
             ),
           );
         }
@@ -163,6 +161,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: ColorPallete.darkBlack,
         ),
       ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.logout),
+          color: ColorPallete.redCinnabar,
+          onPressed: () => _showLogoutConfirmationDialog(context),
+        ),
+      ],
     );
   }
 
@@ -185,9 +190,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           bottom: 40,
           child: Row(
             children: [
-              const CircleAvatar(
-                backgroundImage: AssetImage('assets/image/avatar.png'),
+              CircleAvatar(
                 radius: 64,
+                backgroundImage:
+                    profile.image != null && profile.image!.isNotEmpty
+                        ? NetworkImage(profile.image!)
+                        : const AssetImage('assets/image/avatar.png')
+                            as ImageProvider,
               ),
               const SizedBox(width: 12),
               Column(

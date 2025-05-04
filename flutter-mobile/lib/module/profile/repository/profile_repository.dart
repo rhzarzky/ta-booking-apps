@@ -38,12 +38,67 @@ class ProfileRepository {
         }
       }
 
-      final response = await _dio.get('/user');
+      final response = await _dio.get('/user/profile');
 
       if (response.statusCode == 200) {
         return ProfileModel.fromJson(response.data);
       } else {
         throw Exception('Failed to load services: ${response.statusMessage}');
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<ProfileModel> updateProfile(
+      ProfileModel profile, String? imagePath) async {
+    try {
+      if (!_dio.options.headers.containsKey('Authorization')) {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('token');
+        if (token != null && token.isNotEmpty) {
+          updateToken(token);
+        }
+      }
+
+      // If we have an image path, use multipart/form-data
+      if (imagePath != null) {
+        FormData formData = FormData.fromMap({
+          'name': profile.name,
+          'email': profile.email,
+          'image': await MultipartFile.fromFile(imagePath),
+          if (profile.currentPassword != null)
+            'current_password': profile.currentPassword,
+          if (profile.password != null) 'password': profile.password,
+          if (profile.passwordConfirmation != null)
+            'password_confirmation': profile.passwordConfirmation,
+        });
+
+        final response = await _dio.put(
+          '/user/profile',
+          data: formData,
+        );
+
+        if (response.statusCode == 200) {
+          return ProfileModel.fromJson(response.data);
+        } else {
+          throw Exception(
+              'Failed to update profile: ${response.statusMessage}');
+        }
+      }
+      // Otherwise use regular JSON
+      else {
+        final response = await _dio.put(
+          '/user/profile',
+          data: profile.toJson(),
+        );
+
+        if (response.statusCode == 200) {
+          return ProfileModel.fromJson(response.data);
+        } else {
+          throw Exception(
+              'Failed to update profile: ${response.statusMessage}');
+        }
       }
     } catch (e) {
       rethrow;

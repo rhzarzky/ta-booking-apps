@@ -25,7 +25,7 @@ class HistorybookingRepository {
     }
   }
 
-  Future<BookingResponse> getAllBookings() async {
+  Future<BookingModel> getAllBookings() async {
     try {
       if (!_dio.options.headers.containsKey('Authorization')) {
         final prefs = await SharedPreferences.getInstance();
@@ -35,24 +35,23 @@ class HistorybookingRepository {
         }
       }
 
-      final response = await _dio.get('/booking');
+      final response = await _dio.get('/user/booking');
 
-      if (response.statusCode == 200) {
-        _logger.d('Response: ${response.data}');
-        return BookingResponse.fromJson(response.data);
+      if (response.statusCode == 200 && response.data != null) {
+        _logger.i('Booking data: ${response.data}');
+        return BookingModel.fromJson(response.data);
       } else {
-        _logger.e('Failed to load bookings: ${response.statusMessage}');
         throw Exception('Failed to load bookings: ${response.statusMessage}');
       }
     } catch (e) {
-      _logger.e('Error: $e');
+      _logger.e('Error in getAllBookings: $e');
       rethrow;
     }
   }
 
-  Future<BookingDetail> getBookingById(int idBooking) async {
+  Future<BookingDetailModel> getBookingDetailResponse(int id) async {
     try {
-      _logger.d('Fetching booking with ID: $idBooking');
+      _logger.d('Fetching booking with ID: $id');
 
       if (!_dio.options.headers.containsKey('Authorization')) {
         final prefs = await SharedPreferences.getInstance();
@@ -60,49 +59,32 @@ class HistorybookingRepository {
         if (token != null && token.isNotEmpty) {
           updateToken(token);
         } else {
-          throw Exception('No authorization token found');
+          _logger.w('No token available for service request');
         }
       }
 
-      final response = await _dio.get('/booking/$idBooking');
+      final response = await _dio.get('/booking/$id');
 
       if (response.statusCode == 200) {
-        _logger.d('Response: ${response.data}');
+        _logger.i('Response in booking detail: ${response.data}');
 
         if (response.data == null) {
           throw Exception('No data received from server');
         }
 
-        if (response.data['services'] is List &&
-            (response.data['services'] as List).isEmpty) {
-          // Create an empty booking with user data
-          return BookingDetail.fromEmptyResponse(
-              response.data['user'] as Map<String, dynamic>, idBooking);
-        }
-
-        // Handle different response structures
-        Map<String, dynamic> bookingData;
-        if (response.data['booking'] != null) {
-          bookingData = response.data['booking'];
-        } else if (response.data['services'] != null) {
-          return BookingDetail.fromRawResponse(response.data);
-        } else {
-          bookingData = response.data;
-        }
-
-        return BookingDetail.fromJson(bookingData);
+        return BookingDetailModel.fromJson(response.data);
       } else if (response.statusCode == 401) {
         throw Exception('Unauthorized access. Please login again.');
       } else {
         throw Exception('Failed to fetch booking: ${response.statusCode}');
       }
     } catch (e) {
-      _logger.e('Error in getBookingById: $e');
+      _logger.e('Error in getBookingDetailResponse: $e');
       rethrow;
     }
   }
 
-  Future<Booking> createBooking(Booking booking) async {
+  Future<Booking> createBooking(int userId, Booking booking) async {
     try {
       if (!_dio.options.headers.containsKey('Authorization')) {
         final prefs = await SharedPreferences.getInstance();
@@ -113,15 +95,19 @@ class HistorybookingRepository {
       }
 
       final response = await _dio.post('/booking', data: {
-        'user_id': booking.user.id,
+        'user_id': userId,
         'service': {
+          'id_service': booking.service.id,
           'title': booking.service.title,
           'description': booking.service.description,
-          'option': booking.service.option,
-          'day': booking.service.day,
-          'time': booking.service.time,
-          'status': booking.service.status,
-        }
+          'location': booking.service.location,
+          'image': booking.service.image,
+        },
+        'option': booking.option,
+        'date': booking.date,
+        'time': booking.time,
+        'note': booking.note,
+        'status': booking.status,
       });
 
       if (response.statusCode == 201) {

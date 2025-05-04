@@ -20,6 +20,7 @@ class BookAppointmentEvent extends BookingEvent {
   final String date;
   final String location;
   final String time;
+  final String image;
   final String note;
   final String status;
 
@@ -29,6 +30,7 @@ class BookAppointmentEvent extends BookingEvent {
     required this.userName,
     required this.title,
     required this.description,
+    required this.image,
     required this.date,
     required this.location,
     required this.time,

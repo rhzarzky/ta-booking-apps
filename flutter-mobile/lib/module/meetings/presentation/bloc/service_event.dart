@@ -20,14 +20,14 @@ class UpdateTokenEvent extends ServiceEvent {
 class BookService extends ServiceEvent {
   final int serviceId;
   final String option;
-  final String days;
+  final String date;
   final String notes;
   final String time;
 
   BookService({
     required this.serviceId,
     required this.option,
-    required this.days,
+    required this.date,
     required this.notes,
     required this.time,
   });

@@ -1,99 +1,119 @@
-class BookingResponse {
+class BookingModel {
   final String status;
   final String message;
-  final Bookings bookings;
+  final User user;
+  final Bookings services;
 
-  BookingResponse({
+  BookingModel({
     required this.status,
     required this.message,
-    required this.bookings,
-  });
-
-  factory BookingResponse.fromJson(Map<String, dynamic> json) =>
-      BookingResponse(
-        status: json['status'] as String,
-        message: json['message'] as String,
-        bookings: Bookings.fromJson(json['bookings'] as Map<String, dynamic>),
-      );
-}
-
-class Bookings {
-  final List<Booking> pending;
-
-  Bookings({
-    required this.pending,
-  });
-
-  factory Bookings.fromJson(Map<String, dynamic> json) => Bookings(
-        pending: (json['Pending'] as List)
-            .map((e) => Booking.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
-}
-
-class Booking {
-  final int idBooking;
-  final User user;
-  final ServiceBooking service;
-
-  Booking({
-    required this.idBooking,
     required this.user,
-    required this.service,
+    required this.services,
   });
 
-  factory Booking.fromJson(Map<String, dynamic> json) => Booking(
-        idBooking: json['id_booking'] as int,
-        user: User.fromJson(json['user'] as Map<String, dynamic>),
-        service:
-            ServiceBooking.fromJson(json['service'] as Map<String, dynamic>),
+  factory BookingModel.fromJson(Map<String, dynamic> json) => BookingModel(
+        status: json['status'],
+        message: json['message'],
+        user: User.fromJson(json['user']),
+        services: Bookings.fromJson(json['services']),
       );
 }
 
 class User {
   final int id;
-  final String email;
   final String name;
+  final String email;
 
   User({
     required this.id,
-    required this.email,
     required this.name,
+    required this.email,
   });
 
   factory User.fromJson(Map<String, dynamic> json) => User(
-        id: json['id'] as int,
-        email: json['email'] as String,
-        name: json['name'] as String,
+        id: json['id_user'],
+        name: json['name'],
+        email: json['email'],
+      );
+}
+
+class Bookings {
+  final List<Booking> pending;
+  final List<Booking> approved;
+  final List<Booking> declined;
+
+  Bookings({
+    required this.pending,
+    required this.approved,
+    required this.declined,
+  });
+
+  factory Bookings.fromJson(Map<String, dynamic> json) => Bookings(
+        pending: (json['Pending'] as List<dynamic>?)
+                ?.map((e) => Booking.fromJson(e))
+                .toList() ??
+            [],
+        approved: (json['Approved'] as List<dynamic>?)
+                ?.map((e) => Booking.fromJson(e))
+                .toList() ??
+            [],
+        declined: (json['Declined'] as List<dynamic>?)
+                ?.map((e) => Booking.fromJson(e))
+                .toList() ??
+            [],
+      );
+}
+
+class Booking {
+  final int idBooking;
+  final ServiceBooking service;
+  final String option;
+  final String date;
+  final String time;
+  final String? note;
+  final String status;
+
+  Booking({
+    required this.idBooking,
+    required this.service,
+    required this.option,
+    required this.date,
+    required this.time,
+    required this.note,
+    required this.status,
+  });
+
+  factory Booking.fromJson(Map<String, dynamic> json) => Booking(
+        idBooking: json['id_booking'],
+        service: ServiceBooking.fromJson(json['service']),
+        option: json['option'],
+        date: json['date'],
+        time: json['time'],
+        note: json['note'],
+        status: json['status'],
       );
 }
 
 class ServiceBooking {
   final int id;
+  final String? image;
   final String title;
   final String description;
-  final String option;
-  final String day;
-  final String time;
-  final String status;
+  final String location;
 
   ServiceBooking({
     required this.id,
+    required this.image,
     required this.title,
     required this.description,
-    required this.option,
-    required this.day,
-    required this.time,
-    required this.status,
+    required this.location,
   });
 
   factory ServiceBooking.fromJson(Map<String, dynamic> json) => ServiceBooking(
-        id: json['id'] as int,
-        title: json['title'] as String,
-        description: json['description'] as String,
-        option: json['option'] as String,
-        day: json['day'] as String,
-        time: json['time'] as String,
-        status: json['status'] as String,
+        id: json['id_service'],
+        image: json['image'],
+        title: json['title'],
+        description: json['description'],
+        location: json['location'],
       );
 }

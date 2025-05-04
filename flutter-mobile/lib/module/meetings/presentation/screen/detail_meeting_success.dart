@@ -1,4 +1,3 @@
-import 'package:Appointly/module/meetings/presentation/widget/expanded_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,11 +5,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/core/common/main_tab_screen.dart';
-import 'package:Appointly/module/meetings/model/booking_model.dart';
 import 'package:Appointly/module/meetings/model/booking_detail_model.dart';
-import 'package:intl/intl.dart';
+import 'package:Appointly/module/meetings/presentation/widget/expanded_text.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
+import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:Appointly/module/meetings/model/booking_detail_model.dart';
 
 class DetailMeetingSuccess extends StatefulWidget {
   final int bookingId;
@@ -38,14 +39,17 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
 
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1000),
     );
 
     _controller!.repeat(reverse: true);
 
-    context
-        .read<BookingBloc>()
-        .add(BookAppointmentByIdEvent(idBooking: widget.bookingId));
+    // Delay the API call slightly to ensure the widget is fully mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context
+          .read<BookingBloc>()
+          .add(BookAppointmentByIdEvent(idBooking: widget.bookingId));
+    });
   }
 
   @override
@@ -56,33 +60,78 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BookingBloc, BookingState>(
-      builder: (context, state) {
-        if (state is BookingLoading) {
-          return Center(child: CircularProgressIndicator());
-        } else if (state is BookingLoaded) {
-          final booking = state.bookingDetail!;
-          return Scaffold(
-            appBar: _buildAppBar(),
-            backgroundColor: Colors.white,
-            body: SingleChildScrollView(
+    return Scaffold(
+      appBar: _buildAppBar(),
+      backgroundColor: Colors.white,
+      body: BlocBuilder<BookingBloc, BookingState>(
+        builder: (context, state) {
+          if (state is BookingLoading) {
+            return _buildSkeletonLoader();
+          } else if (state is BookingLoaded && state.bookingDetail != null) {
+            final booking = state.bookingDetail!;
+            _logger.t(booking);
+            return _buildContentWithData(booking);
+          } else if (state is BookingFailure) {
+            return Center(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildBackgroundImage(),
-                  _buildContent(booking),
+                  Text('Failed to load booking details : ${state.failure}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<BookingBloc>().add(BookAppointmentByIdEvent(
+                          idBooking: widget.bookingId, ));
+                    },
+                    child: Text('Retry'),
+                  ),
                 ],
               ),
-            ),
-          );
-        } else if (state is BookingFailure) {
-          return Center(
-            child: Text('Error: ${state.failure}'),
-          );
-        }
-        return Center(
-          child: Text('No booking details found'),
-        );
-      },
+            );
+          }
+          // Default loading state when we don't have data yet
+          return _buildSkeletonLoader();
+        },
+      ),
+    );
+  }
+
+  Widget _buildSkeletonLoader() {
+    // Create a dummy booking detail for the skeleton
+    final dummyBooking = BookingDetail(
+      service: Service(
+        id: 0,
+        title: 'Loading...',
+        description: 'Loading...',
+        image: '',
+        location: 'Loading...',
+      ),
+      option: 'Loading...',
+      date: 'Loading...',
+      time: 'Loading...',
+      note: 'Loading...',
+      status: 'Loading...',
+    );
+
+    // Return the same UI but wrapped in Skeletonizer
+    return Skeletonizer(
+      enabled: true,
+      effect: ShimmerEffect(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+      ),
+      child: _buildContentWithData(dummyBooking),
+    );
+  }
+
+  Widget _buildContentWithData(BookingDetail booking) {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildBackgroundImage(booking),
+          _buildContent(booking),
+        ],
+      ),
     );
   }
 
@@ -96,15 +145,34 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildBackgroundImage() {
+  Widget _buildBackgroundImage(BookingDetail booking) {
+    // Add null safety checks
+    final hasImage =
+        booking.service.image != null && booking.service.image!.isNotEmpty;
+
     return Container(
+      width: double.infinity,
       height: 300,
       decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/image/service_dummy_card.png'),
-          fit: BoxFit.cover,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
         ),
+        image: hasImage
+            ? DecorationImage(
+                image: booking.service.image!.startsWith('http')
+                    ? NetworkImage(booking.service.image!) as ImageProvider
+                    : AssetImage(booking.service.image!) as ImageProvider,
+                fit: BoxFit.cover,
+              )
+            : null,
       ),
+      child: (!hasImage)
+          ? Image.asset(
+              'assets/image/404page.png',
+              fit: BoxFit.contain,
+            )
+          : null,
     );
   }
 
@@ -120,7 +188,8 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           SizedBox(height: 16),
           _buildLocationWithStatus(booking),
           SizedBox(height: 16),
-          // if (booking.service != null) _buildNoteSection(booking.note!),
+          // Add null safety check for note
+          _buildNoteSection(booking.note ?? ''),
           SizedBox(height: 16),
           _buildButtonSend(),
         ],
@@ -149,16 +218,18 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
   }
 
   Widget _buildScheduleSection(BookingDetail booking) {
-    String formattedDate = '';
-    try {
-      final date = DateTime.parse(booking.day);
-      formattedDate = DateFormat('d MMMM yyyy').format(date);
-    } catch (e) {
-      formattedDate = 'Invalid date';
-    }
-
-    _logger.d(booking.day);
+    _logger.d(booking.date);
     _logger.d(booking.time);
+
+    // Add error handling for date parsing
+    String formattedDate;
+    try {
+      final DateTime bookingDate = DateTime.parse(booking.date);
+      formattedDate = DateFormat('EEE, d MMMM yyyy').format(bookingDate);
+    } catch (e) {
+      _logger.e("Error parsing date: ${booking.date}, $e");
+      formattedDate = booking.date; // Fallback to raw date
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,13 +251,15 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           ),
           child: Row(
             children: [
-              Expanded(
+              Flexible(
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border.all(
-                        width: 2, color: ColorPallete.backgroundBody),
+                      width: 2,
+                      color: ColorPallete.backgroundBody,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -194,13 +267,16 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                     children: [
                       SvgPicture.asset('assets/icons/icon-calendar.svg',
                           height: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        booking.day,
-                        style: GoogleFonts.ubuntu(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: ColorPallete.darkBlack,
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          formattedDate,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: ColorPallete.darkBlack,
+                          ),
                         ),
                       ),
                     ],
@@ -208,29 +284,31 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                 ),
               ),
               SizedBox(width: 8),
-              Expanded(
+              Flexible(
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border.all(
-                        width: 2, color: ColorPallete.backgroundBody),
+                      width: 2,
+                      color: ColorPallete.backgroundBody,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        size: 20,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        booking.time,
-                        style: GoogleFonts.ubuntu(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: ColorPallete.darkBlack,
+                      Icon(Icons.access_time_rounded, size: 20),
+                      SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          booking.time,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: ColorPallete.darkBlack,
+                          ),
                         ),
                       ),
                     ],
@@ -245,6 +323,14 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
   }
 
   Widget _buildLocationWithStatus(BookingDetail booking) {
+    // Set text to copy based on location type
+    final textToCopy = booking.option == 'Offline'
+        ? booking.option ?? 'No location provided'
+        : 'https://zoom.us/j/123456789';
+
+    // Set the text controller value for copying
+    _controllerText.text = textToCopy;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -371,17 +457,21 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                           children: [
                             InkWell(
                               onTap: () async {
-                                final textToCopy = _controllerText.text;
-                                if (textToCopy.isNotEmpty) {
+                                try {
                                   await Clipboard.setData(
                                       ClipboardData(text: textToCopy));
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('Copied!')),
                                   );
+                                } catch (e) {
+                                  _logger.e("Copy error: $e");
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed to copy')),
+                                  );
                                 }
                               },
                               child: Text(
-                                'Tap to copy: ${booking.option == 'Offline' ? booking.option ?? 'Online' : 'https://zoom.us/j/123456789'}',
+                                'Tap to copy: $textToCopy',
                                 style: TextStyle(
                                   color: ColorPallete.greySilverChalice,
                                 ),
@@ -421,7 +511,9 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            note,
+            note.isNotEmpty ? note : 'No notes provided',
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.ubuntu(
               fontSize: 14,
               color: ColorPallete.darkBlack,

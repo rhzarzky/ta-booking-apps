@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/meetings/presentation/widget/empty_state.dart';
@@ -13,7 +11,6 @@ import 'package:logger/logger.dart';
 import 'package:Appointly/main.dart' show flutterLocalNotificationsPlugin;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 
 class NotificationScreen extends StatefulWidget {
   final String userId;

@@ -21,7 +21,7 @@ class OnboardButton extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.all(Radius.circular(32)),
-        color: isOutline ? Colors.transparent : ColorPallete.primaryColor,
+        color: isOutline ? ColorPallete.primary50 : ColorPallete.primaryColor,
         border: isOutline
             ? Border.all(color: ColorPallete.primaryColor, width: 2)
             : null,
@@ -38,6 +38,7 @@ class OnboardButton extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: isOutline ? ColorPallete.primaryColor : Colors.white,
+
             ),
           )),
     );

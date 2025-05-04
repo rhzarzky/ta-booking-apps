@@ -59,6 +59,7 @@ class Service {
   final String image;
   final String title;
   final String description;
+  final String location;
   final List<String> option;
   final List<String> days;
   final String startDate;
@@ -72,6 +73,7 @@ class Service {
     required this.image,
     required this.title,
     required this.description,
+    required this.location,
     required this.option,
     required this.days,
     required this.startDate,
@@ -150,6 +152,7 @@ class Service {
       image: json['image']?.toString() ?? "",
       title: json['title']?.toString() ?? "",
       description: json['description']?.toString() ?? "",
+      location: json['location']?.toString() ?? "",
       option: parseOption(),
       days: parseDays(),
       startDate: json['start_date']?.toString() ?? "",

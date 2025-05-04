@@ -18,7 +18,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   BookingBloc({required this.historybookingRepository})
       : super(BookingInitial()) {
-    // get all booking
+    // Handle token update
+    on<UpdateTokenEvent>((event, emit) {
+      historybookingRepository.updateToken(event.token);
+    });
+
+    // Get all bookings
     on<GetBookingEvent>((event, emit) async {
       emit(BookingLoading());
       try {
@@ -31,15 +36,16 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         final result = await historybookingRepository.getAllBookings();
         final currentUser = await _authRepository.getUserData();
 
-        // Categorize bookings by status and filter by current user
+        // Categorize bookings by status
         final approved = <Booking>[];
         final pending = <Booking>[];
         final declined = <Booking>[];
 
-        for (var booking in result.bookings.pending) {
+        // Process pending bookings
+        for (var booking in result.services.pending) {
           // Only include bookings for the current user
-          if (currentUser != null && booking.user.id == currentUser.id) {
-            switch (booking.service.status.toLowerCase()) {
+          if (currentUser != null && booking.service.id != 0) {
+            switch (booking.status.toLowerCase()) {
               case 'approved':
                 approved.add(booking);
                 break;
@@ -50,6 +56,20 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
                 declined.add(booking);
                 break;
             }
+          }
+        }
+
+        // Process approved bookings
+        for (var booking in result.services.approved) {
+          if (currentUser != null && booking.service.id != 0) {
+            approved.add(booking);
+          }
+        }
+
+        // Process declined bookings
+        for (var booking in result.services.declined) {
+          if (currentUser != null && booking.service.id != 0) {
+            declined.add(booking);
           }
         }
 
@@ -70,23 +90,36 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       }
     });
 
-    // get booking by id
+    // Get booking by id
     on<BookAppointmentByIdEvent>((event, emit) async {
       emit(BookingLoading());
       try {
         final prefs = await SharedPreferences.getInstance();
         final token = prefs.getString('token');
+
         if (token != null && token.isNotEmpty) {
           historybookingRepository.updateToken(token);
         }
 
-        final currentUser = await _authRepository.getUserData();
-        if (currentUser == null) {
-          throw Exception('User not logged in');
-        }
+        // Get BookingDetail from repository
+        final response = await historybookingRepository
+            .getBookingDetailResponse(event.idBooking);
 
-        final bookingDetail =
-            await historybookingRepository.getBookingById(event.idBooking);
+        // Create bookingDetail dari response, disesuaikan dengan model yang baru
+        final bookingDetail = BookingDetail(
+          service: Service(
+            id: response.service.service.id,
+            title: response.service.service.title,
+            description: response.service.service.description,
+            location: response.service.service.location,
+            image: response.service.service.image,
+          ),
+          option: response.service.option,
+          date: response.service.date,
+          time: response.service.time,
+          note: response.service.note,
+          status: response.service.status,
+        );
 
         // Make sure we have the full booking lists when viewing a specific booking
         if (state is! BookingLoaded) {
@@ -96,11 +129,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         if (state is BookingLoaded) {
           final currentState = state as BookingLoaded;
           emit(BookingLoaded(
-              approved: currentState.approved,
-              pending: currentState.pending,
-              declined: currentState.declined,
-              bookingDetail: bookingDetail,
-              stats: currentState.stats));
+            approved: currentState.approved,
+            pending: currentState.pending,
+            declined: currentState.declined,
+            bookingDetail: bookingDetail,
+            stats: currentState.stats,
+          ));
         } else {
           emit(BookingLoaded(
             approved: [],
@@ -118,42 +152,88 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
     // Filter bookings by date range
     on<FilterBookingsByDateRangeEvent>((event, emit) async {
-      if (state is! BookingLoaded) {
-        await _loadAllBookings(emit);
-        return;
+      if (state is BookingLoaded) {
+        final currentState = state as BookingLoaded;
+
+        final filteredApproved = _filterBookingsByDateRange(
+            currentState.approved, event.startDate, event.endDate);
+        final filteredPending = _filterBookingsByDateRange(
+            currentState.pending, event.startDate, event.endDate);
+        final filteredDeclined = _filterBookingsByDateRange(
+            currentState.declined, event.startDate, event.endDate);
+
+        final filteredStats = {
+          'approved': filteredApproved.length,
+          'pending': filteredPending.length,
+          'declined': filteredDeclined.length,
+        };
+
+        emit(BookingLoaded(
+          approved: filteredApproved,
+          pending: filteredPending,
+          declined: filteredDeclined,
+          stats: filteredStats,
+          isFiltered: true,
+          filterStartDate: event.startDate,
+          filterEndDate: event.endDate,
+          bookingDetail: currentState.bookingDetail,
+        ));
       }
-
-      final currentState = state as BookingLoaded;
-      final DateTime startDate = event.startDate;
-      final DateTime endDate = event.endDate;
-
-      // Filter the bookings by date range
-      final filteredApproved =
-          _filterBookingsByDateRange(currentState.approved, startDate, endDate);
-      final filteredPending =
-          _filterBookingsByDateRange(currentState.pending, startDate, endDate);
-      final filteredDeclined =
-          _filterBookingsByDateRange(currentState.declined, startDate, endDate);
-
-      final stats = {
-        'approved': filteredApproved.length,
-        'pending': filteredPending.length,
-        'declined': filteredDeclined.length,
-      };
-
-      emit(BookingLoaded(
-        approved: filteredApproved,
-        pending: filteredPending,
-        declined: filteredDeclined,
-        bookingDetail: currentState.bookingDetail,
-        stats: stats,
-        isFiltered: true,
-        filterStartDate: startDate,
-        filterEndDate: endDate,
-      ));
     });
 
-    // book appointment
+    // Filter bookings by type
+    on<FilterBookAppointmentEvent>((event, emit) async {
+      if (state is BookingLoaded) {
+        // Load all bookings first
+        await _loadAllBookings(emit);
+
+        if (event.filterType != null && state is BookingLoaded) {
+          final currentState = state as BookingLoaded;
+
+          // Apply filter based on type
+          switch (event.filterType!.toLowerCase()) {
+            case 'approved':
+              emit(BookingLoaded(
+                approved: currentState.approved,
+                pending: [],
+                declined: [],
+                stats: currentState.stats,
+                bookingDetail: currentState.bookingDetail,
+              ));
+              break;
+            case 'pending':
+              emit(BookingLoaded(
+                approved: [],
+                pending: currentState.pending,
+                declined: [],
+                stats: currentState.stats,
+                bookingDetail: currentState.bookingDetail,
+              ));
+              break;
+            case 'declined':
+              emit(BookingLoaded(
+                approved: [],
+                pending: [],
+                declined: currentState.declined,
+                stats: currentState.stats,
+                bookingDetail: currentState.bookingDetail,
+              ));
+              break;
+            default:
+              // Reset to show all
+              emit(BookingLoaded(
+                approved: currentState.approved,
+                pending: currentState.pending,
+                declined: currentState.declined,
+                stats: currentState.stats,
+                bookingDetail: currentState.bookingDetail,
+              ));
+          }
+        }
+      }
+    });
+
+    // Book appointment
     on<BookAppointmentEvent>((event, emit) async {
       emit(BookingLoading());
       try {
@@ -164,24 +244,22 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
         final booking = Booking(
           idBooking: 0, // This will be assigned by the backend
-          user: User(
-            id: currentUser.id,
-            email: currentUser.email,
-            name: currentUser.name,
-          ),
           service: ServiceBooking(
             id: 0, // This will be assigned by the backend
             title: event.title,
             description: event.description,
-            option: event.location,
-            day: event.date,
-            time: event.time,
-            status: event.status,
+            location: event.location,
+            image: event.image,
           ),
+          option: event.location, // Using location as option
+          date: event.date,
+          time: event.time,
+          note: event.note,
+          status: event.status,
         );
 
-        await historybookingRepository.createBooking(booking);
-        add(GetBookingEvent()); // Refresh the list after booking
+        await historybookingRepository.createBooking(currentUser.id, booking);
+        add(GetBookingEvent()); // Refresh the booking list
       } catch (e) {
         _logger.e('Error creating booking: $e');
         emit(BookingFailure(failure: e.toString()));
@@ -201,15 +279,16 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       final result = await historybookingRepository.getAllBookings();
       final currentUser = await _authRepository.getUserData();
 
-      // Categorize bookings by status and filter by current user
+      // Categorize bookings by status
       final approved = <Booking>[];
       final pending = <Booking>[];
       final declined = <Booking>[];
 
-      for (var booking in result.bookings.pending) {
+      // Process pending bookings
+      for (var booking in result.services.pending) {
         // Only include bookings for the current user
-        if (currentUser != null && booking.user.id == currentUser.id) {
-          switch (booking.service.status.toLowerCase()) {
+        if (currentUser != null && booking.service.id != 0) {
+          switch (booking.status.toLowerCase()) {
             case 'approved':
               approved.add(booking);
               break;
@@ -220,6 +299,20 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
               declined.add(booking);
               break;
           }
+        }
+      }
+
+      // Process approved bookings
+      for (var booking in result.services.approved) {
+        if (currentUser != null && booking.service.id != 0) {
+          approved.add(booking);
+        }
+      }
+
+      // Process declined bookings
+      for (var booking in result.services.declined) {
+        if (currentUser != null && booking.service.id != 0) {
+          declined.add(booking);
         }
       }
 
@@ -245,12 +338,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       List<Booking> bookings, DateTime startDate, DateTime endDate) {
     return bookings.where((booking) {
       try {
-        final bookingDate = DateFormat('yyyy-MM-dd').parse(booking.service.day);
+        final bookingDate = DateFormat('yyyy-MM-dd').parse(booking.date);
         return bookingDate
                 .isAfter(startDate.subtract(const Duration(days: 1))) &&
             bookingDate.isBefore(endDate.add(const Duration(days: 1)));
       } catch (e) {
-        _logger.e('Error parsing date: ${booking.service.day}');
+        _logger.e('Error parsing date: ${booking.date}');
         return false;
       }
     }).toList();
