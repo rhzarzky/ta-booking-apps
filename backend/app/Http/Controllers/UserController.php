@@ -89,7 +89,7 @@ class UserController extends Controller
                     'permission' => $user->permissions->pluck('name')
                 ]
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage()
