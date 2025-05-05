@@ -29,11 +29,11 @@ class VerificationController extends Controller
         $user->email_verified_at = now();
         $user->save();
 
-         return response()->json([
-        'status' => 'success',
-        'message' => 'Your email has been successfully verified! You can now log in to your account.',
-        'redirect_to' => url('/login'),
-    ], 200);
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Your email has been successfully verified! You can now log in to your account.',
+            'redirect_to' => url('/login'),
+        ], 200);
     }
 }
 
