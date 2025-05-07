@@ -57,7 +57,7 @@ class UserController extends Controller
                     'role' => $role->name
                 ]
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage()
