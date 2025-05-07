@@ -162,7 +162,7 @@ class UserController extends Controller
 
             // Handle image upload
             if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('profile_images', 'public');
+                $path = $request->file('image')->store('profile', 'public');
                 $user->image = $path;
             }
 
