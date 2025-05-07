@@ -45,7 +45,7 @@ import {
   PointElement,
   Filler,
 } from 'chart.js'
-import ChartDataLabels from 'chartjs-plugin-datalabels'
+// import ChartDataLabels from 'chartjs-plugin-datalabels'
 
 import { Line as LineChart } from 'vue-chartjs'
 
