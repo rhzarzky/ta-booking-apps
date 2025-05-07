@@ -13,13 +13,13 @@
                         class="w-full px-4 py-2 border md:border-2 border-wildsand-200 rounded-lg text-codgray-900 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 text-sm md:text-base ease-in-out" />
                 </div>
 
-                <!-- Filter Option (Offline / Online / All) -->
+                <!-- Filter Option -->
                 <div class="w-full md:w-64">
                     <select v-model="selectedOption"
                         class="w-full px-4 py-2 border md:border-2 border-wildsand-200 rounded-lg text-codgray-900 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 ease-in-out text-sm md:text-base">
                         <option value="all">All Options</option>
-                        <option value="offline">Offline</option>
-                        <option value="online">Online</option>
+                        <option value="Offline">Offline</option>
+                        <option value="Online">Online</option>
                     </select>
                 </div>
             </div>
@@ -54,28 +54,26 @@
                             <th class="px-4 py-2 text-left font-medium uppercase">Location</th>
                             <th class="px-4 py-2 text-left font-medium uppercase">Option</th>
                             <th class="px-4 py-2 text-left font-medium uppercase">Days</th>
+                            <th class="px-4 py-2 text-left font-medium uppercase">Time</th>
+                            <th class="px-4 py-2 text-left font-medium uppercase">Dates</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="service in filteredServices" :key="service.id"
                             class="border-t border-wildsand-200 hover:bg-gray-50">
-                            <td class="p-4">
-                                <span class="text-sm font-medium text-codgray-900">
-                                    {{ service.title }}
-                                </span>
-                            </td>
-                            <td class="p-4">
-                                <span class="text-sm">{{ service.description }}</span>
-                            </td>
-                            <td class="p-4">
-                                <span class="text-sm">{{ service.location }}</span>
-                            </td>
-                            <td class="p-4 capitalize">
-                                <span class="text-sm">{{ service.option }}</span>
-                            </td>
-                            <td class="p-4">
-                                <span class="text-sm">{{ Array.isArray(service.days) ? service.days.join(", ") :
-                                    service.days }}</span>
+                            <td class="p-4 text-sm font-medium text-codgray-900">{{ service.title }}</td>
+                            <td class="p-4 text-sm">{{ service.description }}</td>
+                            <td class="p-4 text-sm">{{ service.location }}</td>
+                            <td class="p-4 text-sm">{{ Array.isArray(service.option) ? service.option.join(", ") :
+                                service.option }}</td>
+                            <td class="p-4 text-sm">{{ Array.isArray(service.days) ? service.days.join(", ") :
+                                service.days }}</td>
+                            <td class="p-4 text-sm">{{ Array.isArray(service.time) ? service.time.join(", ") :
+                                service.time }}</td>
+                            <td class="p-4 text-sm">
+                                <ul>
+                                    <li v-for="d in service.date" :key="d.date">{{ d.day }} - {{ d.date }}</li>
+                                </ul>
                             </td>
                         </tr>
                     </tbody>
@@ -96,16 +94,15 @@ const servicesStore = useServicesStore();
 const searchQuery = ref("");
 const selectedOption = ref("all");
 
-// Fetch data on mount
 onMounted(() => {
     servicesStore.fetchServices();
 });
 
-// Computed filtering
 const filteredServices = computed(() => {
     return servicesStore.services.filter((service) => {
         const matchesSearch = service.title.toLowerCase().includes(searchQuery.value.toLowerCase());
-        const matchesOption = selectedOption.value === "all" || service.option === selectedOption.value;
+        const matchesOption =
+            selectedOption.value === "all" || (Array.isArray(service.option) && service.option.includes(selectedOption.value));
         return matchesSearch && matchesOption;
     });
 });
