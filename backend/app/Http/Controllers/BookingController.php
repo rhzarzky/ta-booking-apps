@@ -112,7 +112,7 @@ class BookingController extends Controller
                 'image' => $booking->service->image ? asset('storage/' . $booking->service->image) : null,
                 'title' => $booking->service->title,
                 'description' => $booking->service->description,
-                'location'  => $booking->service->location,
+                'location'  => $booking->location,
                 'option' => $booking->option,
                 'date' => $booking->date,
                 'time' => $booking->time,
