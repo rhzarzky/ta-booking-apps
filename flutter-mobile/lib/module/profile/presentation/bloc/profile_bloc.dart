@@ -2,7 +2,6 @@ import 'package:Appointly/module/profile/repository/profile_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:Appointly/module/profile/model/profile_model.dart';
 import 'package:meta/meta.dart';
-import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 part 'profile_event.dart';
@@ -10,7 +9,6 @@ part 'profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final ProfileRepository profileRepository;
-  final Logger _logger = Logger();
 
   ProfileBloc({required this.profileRepository}) : super(ProfileInitial()) {
     on<GetProfileEvent>((event, emit) async {

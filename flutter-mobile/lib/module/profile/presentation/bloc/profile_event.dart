@@ -13,7 +13,6 @@ class UpdateProfileEvent extends ProfileEvent {
     this.imagePath,
   });
 
-  @override
   List<Object> get props => [profile, imagePath ?? ''];
 }
 

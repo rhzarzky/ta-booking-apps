@@ -40,7 +40,7 @@ class CardService extends StatelessWidget {
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12.0),
-                image: (imageService != null && imageService.isNotEmpty)
+                image: (imageService.isNotEmpty)
                     ? DecorationImage(
                         image: imageService.startsWith('http')
                             ? NetworkImage(imageService)
@@ -49,7 +49,7 @@ class CardService extends StatelessWidget {
                       )
                     : null,
               ),
-              child: (imageService == null || imageService.isEmpty)
+              child: (imageService.isEmpty)
                   ? Image.asset(
                       'assets/image/404page.png',
                       fit: BoxFit.contain,

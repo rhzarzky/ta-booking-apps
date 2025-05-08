@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
-import 'package:Appointly/module/meetings/presentation/widget/card_service.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_screen.dart';
 import 'package:logger/logger.dart';
 

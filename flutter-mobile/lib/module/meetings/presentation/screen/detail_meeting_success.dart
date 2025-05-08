@@ -29,7 +29,6 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     with SingleTickerProviderStateMixin {
   DateTime? selectedDate;
   AnimationController? _controller;
-  final TextEditingController _controllerText = TextEditingController();
 
   final Logger _logger = Logger();
 

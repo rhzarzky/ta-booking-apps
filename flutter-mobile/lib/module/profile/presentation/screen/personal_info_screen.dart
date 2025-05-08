@@ -1,7 +1,6 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/profile/model/profile_model.dart';
 import 'package:Appointly/module/profile/presentation/bloc/profile_bloc.dart';
-import 'package:Appointly/module/profile/presentation/screen/change_password_screen.dart';
 import 'package:Appointly/module/profile/presentation/widget/button.dart';
 import 'package:Appointly/module/profile/presentation/widget/field_profile.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -184,12 +183,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         ));
   }
 
-  void _navigateToChangePassword() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ChangePasswordScreen()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
