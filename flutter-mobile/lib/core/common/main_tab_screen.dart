@@ -61,6 +61,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
       ),
       NotificationScreen(
         userId: userId,
+        bookingId: bookingId,
       ),
       ProfileScreen(),
     ];

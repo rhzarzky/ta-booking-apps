@@ -151,7 +151,7 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             titleCard: booking.service.title,
             descCard: booking.service.description,
             dateCard: formattedDate,
-            locationCard: booking.service.location,
+            locationCard: booking.service.location ,
             durationCard: booking.time,
             linkCard: () {
               Navigator.push(

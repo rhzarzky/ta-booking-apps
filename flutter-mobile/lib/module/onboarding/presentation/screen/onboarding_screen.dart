@@ -101,27 +101,6 @@ class OnboardingScreen extends StatelessWidget {
                         isOutline: true,
                       ),
                       const SizedBox(height: 12),
-                      // TextButton(
-                      //   onPressed: () async {
-                      //     await _markOnboardingComplete();
-                      //     if (context.mounted) {
-                      //       Navigator.pushReplacement(
-                      //         context,
-                      //         MaterialPageRoute(
-                      //           builder: (context) => const AuthSignin(),
-                      //         ),
-                      //       );
-                      //     }
-                      //   },
-                      //   child: Text(
-                      //     'Skip',
-                      //     style: GoogleFonts.ubuntu(
-                      //       fontSize: 16,
-                      //       fontWeight: FontWeight.w500,
-                      //       color: ColorPallete.primaryColor,
-                      //     ),
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),

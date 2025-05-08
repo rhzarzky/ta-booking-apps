@@ -797,11 +797,11 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: 16,
-        vertical: 8,
+        vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: ColorPallete.primaryColor,
-        borderRadius: BorderRadius.circular(8.0),
+        gradient: ColorPallete.gradientPrimary,
+        borderRadius: BorderRadius.circular(16.0),
       ),
       child: TextButton(
         onPressed: () async {
@@ -810,15 +810,18 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
           if (settings.authorizationStatus != AuthorizationStatus.authorized) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text(
-                      'Please enable notifications to receive booking confirmations')),
+                content: Text(
+                    'Please enable notifications to receive booking confirmations'),
+              ),
             );
             return;
           }
 
           if (selectedDate == null) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Please select a date')),
+              SnackBar(
+                content: Text('Please select a date'),
+              ),
             );
             return;
           }

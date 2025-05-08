@@ -11,6 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:Appointly/module/meetings/presentation/widget/empty_state_service.dart';
 
 class MeetingsScreen extends StatefulWidget {
   final String userId;
@@ -30,6 +31,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
   late ScrollController _scrollController;
   bool _isSearchBarVisible = true;
   String _searchQuery = '';
+  List<dynamic> _filteredResults = [];
 
   @override
   void initState() {
@@ -78,9 +80,10 @@ class _MeetingsScreenState extends State<MeetingsScreen>
     return Future.value();
   }
 
-  void _onSearch(String query) {
+  void _onSearch(String query, List<dynamic> filteredResults) {
     setState(() {
       _searchQuery = query;
+      _filteredResults = filteredResults;
     });
   }
 
@@ -142,7 +145,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                     )
                   : SizedBox(),
             ),
-            SizedBox(height: _isSearchBarVisible ? 16 : 0),
+            SizedBox(height: _isSearchBarVisible ? 24 : 0),
             Expanded(
               child: BlocBuilder<ServiceBloc, ServiceState>(
                 builder: (context, state) {
@@ -174,25 +177,29 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                   } else if (state is ServiceFailure) {
                     return Center(child: Text('Error: ${state.failure}'));
                   } else if (state is ServiceLoaded) {
-                    // Filter services based on search query
+                    // Use the filtered results from the search widget if available
                     final filteredServices = _searchQuery.isEmpty
                         ? state.services
-                        : state.services.where((service) {
-                            final searchLower = _searchQuery.toLowerCase();
-                            return service.title
-                                    .toLowerCase()
-                                    .contains(searchLower) ||
-                                service.description
-                                    .toLowerCase()
-                                    .contains(searchLower) ||
-                                service.location
-                                    .toLowerCase()
-                                    .contains(searchLower) ||
-                                service.days.any((day) =>
-                                    day.toLowerCase().contains(searchLower)) ||
-                                service.option.any((option) =>
-                                    option.toLowerCase().contains(searchLower));
-                          }).toList();
+                        : _filteredResults.isNotEmpty
+                            ? _filteredResults
+                            : state.services.where((service) {
+                                final searchLower = _searchQuery.toLowerCase();
+                                return service.title
+                                        .toLowerCase()
+                                        .contains(searchLower) ||
+                                    service.description
+                                        .toLowerCase()
+                                        .contains(searchLower) ||
+                                    service.location
+                                        .toLowerCase()
+                                        .contains(searchLower) ||
+                                    service.days.any((day) => day
+                                        .toLowerCase()
+                                        .contains(searchLower)) ||
+                                    service.option.any((option) => option
+                                        .toLowerCase()
+                                        .contains(searchLower));
+                              }).toList();
 
                     if (filteredServices.isEmpty) {
                       return Center(
@@ -263,7 +270,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                       ),
                     );
                   }
-                  return Center(child: Text('No Data Available'));
+                  return Center(child: EmptyStateService());
                 },
               ),
             ),

@@ -65,6 +65,8 @@ class _MainAppState extends State<MainApp> {
 
   Future<void> _checkOnboardingStatus() async {
     final onBoardingRepo = OnboardingRepository();
+    await onBoardingRepo.resetOnboarding();
+
     final isComplete = await onBoardingRepo.isOnboardingComplete();
 
     setState(() {

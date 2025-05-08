@@ -8,7 +8,6 @@ import 'package:Appointly/module/auth/repository/auth_repository.dart';
 import 'package:Appointly/module/meetings/presentation/screen/history_meeting.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -116,7 +115,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             IconButton.filled(
               onPressed: () {},
-              icon: SvgPicture.asset('assets/icons/icon-search.svg'),
+              icon: Icon(
+                Icons.bookmark_outline_rounded,
+                color: ColorPallete.darkBlack,
+              ),
               style: IconButton.styleFrom(
                   backgroundColor: Colors.white,
                   padding: const EdgeInsets.all(12)),

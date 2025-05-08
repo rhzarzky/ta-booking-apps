@@ -169,21 +169,29 @@ class CardAppointment extends StatelessWidget {
   }
 
   IconData _getLocationIcon() {
-    if (onlineLocCard != null && onlineLocCard!.isNotEmpty) {
+    final location = locationCard.toLowerCase();
+
+    if (location.startsWith('http://') ||
+        location.startsWith('https://') ||
+        location.contains('zoom') ||
+        location.contains('meet') ||
+        location.contains('link')) {
       return Icons.wifi_tethering_rounded;
-    } else if (offlineLocCard != null && offlineLocCard!.isNotEmpty) {
-      return Icons.place_rounded;
     } else {
-      final String location = locationCard.toLowerCase();
-      if (location == 'offline') {
-        return Icons.map_outlined;
-      } else if (location == 'online') {
-        return Icons.wifi_tethering_rounded;
-      } else if (location.contains('jitsi')) {
-        return Icons.videocam_rounded;
-      } else {
-        return Icons.place_rounded;
-      }
+      return Icons.place_rounded;
+    }
+  }
+
+  String _getLocationText() {
+    final location = locationCard.toLowerCase();
+
+    if (location.startsWith('http://') ||
+        location.startsWith('https://') ||
+        location.contains('zoom') ||
+        location.contains('meet')) {
+      return "Online Meeting";
+    } else {
+      return locationCard;
     }
   }
 
@@ -217,9 +225,9 @@ class CardAppointment extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildInfoItem(
-            Icons.location_on_rounded,
+            _getLocationIcon(),
             'Location',
-            locationCard,
+            _getLocationText(),
           ),
         ],
       ),
@@ -227,9 +235,6 @@ class CardAppointment extends StatelessWidget {
   }
 
   Widget _buildInfoItem(IconData icon, String label, String value) {
-    // Gunakan icon khusus untuk lokasi
-    final actualIcon = label == 'Location' ? _getLocationIcon() : icon;
-
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -240,7 +245,7 @@ class CardAppointment extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
-            actualIcon,
+            icon,
             size: 18,
             color: ColorPallete.primaryColor,
           ),

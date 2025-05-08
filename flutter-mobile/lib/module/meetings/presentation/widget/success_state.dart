@@ -129,15 +129,8 @@ class SuccessState extends StatelessWidget {
 
   Widget _buildHomeButton(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Your booking ID could not be retrieved, but your booking has been processed.',
-          style: GoogleFonts.ubuntu(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: Colors.red[400],
-          ),
-        ),
         const SizedBox(height: 16),
         Material(
           color: Colors.transparent,
@@ -150,8 +143,8 @@ class SuccessState extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
               decoration: BoxDecoration(
-                color: ColorPallete.primaryColor,
-                borderRadius: BorderRadius.circular(8),
+                color: ColorPallete.primary400,
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 'Back to Home',

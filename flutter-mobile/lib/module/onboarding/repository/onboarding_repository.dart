@@ -12,4 +12,9 @@ class OnboardingRepository {
     final prefes = await SharedPreferences.getInstance();
     await prefes.setBool(_onboardingKey, true);
   }
+
+  Future<void> resetOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_onboardingKey, false);
+  }
 }

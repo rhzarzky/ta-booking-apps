@@ -14,10 +14,12 @@ import 'package:skeletonizer/skeletonizer.dart';
 
 class NotificationScreen extends StatefulWidget {
   final String userId;
+  final int bookingId;
 
   const NotificationScreen({
     super.key,
     required this.userId,
+    required this.bookingId,
   });
 
   @override
@@ -149,7 +151,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => DetailMeetingSuccess(
-                          bookingId: item['bookingId'],
+                          bookingId: widget.bookingId,
                         ),
                       ),
                     );
