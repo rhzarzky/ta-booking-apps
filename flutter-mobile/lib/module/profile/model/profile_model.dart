@@ -1,6 +1,6 @@
 class ProfileModel {
-  final String name;
-  final String email;
+  final String? name;
+  final String? email;
   final String? image;
 
   // Tambahan untuk ubah password
@@ -9,8 +9,8 @@ class ProfileModel {
   final String? passwordConfirmation;
 
   ProfileModel({
-    required this.name,
-    required this.email,
+    this.name,
+    this.email,
     this.image,
     this.currentPassword,
     this.password,
@@ -31,13 +31,15 @@ class ProfileModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'email': email,
-      'image': image,
-      'current_password': currentPassword,
-      'password': password,
-      'password_confirmation': passwordConfirmation,
-    };
+    final Map<String, dynamic> data = {};
+    if (name != null) data['name'] = name;
+    if (email != null) data['email'] = email;
+    if (image != null) data['image'] = image;
+    if (currentPassword != null) data['current_password'] = currentPassword;
+    if (password != null) data['password'] = password;
+    if (passwordConfirmation != null) {
+      data['password_confirmation'] = passwordConfirmation;
+    }
+    return data;
   }
 }

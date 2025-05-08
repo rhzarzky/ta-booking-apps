@@ -35,12 +35,12 @@ class NotificationHelper {
     // Use BlocProvider.of instead of context.read
     BlocProvider.of<NotificationBloc>(context, listen: false).add(
       AddNotification(
-          title: title,
-          body: body,
-          status: 'confirmed',
-          time: DateTime.now().toString(),
-          userId: userId,
-  ),
+        title: title,
+        body: body,
+        status: 'confirmed',
+        time: DateTime.now().toString(),
+        userId: userId,
+      ),
     );
   }
 }

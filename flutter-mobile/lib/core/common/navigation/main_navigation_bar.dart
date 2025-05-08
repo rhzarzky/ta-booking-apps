@@ -49,7 +49,7 @@ class AppBottomNavigationBar extends StatelessWidget {
               width: itemWidth,
               alignment: Alignment.center,
               child: Container(
-                width: 36,
+                width: 46,
                 height: 4,
                 decoration: BoxDecoration(
                   color: ColorPallete.primaryColor,

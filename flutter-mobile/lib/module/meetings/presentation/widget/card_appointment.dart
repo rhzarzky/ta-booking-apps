@@ -11,6 +11,8 @@ class CardAppointment extends StatelessWidget {
   final VoidCallback linkCard;
   final String noteCard;
   final String statusCard;
+  final String? onlineLocCard;
+  final String? offlineLocCard;
 
   const CardAppointment({
     super.key,
@@ -22,6 +24,8 @@ class CardAppointment extends StatelessWidget {
     required this.linkCard,
     required this.noteCard,
     required this.statusCard,
+    this.onlineLocCard,
+    this.offlineLocCard,
   });
 
   @override
@@ -164,6 +168,25 @@ class CardAppointment extends StatelessWidget {
     }
   }
 
+  IconData _getLocationIcon() {
+    if (onlineLocCard != null && onlineLocCard!.isNotEmpty) {
+      return Icons.wifi_tethering_rounded;
+    } else if (offlineLocCard != null && offlineLocCard!.isNotEmpty) {
+      return Icons.place_rounded;
+    } else {
+      final String location = locationCard.toLowerCase();
+      if (location == 'offline') {
+        return Icons.map_outlined;
+      } else if (location == 'online') {
+        return Icons.wifi_tethering_rounded;
+      } else if (location.contains('jitsi')) {
+        return Icons.videocam_rounded;
+      } else {
+        return Icons.place_rounded;
+      }
+    }
+  }
+
   Widget _buildInfoGrid() {
     return Container(
       decoration: BoxDecoration(
@@ -204,6 +227,9 @@ class CardAppointment extends StatelessWidget {
   }
 
   Widget _buildInfoItem(IconData icon, String label, String value) {
+    // Gunakan icon khusus untuk lokasi
+    final actualIcon = label == 'Location' ? _getLocationIcon() : icon;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -214,7 +240,7 @@ class CardAppointment extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
-            icon,
+            actualIcon,
             size: 18,
             color: ColorPallete.primaryColor,
           ),

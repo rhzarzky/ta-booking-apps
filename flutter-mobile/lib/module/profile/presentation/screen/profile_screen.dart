@@ -19,7 +19,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with WidgetsBindingObserver {
   bool showOnboarding = true;
 
   final List<Map<String, dynamic>> settingsItems = [
@@ -43,7 +44,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Trigger profile loading when the screen initializes
+    WidgetsBinding.instance.addObserver(this);
+
+    context.read<ProfileBloc>().add(GetProfileEvent());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     context.read<ProfileBloc>().add(GetProfileEvent());
   }
 
@@ -203,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    profile.name,
+                    profile.name ?? "",
                     style: GoogleFonts.ubuntu(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
@@ -212,7 +220,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    profile.email,
+                    profile.email ?? "",
                     style: GoogleFonts.ubuntu(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,

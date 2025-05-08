@@ -15,7 +15,8 @@ final class ServiceLoading extends ServiceState {}
 
 final class ServiceSucees extends ServiceState {
   final Service service;
-  ServiceSucees(this.service);
+  final int bookingId;
+  ServiceSucees(this.service, {this.bookingId = 0});
 }
 
 final class ServiceFailure extends ServiceState {

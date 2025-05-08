@@ -1,5 +1,3 @@
-// ignore_for_file: depend_on_referenced_packages
-
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
@@ -31,6 +29,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
     with WidgetsBindingObserver {
   late ScrollController _scrollController;
   bool _isSearchBarVisible = true;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -79,6 +78,12 @@ class _MeetingsScreenState extends State<MeetingsScreen>
     return Future.value();
   }
 
+  void _onSearch(String query) {
+    setState(() {
+      _searchQuery = query;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -109,7 +114,9 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                   MaterialPageRoute(
                     builder: (context) => BlocProvider.value(
                       value: context.read<BookingBloc>(),
-                      child: HistoryMeetings(bookingId: widget.bookingId,),
+                      child: HistoryMeetings(
+                        bookingId: widget.bookingId,
+                      ),
                     ),
                   ),
                 );
@@ -127,13 +134,18 @@ class _MeetingsScreenState extends State<MeetingsScreen>
             AnimatedContainer(
               duration: Duration(milliseconds: 300),
               height: _isSearchBarVisible ? 56 : 0,
-              child: _isSearchBarVisible ? CustomSearchBar() : SizedBox(),
+              child: _isSearchBarVisible
+                  ? CustomSearchBar(
+                      onSearch: _onSearch,
+                      userId: widget.userId,
+                      bookingId: widget.bookingId,
+                    )
+                  : SizedBox(),
             ),
             SizedBox(height: _isSearchBarVisible ? 16 : 0),
             Expanded(
               child: BlocBuilder<ServiceBloc, ServiceState>(
                 builder: (context, state) {
-                  // In MeetingsScreen where you create skeleton placeholders
                   if (state is ServiceLoading) {
                     return Skeletonizer(
                       effect: ShimmerEffect(
@@ -150,14 +162,10 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                               child: CardService(
                                 headService: 'Loading Service',
                                 descService: 'Service description loading...',
-                                imageService:
-                                    '', // Empty is fine, your widget handles it
+                                imageService: '',
                                 timeService: ['Monday'],
-                                locationService:
-                                    '', // Provide at least one item in the list
-                                provideService: [
-                                  'Online'
-                                ], // Provide at least one item
+                                locationService: '',
+                                provideService: ['Online'],
                                 onTap: () {},
                               ),
                             );
@@ -166,13 +174,65 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                   } else if (state is ServiceFailure) {
                     return Center(child: Text('Error: ${state.failure}'));
                   } else if (state is ServiceLoaded) {
+                    // Filter services based on search query
+                    final filteredServices = _searchQuery.isEmpty
+                        ? state.services
+                        : state.services.where((service) {
+                            final searchLower = _searchQuery.toLowerCase();
+                            return service.title
+                                    .toLowerCase()
+                                    .contains(searchLower) ||
+                                service.description
+                                    .toLowerCase()
+                                    .contains(searchLower) ||
+                                service.location
+                                    .toLowerCase()
+                                    .contains(searchLower) ||
+                                service.days.any((day) =>
+                                    day.toLowerCase().contains(searchLower)) ||
+                                service.option.any((option) =>
+                                    option.toLowerCase().contains(searchLower));
+                          }).toList();
+
+                    if (filteredServices.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'No services found',
+                              style: GoogleFonts.sourceSans3(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Try changing your search criteria',
+                              style: GoogleFonts.sourceSans3(
+                                fontSize: 14,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
                     return RefreshIndicator(
                       onRefresh: _refreshData,
                       child: ListView.builder(
                         controller: _scrollController,
-                        itemCount: state.services.length,
+                        itemCount: filteredServices.length,
                         itemBuilder: (context, index) {
-                          final service = state.services[index];
+                          final service = filteredServices[index];
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 16.0),
                             child: CardService(

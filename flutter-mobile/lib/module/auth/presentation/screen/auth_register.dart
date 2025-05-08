@@ -1,7 +1,7 @@
-import 'package:Appointly/core/common/main_tab_screen.dart';
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/auth/presentation/bloc/auth_bloc.dart';
 import 'package:Appointly/module/auth/presentation/screen/auth_signIn.dart';
+import 'package:Appointly/module/auth/presentation/screen/verification_regis.dart';
 import 'package:Appointly/module/auth/presentation/widget/auth_button.dart';
 import 'package:Appointly/module/auth/presentation/widget/auth_field.dart';
 import 'package:Appointly/module/auth/presentation/widget/link_button.dart';
@@ -94,7 +94,7 @@ class _AuthRegisterState extends State<AuthRegister> {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => MainTabScreen(),
+                        builder: (context) => VerificationRegis(),
                       ),
                       (route) => false,
                     );

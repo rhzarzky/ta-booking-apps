@@ -61,46 +61,43 @@ class ProfileRepository {
         }
       }
 
-      // If we have an image path, use multipart/form-data
-      if (imagePath != null) {
-        FormData formData = FormData.fromMap({
-          'name': profile.name,
-          'email': profile.email,
-          'image': await MultipartFile.fromFile(imagePath),
-          if (profile.currentPassword != null)
-            'current_password': profile.currentPassword,
-          if (profile.password != null) 'password': profile.password,
-          if (profile.passwordConfirmation != null)
-            'password_confirmation': profile.passwordConfirmation,
-        });
+      FormData formData = FormData.fromMap({
+        '_method': 'PUT', // Add this line to override POST to PUT
+        if (profile.name != null) 'name': profile.name,
+        if (profile.email != null) 'email': profile.email,
+        if (imagePath != null) 'image': await MultipartFile.fromFile(imagePath),
+        if (profile.currentPassword != null)
+          'current_password': profile.currentPassword,
+        if (profile.password != null) 'password': profile.password,
+        if (profile.passwordConfirmation != null)
+          'password_confirmation': profile.passwordConfirmation,
+      });
 
-        final response = await _dio.put(
-          '/user/profile',
-          data: formData,
-        );
+      final response = await _dio.post(
+        // Keep this as POST
+        '/user/profile',
+        data: formData,
+      );
 
-        if (response.statusCode == 200) {
-          return ProfileModel.fromJson(response.data);
-        } else {
-          throw Exception(
-              'Failed to update profile: ${response.statusMessage}');
-        }
+      if (response.statusCode == 200) {
+        return ProfileModel.fromJson(response.data);
+      } else if (response.statusCode == 403) {
+        throw Exception('The current password is incorrect');
+      } else {
+        throw Exception(
+            'Failed to update profile: ${response.data['message'] ?? response.statusMessage}');
       }
-      // Otherwise use regular JSON
-      else {
-        final response = await _dio.put(
-          '/user/profile',
-          data: profile.toJson(),
-        );
-
-        if (response.statusCode == 200) {
-          return ProfileModel.fromJson(response.data);
-        } else {
-          throw Exception(
-              'Failed to update profile: ${response.statusMessage}');
-        }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        _logger.e('Dio error: ${e.response?.data}');
+        throw Exception(
+            'Server responded with: ${e.response?.statusCode} - ${e.response?.data['message'] ?? e.response?.statusMessage}');
+      } else {
+        _logger.e('Dio error: ${e.message}');
+        throw Exception('Network error: ${e.message}');
       }
     } catch (e) {
+      _logger.e('Unexpected error: $e');
       rethrow;
     }
   }

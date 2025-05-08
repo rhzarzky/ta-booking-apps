@@ -121,6 +121,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           status: response.service.status,
         );
 
+        _logger.i('this info Booking detail: ${bookingDetail}');
+
         // Make sure we have the full booking lists when viewing a specific booking
         if (state is! BookingLoaded) {
           await _loadAllBookings(emit);

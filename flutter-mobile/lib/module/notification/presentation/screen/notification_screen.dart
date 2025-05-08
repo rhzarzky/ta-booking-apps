@@ -1,6 +1,6 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
-import 'package:Appointly/module/meetings/presentation/widget/empty_state.dart';
+import 'package:Appointly/module/notification/presentation/widget/empt_state.dart';
 import 'package:Appointly/module/notification/presentation/bloc/notification_bloc.dart';
 import 'package:Appointly/module/notification/presentation/widget/notification_item.dart';
 import 'package:flutter/material.dart';
@@ -35,8 +35,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
   void initState() {
     super.initState();
     _initFirebaseMessaging();
-
-  
   }
 
   void _initFirebaseMessaging() async {
@@ -84,12 +82,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
 
     context.read<NotificationBloc>().add(AddNotification(
-        title: title,
-        body: body,
-        status: 'pending',
-        time: DateTime.now().toString(),
-        userId: widget.userId,
-    ));
+          title: title,
+          body: body,
+          status: 'pending',
+          time: DateTime.now().toString(),
+          userId: widget.userId,
+        ));
   }
 
   @override

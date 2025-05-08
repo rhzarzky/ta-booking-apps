@@ -15,7 +15,6 @@ class _SearchBarAnchorState extends State<SearchBarAnchor> {
   String? _currentQuery;
   late Iterable<Widget> _lastOptions = <Widget>[];
   late final _Debounceable<Iterable<String>?, String> _debouncedSearch;
-  static const Duration debounceDuration = Duration(milliseconds: 500);
 
   Future<Iterable<String>?> _search(String query) async {
     _currentQuery = query;

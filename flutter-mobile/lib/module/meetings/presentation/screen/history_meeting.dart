@@ -144,13 +144,14 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
           // Fallback format if localization isn't initialized
           formattedDate = DateFormat('yyyy-MM-dd').format(bookingDate);
         }
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
           child: CardAppointment(
             titleCard: booking.service.title,
             descCard: booking.service.description,
             dateCard: formattedDate,
-            locationCard: booking.option,
+            locationCard: booking.service.location,
             durationCard: booking.time,
             linkCard: () {
               Navigator.push(

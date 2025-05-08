@@ -3,6 +3,7 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/auth/presentation/screen/auth_register.dart';
 import 'package:Appointly/module/auth/presentation/screen/auth_signIn.dart';
+import 'package:Appointly/module/auth/presentation/screen/verification_regis.dart';
 import 'package:Appointly/module/onboarding/presentation/widget/onboard_button_filled.dart';
 import 'package:Appointly/module/onboarding/repository/onboarding_repository.dart';
 import 'package:flutter/material.dart';

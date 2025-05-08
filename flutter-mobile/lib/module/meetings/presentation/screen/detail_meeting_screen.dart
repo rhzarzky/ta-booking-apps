@@ -1,10 +1,11 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
-import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/widget/custom_calendar.dart';
 import 'package:Appointly/module/meetings/presentation/widget/dropdown_time.dart';
+import 'package:Appointly/module/meetings/presentation/widget/empty_state_service.dart';
 import 'package:Appointly/module/meetings/presentation/widget/expanded_text.dart';
 import 'package:Appointly/module/meetings/presentation/widget/success_state.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -323,9 +324,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                       );
                     }
                   }
-                  return const Center(
-                    child: Text('No Data Available'),
-                  );
+                  return const Center(child: EmptyStateService());
                 },
               ),
               _buildBackButton(),
@@ -794,87 +793,85 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
   }
 
   Widget _buildButtonSend() {
-    return BlocListener<BookingBloc, BookingState>(
-      listener: (context, state) {
-        if (state is BookingSuccess) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SuccessState(
-                bookingId: state.bookings.pending.first.idBooking,
-              ),
-            ),
-          );
-        } else if (state is BookingFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.failure)),
-          );
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          gradient: ColorPallete.gradientPrimary,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: TextButton(
-          onPressed: () async {
-            if (selectedDate == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Please select a date')),
-              );
-              return;
-            }
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        color: ColorPallete.primaryColor,
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: TextButton(
+        onPressed: () async {
+          // 1. First check for notification permissions
+          final settings = await FirebaseMessaging.instance.requestPermission();
+          if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(
+                      'Please enable notifications to receive booking confirmations')),
+            );
+            return;
+          }
 
-            // Format selected date
-            final formattedDay = DateFormat('EEEE').format(selectedDate!);
-            final formattedDate =
-                DateFormat('yyyy-MM-dd').format(selectedDate!);
+          if (selectedDate == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Please select a date')),
+            );
+            return;
+          }
 
-            // Get the time in 24-hour format
-            final time24 = convert12To24Format(selectedTime);
+          // Format selected date
+          final formattedDate = selectedDate != null
+              ? DateFormat('yyyy-MM-dd').format(selectedDate!)
+              : '';
 
-            // Get note from controller
-            final note = _noteController.text.trim();
+          // Get the time in 24-hour format
+          final time24 = convert12To24Format(selectedTime);
 
-            // Get service details for notification
-            final state = context.read<ServiceBloc>().state;
-            if (state is ServiceLoaded) {
-              final service = state.services.firstWhere(
-                (service) => service.id == widget.serviceId,
-                orElse: () => state.services.first,
-              );
-              
-              context.read<ServiceBloc>().add(BookService(
-                    serviceId: widget.serviceId,
-                    option: selectedOption,
-                    date: formattedDate,
-                    notes: note,
-                    time: time24,
-                  ));
+          // Get note from controller
+          final note = _noteController.text.trim();
 
-              // Show notification with booking details
-              await NotificationHelper.showBookingNotification(
-                context: context,
-                serviceName: service.title,
-                date: formattedDate,
-                time: selectedTime,
-                option: selectedOption,
-                userId: widget.userId,
-              );
-            }
-          },
-          child: Text(
-            'Book Appointment Now',
-            style: GoogleFonts.ubuntu(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+          final state = context.read<ServiceBloc>().state;
+          if (state is ServiceLoaded) {
+            final service = state.services.firstWhere(
+              (service) => service.id == widget.serviceId,
+              orElse: () => state.services.first,
+            );
+
+            await NotificationHelper.showBookingNotification(
+              context: context,
+              serviceName: service.title,
+              date: formattedDate,
+              time: selectedTime,
+              option: selectedOption,
+              userId: widget.userId,
+            );
+
+            context.read<ServiceBloc>().add(BookService(
+                  serviceId: widget.serviceId,
+                  option: selectedOption,
+                  date: formattedDate,
+                  notes: note,
+                  time: time24,
+                ));
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      SuccessState(bookingId: widget.bookingId)),
+            );
+          }
+        },
+        child: Text(
+          'Book Appointment Now',
+          style: GoogleFonts.ubuntu(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

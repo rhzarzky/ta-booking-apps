@@ -1,7 +1,7 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/profile/model/profile_model.dart';
 import 'package:Appointly/module/profile/presentation/bloc/profile_bloc.dart';
-import 'package:Appointly/module/profile/presentation/screen/profile_screen.dart';
+import 'package:Appointly/module/profile/presentation/screen/change_password_screen.dart';
 import 'package:Appointly/module/profile/presentation/widget/button.dart';
 import 'package:Appointly/module/profile/presentation/widget/field_profile.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,9 +24,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   final formKey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final fullNameController = TextEditingController();
-  final oldPassword = TextEditingController();
-  final newPassword = TextEditingController();
-  final confirmPassword = TextEditingController();
   XFile? _selectedImage; // For newly selected images
   String? _currentProfileImageUrl;
 
@@ -35,8 +32,6 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     super.initState();
     emailController.addListener(_updateButtonVisibility);
     fullNameController.addListener(_updateButtonVisibility);
-    oldPassword.addListener(_updateButtonVisibility);
-    newPassword.addListener(_updateButtonVisibility);
 
     context.read<ProfileBloc>().add(GetProfileEvent());
   }
@@ -45,33 +40,13 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   void dispose() {
     emailController.removeListener(_updateButtonVisibility);
     fullNameController.removeListener(_updateButtonVisibility);
-    oldPassword.removeListener(_updateButtonVisibility);
-    newPassword.removeListener(_updateButtonVisibility);
     emailController.dispose();
     fullNameController.dispose();
-    oldPassword.dispose();
-    newPassword.dispose();
     super.dispose();
   }
 
   void _updateButtonVisibility() {
     setState(() {});
-  }
-
-  bool _areFieldsFilled() {
-    return fullNameController.text.isNotEmpty &&
-        emailController.text.isNotEmpty &&
-        // Either all password fields are empty OR all are filled
-        ((oldPassword.text.isEmpty &&
-                newPassword.text.isEmpty &&
-                confirmPassword.text.isEmpty) ||
-            (oldPassword.text.isNotEmpty &&
-                newPassword.text.isNotEmpty &&
-                confirmPassword.text.isNotEmpty));
-  }
-
-  bool _arePasswordFieldsFilled() {
-    return newPassword.text.isNotEmpty && oldPassword.text.isNotEmpty;
   }
 
   // Method to pick an image from the gallery
@@ -197,59 +172,22 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     );
   }
 
-  void _updateProfile({bool updatePassword = false}) {
+  void _updateProfile() {
     final profile = ProfileModel(
-      name: fullNameController.text,
-      email: emailController.text,
-      //image: _currentProfileImageUrl,
-      currentPassword: updatePassword ? oldPassword.text : null,
-      password: updatePassword ? newPassword.text : null,
-      passwordConfirmation: updatePassword ? confirmPassword.text : null,
+      name: fullNameController.text.isNotEmpty ? fullNameController.text : null,
+      email: emailController.text.isNotEmpty ? emailController.text : null,
     );
 
     context.read<ProfileBloc>().add(UpdateProfileEvent(
           profile: profile,
-          imagePath: _selectedImage != null
-              ? _selectedImage!.path
-              : null, // Kirim file gambar langsung
+          imagePath: _selectedImage?.path,
         ));
   }
 
-  void _confirmChangePassword() {
-    if (_arePasswordFieldsFilled() &&
-        newPassword.text != confirmPassword.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('New password and confirmation do not match'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Confirm Changes'),
-          content: Text('Are you sure you want to save these changes?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _updateProfile(
-                  updatePassword: _arePasswordFieldsFilled(),
-                );
-              },
-              child: Text('Save'),
-            ),
-          ],
-        );
-      },
+  void _navigateToChangePassword() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ChangePasswordScreen()),
     );
   }
 
@@ -263,18 +201,33 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
         appBar: _buildAppBar(),
         body: state is ProfileLoading
             ? Center(child: CircularProgressIndicator())
-            : ListView(
+            : Column(
                 children: [
-                  _buildProfileHeader(),
-                  _fieldItem(isKeyboardVisible),
-                  _passwordFields(isKeyboardVisible),
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        _buildProfileHeader(),
+                        _fieldItem(isKeyboardVisible),
+                        _passwordChangeSection(isKeyboardVisible),
+                        SizedBox(height: 80), // Add space for the button
+                      ],
+                    ),
+                  ),
+                  // Fixed positioned button at the bottom
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Button(
+                      text: 'Save Changes',
+                      onTap: _updateProfile,
+                    ),
+                  ),
                 ],
               ),
       );
     }, listener: (context, state) {
       if (state is ProfileLoaded) {
-        fullNameController.text = state.profile.name;
-        emailController.text = state.profile.email;
+        fullNameController.text = state.profile.name ?? "";
+        emailController.text = state.profile.email ?? "";
 
         setState(() {
           _currentProfileImageUrl = state.profile.image;
@@ -286,10 +239,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(
-          context,
-          MaterialPageRoute(builder: (context) => ProfileScreen()),
-        );
+        context.read<ProfileBloc>().add(GetProfileEvent());
+        Navigator.pop(context);
       } else if (state is ProfileError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -405,100 +356,43 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   }
 
   Widget _fieldItem(bool isKeyboardVisible) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(
-          top: 24.0,
-          bottom: 24.0,
-          left: 16.0,
-          right: 16.0,
-        ),
-        child: Column(
-          children: [
-            FieldProfile(
-              labelText: 'Full Name',
-              hintText: 'John Doe',
-              controller: fullNameController,
-            ),
-            SizedBox(
-              height: 24.0,
-            ),
-            FieldProfile(
-              labelText: 'Email Address',
-              hintText: 'JohnDoe@gmail.com',
-              controller: emailController,
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: 24.0,
+        left: 16.0,
+        right: 16.0,
+      ),
+      child: Column(
+        children: [
+          FieldProfile(
+            labelText: 'Full Name',
+            hintText: 'John Doe',
+            controller: fullNameController,
+          ),
+          SizedBox(
+            height: 24.0,
+          ),
+          FieldProfile(
+            labelText: 'Email Address',
+            hintText: 'JohnDoe@gmail.com',
+            controller: emailController,
+          ),
+        ],
       ),
     );
   }
 
-  Widget _passwordFields(bool isKeyboardVisible) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.only(
-          bottom: 24.0,
-          left: 16.0,
-          right: 16.0,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            FieldProfile(
-              labelText: 'Old Password',
-              hintText: 'Min.8 Characters',
-              controller: oldPassword,
-              isPassword: true,
-              isOptional: true,
-            ),
-            SizedBox(
-              height: 24.0,
-            ),
-            FieldProfile(
-              labelText: 'New Password',
-              hintText: 'Min.8 Characters',
-              controller: newPassword,
-              isPassword: true,
-              isOptional: true,
-            ),
-            SizedBox(
-              height: 24.0,
-            ),
-            FieldProfile(
-              labelText: 'Confirm Password',
-              hintText: 'Min.8 Characters',
-              controller: confirmPassword,
-              isPassword: true,
-              isOptional: true,
-            ),
-            SizedBox(
-              height: isKeyboardVisible ? 24.0 : 24.0,
-            ),
-            SizedBox(height: isKeyboardVisible ? 24.0 : 24.0),
-            // Replace both Visibility widgets with this single button
-            Button(
-              text: 'Save Changes',
-              onTap: () {
-                if (_arePasswordFieldsFilled()) {
-                  // If password fields are filled, confirm password change first
-                  _confirmChangePassword();
-                } else if (_areFieldsFilled()) {
-                  // If only profile fields are filled, update profile directly
-                  _updateProfile();
-                } else {
-                  // Show error if nothing is filled (shouldn't happen since button would be disabled)
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Please fill in at least name and email'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
-        ),
+  Widget _passwordChangeSection(bool isKeyboardVisible) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16.0,
+        vertical: 24.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 32.0),
+        ],
       ),
     );
   }

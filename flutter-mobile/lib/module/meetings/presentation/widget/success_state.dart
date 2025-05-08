@@ -2,6 +2,8 @@ import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:logger/logger.dart';
+import 'package:Appointly/core/common/main_tab_screen.dart';
 
 class SuccessState extends StatelessWidget {
   final int bookingId;
@@ -13,6 +15,9 @@ class SuccessState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final logger = Logger();
+    logger.d('Success state with bookingId: $bookingId');
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -56,35 +61,10 @@ class SuccessState extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DetailMeetingSuccess(
-                              bookingId: bookingId,
-                            ),
-                          ),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 24),
-                          decoration: BoxDecoration(
-                            color: ColorPallete.primaryColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            'View Appointment',
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: ColorPallete.primaryColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    if (bookingId > 0)
+                      _buildViewAppointmentButton(context)
+                    else
+                      _buildHomeButton(context),
                   ],
                 ),
               ),
@@ -92,6 +72,99 @@ class SuccessState extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildViewAppointmentButton(BuildContext context) {
+    final logger = Logger();
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          logger.d(
+              'Navigating to DetailMeetingSuccess with bookingId: $bookingId');
+          // Cek terlebih dahulu apakah bookingId valid
+          if (bookingId <= 0) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(
+                      'ID Pemesanan tidak valid. Silakan kembali ke beranda.')),
+            );
+            // Redirect ke home jika bookingId tidak valid
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => MainTabScreen()),
+              (route) => false,
+            );
+            return;
+          }
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailMeetingSuccess(
+                bookingId: bookingId,
+              ),
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          decoration: BoxDecoration(
+            color: ColorPallete.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'View Appointment',
+            style: GoogleFonts.ubuntu(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: ColorPallete.primaryColor,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeButton(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          'Your booking ID could not be retrieved, but your booking has been processed.',
+          style: GoogleFonts.ubuntu(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Colors.red[400],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => MainTabScreen()),
+              (route) => false,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              decoration: BoxDecoration(
+                color: ColorPallete.primaryColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Back to Home',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

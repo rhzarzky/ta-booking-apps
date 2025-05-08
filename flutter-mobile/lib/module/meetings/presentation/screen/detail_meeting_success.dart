@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
 import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:Appointly/module/meetings/model/booking_detail_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DetailMeetingSuccess extends StatefulWidget {
   final int bookingId;
@@ -46,6 +46,22 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
 
     // Delay the API call slightly to ensure the widget is fully mounted
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _logger.d('Requesting booking details for ID: ${widget.bookingId}');
+      if (widget.bookingId <= 0) {
+        _logger.e('Invalid booking ID: ${widget.bookingId}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('ID Pemesanan tidak valid'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        // Kembalikan ke halaman sebelumnya jika ID tidak valid
+        Future.delayed(Duration(seconds: 2), () {
+          Navigator.pop(context);
+        });
+        return;
+      }
+
       context
           .read<BookingBloc>()
           .add(BookAppointmentByIdEvent(idBooking: widget.bookingId));
@@ -71,6 +87,52 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
             final booking = state.bookingDetail!;
             _logger.t(booking);
             return _buildContentWithData(booking);
+          } else if (state is BookingLoaded && state.bookingDetail == null) {
+            // Jika BookingLoaded tetapi bookingDetail null
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Tidak bisa memuat detail janji temu.',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: ColorPallete.darkBlack,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.read<BookingBloc>().add(BookAppointmentByIdEvent(
+                            idBooking: widget.bookingId,
+                          ));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorPallete.primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text('Coba Lagi'),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => MainTabScreen()),
+                        (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[200],
+                      foregroundColor: ColorPallete.darkBlack,
+                    ),
+                    child: Text('Kembali ke Beranda'),
+                  ),
+                ],
+              ),
+            );
           } else if (state is BookingFailure) {
             return Center(
               child: Column(
@@ -81,15 +143,35 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                   ElevatedButton(
                     onPressed: () {
                       context.read<BookingBloc>().add(BookAppointmentByIdEvent(
-                          idBooking: widget.bookingId, ));
+                            idBooking: widget.bookingId,
+                          ));
                     },
-                    child: Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorPallete.primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text('Coba Lagi'),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => MainTabScreen()),
+                        (route) => false,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.grey[200],
+                      foregroundColor: ColorPallete.darkBlack,
+                    ),
+                    child: Text('Kembali ke Beranda'),
                   ),
                 ],
               ),
             );
           }
-          // Default loading state when we don't have data yet
           return _buildSkeletonLoader();
         },
       ),
@@ -97,7 +179,6 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
   }
 
   Widget _buildSkeletonLoader() {
-    // Create a dummy booking detail for the skeleton
     final dummyBooking = BookingDetail(
       service: Service(
         id: 0,
@@ -141,7 +222,24 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
       backgroundColor: Colors.white,
       scrolledUnderElevation: 0,
       elevation: 0.0,
-      toolbarHeight: 8.0,
+      leading: IconButton(
+        onPressed: () {
+          context.read<BookingBloc>().add(GetBookingEvent());
+          Navigator.pop(context);
+        },
+        icon: Icon(
+          Icons.arrow_back_rounded,
+          color: ColorPallete.darkBlack,
+        ),
+      ),
+      title: Text(
+        'Detail Appointment',
+        style: GoogleFonts.ubuntu(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: ColorPallete.darkBlack,
+        ),
+      ),
     );
   }
 
@@ -160,9 +258,9 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
         ),
         image: hasImage
             ? DecorationImage(
-                image: booking.service.image!.startsWith('http')
+                image: booking.service.image!.isNotEmpty
                     ? NetworkImage(booking.service.image!) as ImageProvider
-                    : AssetImage(booking.service.image!) as ImageProvider,
+                    : const AssetImage('assets/image/404page.png'),
                 fit: BoxFit.cover,
               )
             : null,
@@ -228,7 +326,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
       formattedDate = DateFormat('EEE, d MMMM yyyy').format(bookingDate);
     } catch (e) {
       _logger.e("Error parsing date: ${booking.date}, $e");
-      formattedDate = booking.date; // Fallback to raw date
+      formattedDate = booking.date;
     }
 
     return Column(
@@ -323,18 +421,9 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
   }
 
   Widget _buildLocationWithStatus(BookingDetail booking) {
-    // Set text to copy based on location type
-    final textToCopy = booking.option == 'Offline'
-        ? booking.option ?? 'No location provided'
-        : 'https://zoom.us/j/123456789';
-
-    // Set the text controller value for copying
-    _controllerText.text = textToCopy;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Location title
         Text(
           'Location',
           style: GoogleFonts.ubuntu(
@@ -344,7 +433,6 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           ),
         ),
         SizedBox(height: 8),
-        // Container for both status and location
         Container(
           padding: EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -353,7 +441,6 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           ),
           child: Column(
             children: [
-              // Status section
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -392,7 +479,6 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                   ],
                 ),
               ),
-              // Location section
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.only(
@@ -442,44 +528,52 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                         ),
                       ],
                     ),
-                    SizedBox(
-                      height: 12,
-                    ),
+                    SizedBox(height: 12),
                     Container(
-                        width: double.infinity,
-                        height: 80,
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: ColorPallete.concrete50,
-                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                      width: double.infinity,
+                      height: 80,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: ColorPallete.concrete50,
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      child: InkWell(
+                        onTap: () async {
+                          final url = booking.service.location;
+                          if (url != null && url.isNotEmpty) {
+                            try {
+                              // Check if the URL has a scheme, if not add https://
+                              final parsedUrl = url.startsWith('http://') ||
+                                      url.startsWith('https://')
+                                  ? url
+                                  : 'https://$url';
+
+                              if (await canLaunchUrl(Uri.parse(parsedUrl))) {
+                                await launchUrl(
+                                  Uri.parse(parsedUrl),
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              } else {
+                                throw 'Could not launch $parsedUrl';
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Could not open URL: $e')),
+                              );
+                              _logger.e("URL launch error: $e");
+                            }
+                          }
+                        },
+                        child: Text(
+                          'Tap to open: ${booking.service.location}',
+                          style: TextStyle(
+                            color: ColorPallete.greySilverChalice,
+                          ),
+                          textAlign: TextAlign.left,
                         ),
-                        child: Column(
-                          children: [
-                            InkWell(
-                              onTap: () async {
-                                try {
-                                  await Clipboard.setData(
-                                      ClipboardData(text: textToCopy));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Copied!')),
-                                  );
-                                } catch (e) {
-                                  _logger.e("Copy error: $e");
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Failed to copy')),
-                                  );
-                                }
-                              },
-                              child: Text(
-                                'Tap to copy: $textToCopy',
-                                style: TextStyle(
-                                  color: ColorPallete.greySilverChalice,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ),
-                          ],
-                        ))
+                      ),
+                    ),
                   ],
                 ),
               ),
