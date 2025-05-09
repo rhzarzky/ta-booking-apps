@@ -13,7 +13,7 @@ const router = createRouter({
 
 // Middleware global for authentication and setting pages
 router.beforeEach((to, from, next) => {
-  document.title = `${to.meta.title} | Appointly`;
+  document.title = `${to.meta.title} | Admin Panel`;
 
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
   const isAuthenticated = authServices.isAuthenticated();

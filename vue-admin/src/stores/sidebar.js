@@ -6,7 +6,7 @@ export const useSidebarStore = defineStore("sidebar", () => {
   // State
   const isSidebarOpen = ref(false);
   const selected = useStorage("selected", ref(" "));
-  const page = useStorage("page", ref("AdminDashboard"));
+  const page = useStorage("page", ref("Dashboard"));
 
   // Actions
   function toggleSidebar() {
@@ -24,7 +24,7 @@ export const useSidebarStore = defineStore("sidebar", () => {
   function resetState() {
     isSidebarOpen.value = false;
     selected.value = " ";
-    page.value = "AdminDashboard";
+    page.value = "Dashboard";
   }
 
   // Getters

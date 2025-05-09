@@ -1,21 +1,13 @@
 import api from "./api";
 
-// List all services
-export const getServiceApi = () => {
-  return api.get("/service");
-};
+// GET /service
+export const getServiceApi = () => api.get("/service");
 
-// Get service detail by ID
-export const getServiceDetailApi = (id) => {
-  return api.get(`/service/${id}`);
-};
+// GET /service/:id
+export const getServiceDetailApi = (id) => api.get(`/service/${id}`);
 
-// Create a new service (requires data)
-export const createServiceApi = (data) => {
-  return api.post("/service", data);
-};
+// POST /service with payload
+export const createServiceApi = (data) => api.post("/service", data);
 
-// Edit an existing service by ID (requires data)
-export const editServiceApi = (id, data) => {
-  return api.put(`/service/${id}`, data);
-};
+// PUT /service/:id with payload
+export const editServiceApi = (id, data) => api.put(`/service/${id}`, data);

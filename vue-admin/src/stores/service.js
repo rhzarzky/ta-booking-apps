@@ -1,5 +1,9 @@
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import {
+  getServiceApi,
+  createServiceApi,
+  editServiceApi
+} from "@/api/service-api"; // Importing the API functions
 
 export const useServicesStore = defineStore('services', {
   state: () => ({
@@ -9,43 +13,92 @@ export const useServicesStore = defineStore('services', {
     notification: {
       show: false,
       message: '',
-      type: 'success', 
+      type: 'success',
     },
   }),
 
   actions: {
+    // Fetching services from the API
     async fetchServices() {
-      this.isLoading = true
-      this.error = null
+      this.isLoading = true;
+      this.error = null;
 
       try {
-        // Ensure baseURL is set correctly in Axios configuration
-        const response = await axios.get('/service') 
+        const response = await getServiceApi();  // Calling the getServiceApi function
 
-        // Check if response has valid status
         if (response.data.status === 'success') {
-          this.services = response.data.services
+          this.services = response.data.services;
         } else {
-          throw new Error(response.data.message || 'Failed to fetch services')
+          throw new Error(response.data.message || 'Failed to fetch services');
         }
       } catch (err) {
-        // Set error message from exception or fallback to a default
-        this.error = err.message || 'An unexpected error occurred'
-        this.showNotification(this.error, 'error')
+        this.error = err.message || 'An unexpected error occurred';
+        this.showNotification(this.error, 'error');
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     },
 
-    showNotification(message, type = 'success') {
-      this.notification.message = message
-      this.notification.type = type
-      this.notification.show = true
+    // Create a new service
+    async createService(postData) {
+      this.isLoading = true;
+      this.error = null;
 
-      // auto close after 3 seconds
+      try {
+        const response = await createServiceApi(postData);
+
+        if (response.data.status === 'success') {
+          this.services.push(response.data.service);  // Add the new service
+          this.showNotification('Service created successfully!', 'success');
+          return { success: true };
+        } else {
+          throw new Error(response.data.message || 'Failed to create service');
+        }
+      } catch (err) {
+        this.error = err.response?.data?.errors || err.message || 'An unexpected error occurred';
+        this.showNotification(this.error, 'error');
+        return { success: false, validationErrors: err.response?.data?.errors };
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    // Edit an existing service
+    async editService(id, updatedData) {
+      this.isLoading = true;
+      this.error = null;
+
+      try {
+        const response = await editServiceApi(id, updatedData);  // Calling the editServiceApi function
+
+        if (response.data.status === 'success') {
+          // Update the service in the state
+          const index = this.services.findIndex(service => service.id === id);
+          if (index !== -1) {
+            this.services[index] = response.data.service;
+          }
+          this.showNotification('Service updated successfully!', 'success');
+        } else {
+          throw new Error(response.data.message || 'Failed to update service');
+        }
+      } catch (err) {
+        this.error = err.message || 'An unexpected error occurred';
+        this.showNotification(this.error, 'error');
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    // Display notifications
+    showNotification(message, type = 'success') {
+      this.notification.message = message;
+      this.notification.type = type;
+      this.notification.show = true;
+
+      // Auto close the notification after 3 seconds
       setTimeout(() => {
-        this.notification.show = false
-      }, 3000)
+        this.notification.show = false;
+      }, 3000);
     },
   },
-})
+});
