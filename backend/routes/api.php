@@ -13,7 +13,14 @@ Route::middleware([JwtMiddleware::class])->group(function () {
 
     Route::middleware(['permission:show user'])->group(function () {
         Route::get('/users', [UserController::class, 'showAllUser']);
+        Route::get('/user/{id}', [UserController::class, 'getUserById']);
     });
+    Route::middleware(['permission:edit user'])->group(function () {
+        Route::put('/user/{id}', [UserController::class, 'editUserById']);
+    });
+    Route::middleware(['permission:delete user'])->group(function () {
+        Route::delete('/user/{id}', [UserController::class, 'deleteUserById']);
+    }); 
     Route::middleware(['permission:create role'])->group(function () {
         Route::post('/role', [RoleController::class, 'storeRole']);
     });
@@ -35,6 +42,9 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::middleware(['permission:edit service'])->group(function () {
         Route::put('/service/{id}', [ServiceController::class, 'editService']);
     });
+    Route::middleware(['permission:delete service'])->group(function () {
+        Route::delete('/service/{id}', [ServiceController::class, 'deleteService']);
+    }); 
     Route::middleware(['permission:show booking'])->group(function () {
         Route::get('/booking', [BookingController::class, 'showAllBooking']);
     });

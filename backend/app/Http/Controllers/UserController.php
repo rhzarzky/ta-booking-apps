@@ -9,6 +9,7 @@ use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 use Exception;
 
@@ -32,6 +33,135 @@ class UserController extends Controller
                 ];
             }),
         ], 200);
+    }
+    public function getUserById($id)
+    {
+        $user = User::find($id);
+
+        if(!$user){
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User found',
+            'user' => [
+                'id' => $user->id,
+                'image' => $user->image ? asset('storage/' . $user->image) : null,
+                'name' => $user->name,
+                'email' => $user->email,
+                'status' => $user->status,
+                'role' => $user->roles->pluck('name')->toArray(),  
+                'permission' => $user->permissions->pluck('name')->toArray(), 
+            ],
+        ], 200);
+    }
+    public function editUserById(Request $request, $id)
+    {
+
+        $dataValidation = Validator::make($request->all(), [
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id,
+            'role' => 'nullable|string|max:50',
+            'password' => 'sometimes|string|min:8|confirmed',
+            'status' => 'sometimes|in:Active,Inactive',
+            'permissions' => 'nullable|array', // Menambahkan validasi untuk permissions
+            'permissions.*' => 'string|exists:permissions,name',
+        ]);
+
+        if ($dataValidation->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $dataValidation->errors(),
+            ], 422);
+        }
+
+        try {
+            $user = User::findOrFail($id);
+
+            if ($user->is_protected && $user->hasRole('admin')) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Admin cannot be updated.',
+                ], 403); // Status code 403 for forbidden
+            }
+
+            if ($request->has('name')) {
+                $user->name = $request->name;
+            }
+
+            if ($request->has('email')) {
+                $user->email = $request->email;
+            }
+
+            if ($request->has('password')) {
+                $user->password = Hash::make($request->password);
+            }
+
+            if ($request->has('status')) {
+                $user->status = $request->status;
+            }
+
+            if ($request->has('role')) {
+                $user->syncRoles([$request->role]); // Hapus semua role sebelumnya, tambahkan role baru
+            }
+            
+            if ($request->has('permissions')) {
+                $user->syncPermissions($request->permissions); // Sinkronkan izin pengguna
+            }
+
+            $user->save();
+            $roles = $user->getRoleNames();
+            $permissions = $user->getPermissionNames();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User profile updated successfully',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'status' => $user->status,
+                    'role' => $roles,
+                    'permissions' => $permissions,
+
+                ],
+            ], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'User not found',
+            ], 404);
+        } catch (Exception $e) {
+            Log::error('User Profile Update Error: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while updating the user profile',
+            ], 500);
+        }
+    }
+    public function deleteUserById($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['status' => 'error', 'message' => 'User not found'], 404);
+        }
+
+        if ($user->is_protected && $user->hasRole('admin')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Admin cannot be deleted.',
+            ], 403);
+        }
+
+        $user->delete();
+
+        return response()->json(['status' => 'success', 'message' => 'User deleted successfully'], 200);
     }
     public function assignRole(Request $request, $id)
     {
