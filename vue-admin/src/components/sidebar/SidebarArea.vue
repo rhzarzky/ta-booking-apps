@@ -176,7 +176,7 @@ const menuGroups = computed(() => {
     <!-- sidebar header start -->
     <div class="flex items-center justify-between gap-2 p-6">
       <router-link to="/dashboard">
-        <img src="@/assets/image/logo-gmed.png" alt="" class="w-32" />
+        <img src="" alt="" class="w-32" />
       </router-link>
       <button class="block lg:hidden" @click="sidebarStore.isSidebarOpen = false">
         <svg class="text-cobalt-50" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024">
