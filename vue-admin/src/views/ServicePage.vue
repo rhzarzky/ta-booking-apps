@@ -26,7 +26,7 @@
 
             <!-- Create Service Button -->
             <div class="px-4 py-2 mb-4 flex justify-end">
-                <RouterLink to="/createservice"
+                <RouterLink to="/create-service"
                     class="flex gap-2 items-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm
                     md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25
                     hover:transition hover:ease-in-out"
@@ -95,7 +95,7 @@
                             <!-- Scrollable Date Column -->
                             <td class="p-4 text-sm overflow-y-auto max-h-32">
                                 <ul>
-                                    <li v-for="d in service.date" :key="d.date">{{ d.day }} - {{ d.date }}</li>
+                                    <li v-for="d in service.date" :key="d.date">{{ d.date }}</li>
                                 </ul>
                             </td>
                             <td class="p-4 text-sm">

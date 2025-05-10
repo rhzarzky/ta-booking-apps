@@ -1,15 +1,16 @@
 import ServicePage from "@/views/ServicePage.vue";
 import AdminDashboard from "@/views/AdminDashboard.vue";
 import LoginPage from "@/views/LoginPage.vue";
+import UserPage from "@/views/UserPage.vue";
 import UnknownPage from "@/views/error/UnknownPage.vue";
 import CreateService from "@/views/CreateService.vue";
 
 const routes = [{
         path: "/login-admin",
-        name: "login",
+        name: "Login",
         component: LoginPage,
         meta: {
-            title: "login",
+            title: "Login",
         },
     },
     {
@@ -33,12 +34,22 @@ const routes = [{
         },
     },
     {
-        path: "/createservice",
+        path: "/create-service",
         name: "Create Service",
         component: CreateService,
         meta: {
             title: "Create Service",
             breadcrumbs: "Create Service",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/user-list",
+        name: "User List",
+        component: UserPage,
+        meta: {
+            title: "User List",
             excludeRole: ["user"], 
             requiresAuth: true,
         },

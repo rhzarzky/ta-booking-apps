@@ -8,7 +8,7 @@ const serviceStore = useServicesStore();
 const router = useRouter();
 
 const post = reactive({
-    image: "",
+    image: null,
     title: "",
     description: "",
     location: "",

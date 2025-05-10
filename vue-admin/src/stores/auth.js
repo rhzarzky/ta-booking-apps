@@ -157,6 +157,7 @@ const fetchUserWithPermissions = async (selectedUserId) => {
       user.value = null;
       authServices.removeToken();
       authServices.removeUserId();
+      authServices.removeRole();
     } catch (error) {
       console.error("Logout failed:", error);
     }
