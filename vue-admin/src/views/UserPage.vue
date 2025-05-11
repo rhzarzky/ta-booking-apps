@@ -6,7 +6,6 @@ import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { fetchUsers } from "@/api/auth-api";
 import SearchUser from "@/components/searchforms/SearchUser.vue";
-import FilterUser from "@/components/dropdown/FilterUser.vue";
 import PaginationPage from "@/components/pagination/PaginationPage.vue";
 
 
@@ -17,8 +16,6 @@ const error = ref(null);
 const currentPage = ref(1);
 const usersPerPage = 10;
 const authStore = useAuthStore();
-const selectedStatuses = ref(["all"]);
-const selectedRoles = ref([]);
 const searchQuery = ref("");
 const isVisible = ref(false);
 const currentPermission = ref([]); // Inisialisasi sebagai array kosong
@@ -96,14 +93,6 @@ const handleDeleteUser = async (id) => {
   }
 };
 
-const handleStatusFilterUpdate = (newStatus) => {
-  selectedStatuses.value = newStatus;
-};
-
-const handleRoleFilterUpdate = (newRoles) => {
-  selectedRoles.value = newRoles;
-};
-
 onMounted(() => {
   if (!authStore.isLoggedIn) {
     router.push("/login");
@@ -115,42 +104,14 @@ onMounted(() => {
   }
 });
 
-const filteredUsers = computed(() => {
-  let filtered = users.value;
-
-  if (searchQuery.value) {
-    filtered = filtered.filter(
-      (user) =>
-        user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
-    );
-  }
-
-  if (!selectedStatuses.value.includes("all")) {
-    if (selectedStatuses.value.length) {
-      filtered = filtered.filter((user) =>
-        selectedStatuses.value.includes(user.status)
-      );
-    }
-  }
-
-  if (selectedRoles.value.length) {
-    filtered = filtered.filter((user) =>
-      user.role.some((role) => selectedRoles.value.includes(role.name))
-    );
-  }
-
-  return filtered;
-});
-
 const totalPages = computed(() => {
-  return Math.ceil(filteredUsers.value.length / usersPerPage);
+  return Math.ceil(users.value.length / usersPerPage);
 });
 
 const paginatedUsers = computed(() => {
   const start = (currentPage.value - 1) * usersPerPage;
   const end = start + usersPerPage;
-  return filteredUsers.value.slice(start, end);
+  return users.value.slice(start, end);
 });
 
 const handlePageChange = (page) => {
@@ -177,10 +138,6 @@ const isChecked = (permission) => {
         <!-- Filter Search -->
         <SearchUser @search="searchQuery = $event" />
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
-          <!-- Filter Status -->
-          <FilterUser :selectedStatuses="selectedStatuses" :selectedRoles="selectedRoles"
-            @updateStatus="handleStatusFilterUpdate" @updateRole="handleRoleFilterUpdate" />
-
           <!-- Add User Button -->
           <RouterLink to="/createuser"
             class="flex gap-2 items-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25 hover:transition hover:ease-in-out">
