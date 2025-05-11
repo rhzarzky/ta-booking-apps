@@ -34,9 +34,13 @@ const store = async () => {
     formData.append("description", post.description);
     formData.append("location", post.location);
     formData.append("end_date", post.end_date);
-    formData.append("image", post.image);
 
-    // Convert arrays to multiple inputs
+    // Append the image file with its name
+    if (post.image) {
+        formData.append("image", post.image, post.image.name);
+    }
+
+    // Append array fields
     post.option.forEach((opt, i) => {
         formData.append(`option[${i}]`, opt);
     });
@@ -58,6 +62,7 @@ const store = async () => {
         validation.value = validationErrors || {};
     }
 };
+
 </script>
 
 <template>
@@ -91,7 +96,10 @@ const store = async () => {
                     <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="image">Image
                         <span class="text-red-600">*</span>
                     </label>
-                    <input type="file" id="image" @change="(e) => post.image = e.target.files[0]" />
+                    <input type="file" id="image" @change="(e) => {
+                        post.image = e.target.files[0];
+                        console.log('Selected file:', post.image);
+                    }" />
                     <!-- validation -->
                     <div class="mt-2 text-red-600" v-if="validation.image">
                         {{ validation.image[0] }}

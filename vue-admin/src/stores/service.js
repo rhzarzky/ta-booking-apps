@@ -2,7 +2,8 @@ import { defineStore } from 'pinia'
 import {
   getServiceApi,
   createServiceApi,
-  editServiceApi
+  editServiceApi,
+  deleteServiceApi,
 } from "@/api/service-api"; // Importing the API functions
 
 export const useServicesStore = defineStore('services', {
@@ -22,7 +23,6 @@ export const useServicesStore = defineStore('services', {
     async fetchServices() {
       this.isLoading = true;
       this.error = null;
-
       try {
         const response = await getServiceApi();  // Calling the getServiceApi function
 
@@ -40,12 +40,11 @@ export const useServicesStore = defineStore('services', {
     },
 
     // Create a new service
-    async createService(postData) {
+    async createService(FormData) {
       this.isLoading = true;
       this.error = null;
-
       try {
-        const response = await createServiceApi(postData);
+        const response = await createServiceApi(FormData);
 
         if (response.data.status === 'success') {
           this.services.push(response.data.service);  // Add the new service
@@ -63,11 +62,30 @@ export const useServicesStore = defineStore('services', {
       }
     },
 
+    //deleteService
+    async deleteService(id) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const response = await deleteServiceApi(id);  // Calling the deleteServiceApi function
+
+        if (response.data.status !== 'success') {
+          throw new Error(response.data.message || 'Failed to delete service');
+        }
+        this.services = this.services.filter(service => service.id !== id);  // Remove the deleted service
+        this.showNotification('Service deleted successfully!', 'success');
+      } catch (err) {
+        this.error = err.message || 'An unexpected error occurred';
+        this.showNotification(this.error, 'error');
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     // Edit an existing service
     async editService(id, updatedData) {
       this.isLoading = true;
       this.error = null;
-
       try {
         const response = await editServiceApi(id, updatedData);  // Calling the editServiceApi function
 

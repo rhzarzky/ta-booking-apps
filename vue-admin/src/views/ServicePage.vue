@@ -147,8 +147,6 @@ const editService = (id) => {
 
 // Delete service action
 const deleteService = (id) => {
-    console.log("Deleting service with ID:", id);
-    // Implement delete service functionality
-    servicesStore.deleteService(id); // Make sure to implement this in your store
+    servicesStore.deleteService(id);
 };
 </script>
