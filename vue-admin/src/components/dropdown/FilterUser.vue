@@ -61,8 +61,8 @@ const toggleDropdown = () => {
 
 const statusOptions = [
   { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
+  { label: "Active", value: "Active" },
+  { label: "Inactive", value: "Inactive" },
 ];
 
 const roleOptions = [
@@ -114,9 +114,9 @@ const roleOptions = [
         <label class="flex items-center font-medium text-sm text-codgray-600">
           <input
             type="checkbox"
-            value="active"
-            :checked="localSelectedStatuses.includes('active')"
-            @change="handleStatusChange('active')"
+            value="Active"
+            :checked="localSelectedStatuses.includes('Active')"
+            @change="handleStatusChange('Active')"
             class="mr-1 size-4"
           />
           Active
@@ -124,9 +124,9 @@ const roleOptions = [
         <label class="flex items-center text-sm font-medium text-codgray-600">
           <input
             type="checkbox"
-            value="inactive"
-            :checked="localSelectedStatuses.includes('inactive')"
-            @change="handleStatusChange('inactive')"
+            value="Inactive"
+            :checked="localSelectedStatuses.includes('Inactive')"
+            @change="handleStatusChange('Inactive')"
             class="mr-1 size-4"
           />
           Inactive
