@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/notification/presentation/widget/empt_state.dart';
@@ -19,7 +20,7 @@ class NotificationScreen extends StatefulWidget {
   const NotificationScreen({
     super.key,
     required this.userId,
-    required this.bookingId,
+    this.bookingId = 0,
   });
 
   @override
@@ -30,13 +31,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
   final Logger _logger = Logger();
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
-  List<Map<String, dynamic>> get notifications =>
-      context.read<NotificationBloc>().state.notifications;
-
   @override
   void initState() {
     super.initState();
     _initFirebaseMessaging();
+
+    _loadNotifications();
+  }
+
+  void _loadNotifications() {
+    _logger.d('Memuat notifikasi untuk user: ${widget.userId}');
+    context.read<NotificationBloc>().add(
+          GetNotifications(userId: widget.userId),
+        );
   }
 
   void _initFirebaseMessaging() async {
@@ -51,19 +58,46 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final body = message.notification?.body ?? 'No Body';
       _logger.d('Message: $title, $body');
 
-      _showNotification(title, body);
+      // Extract bookingId dari data payload jika ada
+      final bookingId =
+          int.tryParse('${message.data['bookingId'] ?? '0'}') ?? 0;
 
-      context.read<NotificationBloc>().add(AddNotification(
-            title: title,
-            body: body,
-            status: 'pending',
-            time: DateTime.now().toString(),
-            userId: widget.userId,
-          ));
+      _showNotification(title, body, bookingId);
+
+      // Refresh notifikasi setelah menerima pesan baru
+      if (mounted) {
+        context.read<NotificationBloc>().add(
+              GetNotifications(userId: widget.userId),
+            );
+      }
+    });
+
+    // background message
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      if (mounted) {
+        final bookingId =
+            int.tryParse('${message.data['bookingId'] ?? '0'}') ?? 0;
+        if (bookingId > 0) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailMeetingSuccess(
+                bookingId: bookingId,
+              ),
+            ),
+          );
+        }
+      }
     });
   }
 
-  Future<void> _showNotification(String title, String body) async {
+  Future<void> _showNotification(
+      String title, String body, int bookingId) async {
+    final payload = jsonEncode({
+      'bookingId': bookingId,
+      'type': 'booking',
+    });
+
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'appointly_channel',
@@ -71,28 +105,33 @@ class _NotificationScreenState extends State<NotificationScreen> {
       importance: Importance.max,
       priority: Priority.high,
       showWhen: true,
+      enableVibration: true,
+      playSound: true,
     );
 
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      bookingId, // Gunakan bookingId sebagai notification ID
       title,
       body,
       platformChannelSpecifics,
+      payload: payload,
     );
 
-    context.read<NotificationBloc>().add(AddNotification(
-          title: title,
-          body: body,
-          status: 'pending',
-          time: DateTime.now().toString(),
-          userId: widget.userId,
-        ));
+    if (mounted) {
+      context.read<NotificationBloc>().add(AddNotification(
+            title: title,
+            body: body,
+            status: 'pending',
+            time: DateTime.now().toString(),
+            userId: widget.userId,
+            bookingId: bookingId,
+          ));
+    }
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,6 +139,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
       appBar: _buildAppBar(),
       body: BlocBuilder<NotificationBloc, NotificationState>(
         builder: (context, state) {
+          _logger.d(
+              'NotificationState: ${state.runtimeType}, userId: ${widget.userId}');
+          _logger
+              .d('Current notifications count: ${state.notifications.length}');
+
           if (state is NotificationLoading) {
             return Skeletonizer(
               enabled: true,
@@ -120,47 +164,112 @@ class _NotificationScreenState extends State<NotificationScreen> {
             );
           } else if (state is NotificationError) {
             return Center(
-              child: Text('Error: ${state.message}'),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: ${state.message}'),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _loadNotifications,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColorPallete.primaryColor,
+                    ),
+                    child: Text('Coba Lagi',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
             );
-          } else if (state is NotificationLoaded) {
+          } else {
             final filteredNotifications = state.notifications
                 .where((notif) => notif['userId'] == widget.userId)
                 .toList();
 
+            _logger
+                .d('Filtered notifications: ${filteredNotifications.length}');
+
             if (filteredNotifications.isEmpty) {
-              return Center(child: EmptyState());
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    EmptyState(),
+                    SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _loadNotifications,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorPallete.primaryColor,
+                      ),
+                      child: Text('Refresh',
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
             }
 
-            return ListView.builder(
-              cacheExtent: 500.0,
-              padding: EdgeInsets.only(
-                bottom: 8.0,
-                top: 16.0,
-                left: 16.0,
-                right: 16.0,
-              ),
-              itemCount: filteredNotifications.length,
-              itemBuilder: (context, index) {
-                final item = filteredNotifications[index];
-                return NotificationItem(
-                  title: item['title'] ?? '',
-                  indicatorStatus: item['status'] ?? 'pending',
-                  timeStamp: item['time'] ?? '',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DetailMeetingSuccess(
-                          bookingId: widget.bookingId,
-                        ),
-                      ),
+            return RefreshIndicator(
+              onRefresh: () async {
+                // Refresh data notifikasi
+                _logger.d('Refreshing notifications for user ${widget.userId}');
+                context.read<NotificationBloc>().add(
+                      GetNotifications(userId: widget.userId),
                     );
-                  },
-                );
               },
+              child: ListView.builder(
+                cacheExtent: 500.0,
+                padding: EdgeInsets.only(
+                  bottom: 8.0,
+                  top: 16.0,
+                  left: 16.0,
+                  right: 16.0,
+                ),
+                itemCount: filteredNotifications.length,
+                itemBuilder: (context, index) {
+                  final item = filteredNotifications[index];
+
+                  // Gunakan bookingId dari notifikasi, atau default 0 jika tidak ada
+                  final int notifBookingId = item['bookingId'] != null
+                      ? (item['bookingId'] is int
+                          ? item['bookingId']
+                          : int.tryParse('${item['bookingId']}') ?? 0)
+                      : 0;
+
+                  _logger.d(
+                      'Item $index: title=${item['title']}, bookingId=$notifBookingId');
+
+                  return NotificationItem(
+                    title: item['title'] ?? '',
+                    indicatorStatus: item['status'] ?? 'pending',
+                    timeStamp: item['time'] ?? '',
+                    onTap: () {
+                      // Gunakan ID dari notifikasi, bukan dari widget global
+                      if (notifBookingId > 0) {
+                        _logger.d(
+                            'Opening booking detail with ID: $notifBookingId');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailMeetingSuccess(
+                              bookingId: notifBookingId,
+                            ),
+                          ),
+                        );
+                      } else {
+                        // Tampilkan pesan error jika tidak ada booking ID yang valid
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Detail pemesanan tidak tersedia'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
             );
           }
-          return Center(child: EmptyState());
         },
       ),
     );

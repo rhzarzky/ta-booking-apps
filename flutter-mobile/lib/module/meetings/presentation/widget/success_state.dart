@@ -1,5 +1,6 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
+import 'package:Appointly/module/notification/presentation/screen/notification_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
@@ -7,10 +8,12 @@ import 'package:Appointly/core/common/main_tab_screen.dart';
 
 class SuccessState extends StatelessWidget {
   final int bookingId;
+  final String userId;
 
   const SuccessState({
     super.key,
     required this.bookingId,
+    required this.userId,
   });
 
   @override
@@ -62,7 +65,13 @@ class SuccessState extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     if (bookingId > 0)
-                      _buildViewAppointmentButton(context)
+                      Column(
+                        children: [
+                          _buildViewAppointmentButton(context),
+                          const SizedBox(height: 8),
+                          _buildViewNotificationsButton(context),
+                        ],
+                      )
                     else
                       _buildHomeButton(context),
                   ],
@@ -109,13 +118,50 @@ class SuccessState extends StatelessWidget {
           );
         },
         child: Container(
+          width: double.infinity,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          decoration: BoxDecoration(
+            color: ColorPallete.primaryColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'View Appointment',
+            style: GoogleFonts.ubuntu(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildViewNotificationsButton(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => NotificationScreen(
+                userId: userId,
+              ),
+            ),
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           decoration: BoxDecoration(
             color: ColorPallete.primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            'View Appointment',
+            'View Notifications',
             style: GoogleFonts.ubuntu(
               fontSize: 16,
               fontWeight: FontWeight.w600,

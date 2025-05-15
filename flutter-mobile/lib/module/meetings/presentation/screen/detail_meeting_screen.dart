@@ -14,6 +14,7 @@ import 'package:Appointly/module/meetings/model/service_model.dart';
 import 'package:intl/intl.dart';
 import 'package:Appointly/module/notification/utils/notification_helper.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:Appointly/module/notification/presentation/bloc/notification_bloc.dart';
 
 class DetailMeetingScreen extends StatefulWidget {
   final int serviceId;
@@ -844,15 +845,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
               orElse: () => state.services.first,
             );
 
-            await NotificationHelper.showBookingNotification(
-              context: context,
-              serviceName: service.title,
-              date: formattedDate,
-              time: selectedTime,
-              option: selectedOption,
-              userId: widget.userId,
-            );
-
+            // Book the service first
             context.read<ServiceBloc>().add(BookService(
                   serviceId: widget.serviceId,
                   option: selectedOption,
@@ -861,12 +854,44 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                   time: time24,
                 ));
 
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) =>
-                      SuccessState(bookingId: widget.bookingId)),
-            );
+            // Listen for the booking response
+            context.read<ServiceBloc>().stream.listen((state) {
+              if (state is ServiceSucees) {
+                // Show notification after successful booking
+                NotificationHelper.showBookingNotification(
+                  context: context,
+                  serviceName: service.title,
+                  date: formattedDate,
+                  time: selectedTime,
+                  option: selectedOption,
+                  userId: widget.userId,
+                  bookingId: state.bookingId,
+                );
+
+                // Refresh notifications
+                context.read<NotificationBloc>().add(
+                      GetNotifications(userId: widget.userId),
+                    );
+
+                // Navigate to success screen
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SuccessState(
+                      bookingId: state.bookingId,
+                      userId: widget.userId,
+                    ),
+                  ),
+                );
+              } else if (state is ServiceFailure) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Booking failed: ${state.failure}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            });
           }
         },
         child: Text(

@@ -9,12 +9,22 @@ class AddNotification extends NotificationEvent {
   final String status;
   final String time;
   final String userId;
+  final int bookingId;
 
   AddNotification({
     required this.title,
     required this.body,
     required this.status,
     required this.time,
+    required this.userId,
+    this.bookingId = 0,
+  });
+}
+
+class GetNotifications extends NotificationEvent {
+  final String userId;
+
+  GetNotifications({
     required this.userId,
   });
 }

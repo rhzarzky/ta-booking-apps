@@ -241,7 +241,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                         itemBuilder: (context, index) {
                           final service = filteredServices[index];
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
+                            padding: const EdgeInsets.only(bottom: 12.0),
                             child: CardService(
                               headService: service.title,
                               descService: service.description,

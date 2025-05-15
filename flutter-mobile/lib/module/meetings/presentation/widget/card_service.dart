@@ -34,10 +34,12 @@ class CardService extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(12.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 400,
-              height: 200,
+              width: double.infinity,
+              height:200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12.0),
                 image: (imageService.isNotEmpty)
@@ -89,6 +91,7 @@ class CardService extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Container(
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -101,14 +104,14 @@ class CardService extends StatelessWidget {
                     borderRadius: BorderRadius.circular(24.0),
                   ),
                   child: Container(
-                    margin: EdgeInsets.all(1.5), // Border thickness
+                    margin: EdgeInsets.all(1.5),
                     decoration: BoxDecoration(
                       gradient: ColorPallete.gradientAccent,
                       borderRadius: BorderRadius.circular(22.0),
                     ),
                     child: Padding(
                       padding: EdgeInsets.symmetric(
-                        vertical: 8.0,
+                        vertical: 6.0,
                         horizontal: 16.0,
                       ),
                       child: Row(
@@ -121,13 +124,16 @@ class CardService extends StatelessWidget {
                             size: 16,
                           ),
                           SizedBox(width: 4),
-                          // In CardService class
-                          Text(
-                            'Beginning on:  ${timeService.isNotEmpty ? timeService.first : "N/A"} at $locationService  ',
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: ColorPallete.primaryDark,
+                          Flexible(
+                            child: Text(
+                              'Beginning on:  ${timeService.isNotEmpty ? timeService.first : "N/A"} at $locationService  ',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: ColorPallete.primaryDark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -136,9 +142,9 @@ class CardService extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     if (provideService.contains('Offline'))
                       Container(
@@ -211,7 +217,7 @@ class CardService extends StatelessWidget {
                           ),
                           child: Padding(
                             padding: EdgeInsets.symmetric(
-                              vertical: 8.0,
+                              vertical: 6.0,
                               horizontal: 16.0,
                             ),
                             child: Row(
@@ -241,9 +247,7 @@ class CardService extends StatelessWidget {
                 )
               ],
             ),
-            SizedBox(
-              height: 20,
-            ),
+            SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: Container(

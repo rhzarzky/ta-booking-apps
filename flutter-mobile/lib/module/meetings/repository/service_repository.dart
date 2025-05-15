@@ -120,8 +120,9 @@ class ServiceRepository {
         'option': option,
       });
 
-      if (response.statusCode == 200) {
-        return DataService.fromJson(response.data);
+      if (response.statusCode == 201) {
+        final bookingId = response.data['booking']['id_booking'] as int;
+        return DataService(services: [], bookingId: bookingId);
       } else {
         throw Exception('Failed to post service: ${response.statusMessage}');
       }

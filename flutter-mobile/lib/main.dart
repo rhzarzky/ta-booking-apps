@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:Appointly/core/common/main_tab_screen.dart';
 import 'package:Appointly/module/auth/presentation/bloc/auth_bloc.dart';
 import 'package:Appointly/module/auth/presentation/screen/auth_signIn.dart';
 import 'package:Appointly/module/auth/repository/auth_repository.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/meetings/repository/historyBooking_repository.dart';
 import 'package:Appointly/module/meetings/repository/service_repository.dart';
 import 'package:Appointly/module/onboarding/presentation/screen/onboarding_screen.dart';
@@ -15,9 +17,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/map_bloc.dart';
+import 'package:Appointly/module/meetings/repository/map_repository.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +35,12 @@ void main() async {
     android: initializationSettingsAndroid,
   );
 
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse details) {
+      _handleNotification(details.payload);
+    },
+  );
 
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'appointly_channel',
@@ -44,6 +55,34 @@ void main() async {
       ?.createNotificationChannel(channel);
 
   runApp(const MainApp());
+}
+
+void _handleNotification(String? payload) {
+  if (payload != null) {
+    try {
+      final data = jsonDecode(payload);
+
+      if (data['type'] == 'booking' && data['bookingId'] != null) {
+        final int bookingId = data['bookingId'] is int
+            ? data['bookingId']
+            : int.tryParse(data['bookingId'].toString()) ?? 0;
+
+        if (bookingId > 0) {
+          // Tunggu navigasi siap
+          Future.delayed(Duration(milliseconds: 500), () {
+            navigatorKey.currentState?.push(
+              MaterialPageRoute(
+                builder: (context) =>
+                    DetailMeetingSuccess(bookingId: bookingId),
+              ),
+            );
+          });
+        }
+      }
+    } catch (e) {
+      print('Error parsing notification payload: $e');
+    }
+  }
 }
 
 class MainApp extends StatefulWidget {
@@ -103,8 +142,14 @@ class _MainAppState extends State<MainApp> {
             profileRepository: ProfileRepository(),
           ),
         ),
+        BlocProvider<MapBloc>(
+          create: (context) => MapBloc(
+            mapRepository: MapRepository(),
+          ),
+        ),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
         home: isLoading
             ? const Center(child: CircularProgressIndicator())

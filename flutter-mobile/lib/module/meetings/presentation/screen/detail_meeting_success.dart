@@ -5,13 +5,17 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/core/common/main_tab_screen.dart';
-import 'package:Appointly/module/meetings/model/booking_detail_model.dart';
+import 'package:Appointly/module/meetings/model/booking_detail_model.dart'
+    as detail;
 import 'package:Appointly/module/meetings/presentation/widget/expanded_text.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
 import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:Appointly/module/meetings/model/booking_model.dart';
+import 'package:Appointly/module/meetings/model/service_model.dart' as service;
+import 'package:Appointly/module/meetings/presentation/screen/visual_map.dart';
 
 class DetailMeetingSuccess extends StatefulWidget {
   final int bookingId;
@@ -178,8 +182,8 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
   }
 
   Widget _buildSkeletonLoader() {
-    final dummyBooking = BookingDetail(
-      service: Service(
+    final dummyBooking = detail.BookingDetail(
+      service: detail.Service(
         id: 0,
         title: 'Loading...',
         description: 'Loading...',
@@ -204,7 +208,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildContentWithData(BookingDetail booking) {
+  Widget _buildContentWithData(detail.BookingDetail booking) {
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -242,7 +246,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildBackgroundImage(BookingDetail booking) {
+  Widget _buildBackgroundImage(detail.BookingDetail booking) {
     // Add null safety checks
     final hasImage =
         booking.service.image != null && booking.service.image!.isNotEmpty;
@@ -273,7 +277,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildContent(BookingDetail booking) {
+  Widget _buildContent(detail.BookingDetail booking) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Column(
@@ -289,12 +293,17 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           _buildNoteSection(booking.note ?? ''),
           SizedBox(height: 16),
           _buildButtonSend(),
+          SizedBox(height: 16),
+          // Add navigation to VisualMap for Offline meetings
+          if (booking.option == 'Offline')
+            _buildVisualMapButton(context, booking),
+          SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  Widget _buildTitleSection(BookingDetail booking) {
+  Widget _buildTitleSection(detail.BookingDetail booking) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -314,7 +323,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildScheduleSection(BookingDetail booking) {
+  Widget _buildScheduleSection(detail.BookingDetail booking) {
     _logger.d(booking.date);
     _logger.d(booking.time);
 
@@ -419,7 +428,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildLocationWithStatus(BookingDetail booking) {
+  Widget _buildLocationWithStatus(detail.BookingDetail booking) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -645,6 +654,62 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisualMapButton(
+      BuildContext context, detail.BookingDetail booking) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VisualMap(
+                booking: BookingModel(
+                    status: booking.status,
+                    message: '',
+                    user: User(id: 0, name: '', email: ''),
+                    services: Bookings(pending: [], approved: [
+                      Booking(
+                        idBooking: widget.bookingId,
+                        service: ServiceBooking(
+                          id: booking.service.id,
+                          title: booking.service.title,
+                          description: booking.service.description,
+                          location: booking.service.location ?? '',
+                          image: booking.service.image,
+                        ),
+                        option: booking.option,
+                        date: booking.date,
+                        time: booking.time,
+                        note: booking.note,
+                        status: booking.status,
+                      )
+                    ], declined: [])),
+              ),
+            ),
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          decoration: BoxDecoration(
+            color: ColorPallete.primaryColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'Lihat Lokasi di Peta',
+            style: GoogleFonts.ubuntu(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
         ),

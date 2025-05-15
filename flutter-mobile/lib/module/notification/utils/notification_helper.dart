@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'package:Appointly/module/notification/presentation/bloc/notification_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:Appointly/main.dart' show flutterLocalNotificationsPlugin;
+import 'package:logger/logger.dart';
 
 class NotificationHelper {
+  static final Logger _logger = Logger();
+
   static Future<void> showBookingNotification({
     required BuildContext context,
     required String serviceName,
@@ -12,35 +16,60 @@ class NotificationHelper {
     required String time,
     required String option,
     required String userId,
+    required int bookingId,
   }) async {
+    _logger.d('Creating notification for booking $bookingId, user $userId');
+
     final title = 'Booking Confirmed!';
     final body =
         'Your appointment for $serviceName has been scheduled for $date at $time ($option)';
 
-    await flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecondsSinceEpoch.remainder(100000),
-      title,
-      body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'appointly_channel',
-          'Appointly Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-          showWhen: true,
-        ),
-      ),
-    );
+    // Buat payload dengan bookingId sebagai integer
+    final payload = jsonEncode({
+      'bookingId': bookingId, // Pastikan bookingId adalah integer
+      'type': 'booking',
+    });
 
-    // Use BlocProvider.of instead of context.read
-    BlocProvider.of<NotificationBloc>(context, listen: false).add(
-      AddNotification(
-        title: title,
-        body: body,
-        status: 'confirmed',
-        time: DateTime.now().toString(),
-        userId: userId,
-      ),
-    );
+    _logger.d('Notification payload: $payload');
+
+    try {
+      // Tampilkan notifikasi lokal
+      await flutterLocalNotificationsPlugin.show(
+        bookingId, // Gunakan bookingId sebagai notification ID
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'appointly_channel',
+            'Appointly Notifications',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: true,
+            enableVibration: true,
+            playSound: true,
+          ),
+        ),
+        payload: payload,
+      );
+
+      // Tambahkan notifikasi ke bloc
+      if (context.mounted) {
+        _logger.d(
+            'Adding notification to bloc: bookingId=$bookingId, userId=$userId');
+        BlocProvider.of<NotificationBloc>(context, listen: false).add(
+          AddNotification(
+            title: title,
+            body: body,
+            status: 'confirmed',
+            time: DateTime.now().toString(),
+            userId: userId,
+            bookingId: bookingId,
+          ),
+        );
+        _logger.d('Notification added to bloc successfully');
+      }
+    } catch (e) {
+      _logger.e('Error showing notification: $e');
+    }
   }
 }

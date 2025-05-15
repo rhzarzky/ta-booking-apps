@@ -80,7 +80,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         if (token != null && token.isNotEmpty) {
           serviceRepository.updateToken(token);
         }
-        await serviceRepository.postService(
+        final response = await serviceRepository.postService(
           event.serviceId,
           time: event.time,
           date: event.date,
@@ -89,7 +89,10 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         );
 
         final result = await serviceRepository.getServiceById(event.serviceId);
-        emit(ServiceSucees(result.services.first));
+
+        // Emit success state with booking ID
+        emit(ServiceSucees(result.services.first,
+            bookingId: response.bookingId ?? 0));
       } catch (e) {
         emit(ServiceFailure(failure: e.toString()));
       }

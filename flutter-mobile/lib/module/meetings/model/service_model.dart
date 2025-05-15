@@ -4,20 +4,28 @@ final Logger _logger = Logger();
 
 class DataService {
   final List<Service> services;
+  final int? bookingId;
 
-  DataService({required this.services});
+  DataService({required this.services, this.bookingId});
 
-  factory DataService.fromJson(Map<String, dynamic> json) => DataService(
-        services: json['services'] != null
-            ? List.from(
-                json['services']
-                    .map(
-                      (service) => Service.fromModel(service),
-                    )
-                    .toList(),
-              )
-            : [],
-      );
+  factory DataService.fromJson(Map<String, dynamic> json) {
+    final bookingData = json['booking'];
+    final int? bookingId =
+        bookingData != null ? bookingData['id_booking'] as int? : null;
+
+    return DataService(
+      services: json['services'] != null
+          ? List.from(
+              json['services']
+                  .map(
+                    (service) => Service.fromModel(service),
+                  )
+                  .toList(),
+            )
+          : [],
+      bookingId: bookingId,
+    );
+  }
 }
 
 List<DateTime> generateDateRange({
