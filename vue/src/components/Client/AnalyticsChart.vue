@@ -48,6 +48,7 @@ import {
 // import ChartDataLabels from 'chartjs-plugin-datalabels'
 
 import { Line as LineChart } from 'vue-chartjs'
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 ChartJS.register(
   Title,

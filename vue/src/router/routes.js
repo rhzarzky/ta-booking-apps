@@ -3,11 +3,14 @@ import LoginClient from '@/views/LoginClient.vue';
 import RegisterClient from '@/views/RegisterClient.vue';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Dashboard from '@/views/Client/Dashboard.vue';
-import Meeting from '@/views/Client/Meeting.vue';
+import Meeting from '@/views/Client/Service.vue';
 import Activity from '@/views/Client/Activity.vue';
 import Profile from '@/views/Client/Profile.vue';
 import EditProfile from '@/views/Client/EditProfile.vue';
+import ChangePassword from '@/views/Client/ChangePassword.vue';
+import DetailService from '@/views/Client/DetailService.vue';
 import DetailBooking from '@/views/Client/DetailBooking.vue';
+
 
 const routes = [
   {
@@ -56,14 +59,24 @@ const routes = [
         component: EditProfile,
       },
       {
-        path: 'detail-booking',
+        path: 'change-password',
+        name: 'client-change-password',
+        component: ChangePassword,
+      },
+      {
+        path: 'detail-booking/:id',
         name: 'client-detail-booking',
         component: DetailBooking,
-      },
+        props: true, 
+      },    
+      {
+        path: 'detail-service/:id',
+        name: 'client-detail-service',
+        component: DetailService,
+        props: true, 
+      }      
     ],
   },
 ];
-
-
 
 export default routes;
