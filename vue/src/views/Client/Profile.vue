@@ -29,7 +29,7 @@ export default {
       this.$router.push('/client/edit-profile')
     },
     editPassword() {
-      this.$router.push('/client/edit-password')
+      this.$router.push('/client/change-password')
     }
   }
 }

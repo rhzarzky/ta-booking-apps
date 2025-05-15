@@ -1,7 +1,8 @@
+// stores/auth.js
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import axios from 'axios';
-import { authServices } from '../services/auth-services';
+import { authServices } from '@/services/auth-services';
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null);
@@ -10,7 +11,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => authServices.isAuthenticated());
 
-  // Handle Login
   const handleLogin = async (credentials) => {
     loading.value = true;
     try {
@@ -38,7 +38,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  // ✅ Handle Register
   const handleRegister = async (userData) => {
     loading.value = true;
     try {
@@ -66,13 +65,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  // Logout
   const handleLogout = () => {
     user.value = null;
     authServices.clearAuthData();
   };
 
-  // Get current user
   const getCurrentUser = async () => {
     try {
       const token = authServices.getToken();
@@ -91,32 +88,28 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  // Update user profile
   const updateProfile = async (formData) => {
     try {
       const token = authServices.getToken();
-      const BASE_URL = import.meta.env.VITE_BASE_URL;
-      const API_PATH = import.meta.env.VITE_API_PATH;
-      const url = `${BASE_URL}${API_PATH}/user/profile`;
-  
-      const response = await axios.put(url, formData, {
+      const url = `${import.meta.env.VITE_BASE_URL}${import.meta.env.VITE_API_PATH}/user/profile`;
+
+      const response = await axios.post(url, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
-  
+
       if (response.data.user) {
         user.value = response.data.user;
       }
-  
+
       return response.data;
     } catch (error) {
       console.error('Error updating profile:', error);
       throw error;
     }
   };
-  
 
   return {
     user,

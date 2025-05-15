@@ -1,74 +1,85 @@
 import api from './api';
 import { ref } from 'vue';
-import { authServices } from '../services/auth-services';
+import { authServices } from '@/services/auth-services';
 
 export const loading = ref(false);
 export const errors = ref({});
 
-// Fungsi login
+// Fungsi Login
 export const login = async (credentials) => {
+  loading.value = true;
+  errors.value = {};
   try {
-    if (!credentials.email || !credentials.password) {
-      throw new Error("Email dan password harus diisi.");
-    }
-
-    // Mengirim request login ke server
     const response = await api.post('/login', credentials);
-
-    // Menyimpan token dan userId jika login sukses
-    if (response.data && response.data.token && response.data.user) {
+    if (response.data?.token && response.data?.user) {
       authServices.setToken(response.data.token);
       authServices.setUserId(response.data.user.id);
     }
-    
-
     return response.data;
   } catch (error) {
     console.error("Login error:", error.response?.data || error.message);
-    errors.value = error.response?.data?.error || "Terjadi kesalahan";
+    if (error.response?.status === 422) {
+      errors.value = error.response.data.errors;
+    } else {
+      errors.value = { general: "Login failed. Please try again." };
+    }
     throw error;
+  } finally {
+    loading.value = false;
   }
 };
 
-// Fungsi register (opsional, jika backend kamu menyediakan endpoint)
+// Fungsi Register
 export const register = async (userData) => {
+  loading.value = true;
+  errors.value = {};
   try {
     const response = await api.post('/register', userData);
-    // if (response.data.token && response.data.user) {
-    //   authServices.setToken(response.data.token);
-    //   authServices.setUserId(response.data.user.id);
-    // }
+    if (response.data?.token && response.data?.user) {
+      authServices.setToken(response.data.token);
+      authServices.setUserId(response.data.user.id);
+    }
     return response.data;
   } catch (error) {
     console.error("Register error:", error.response?.data || error.message);
+    if (error.response?.status === 422) {
+      errors.value = error.response.data.errors;
+    } else {
+      errors.value = { general: "Registration failed. Please try again." };
+    }
     throw error;
+  } finally {
+    loading.value = false;
   }
 };
 
-// Fungsi logout
+// Fungsi Logout
 export const logout = async () => {
   try {
     await api.post('/logout');
-    authServices.removeToken();
-    authServices.removeUserId();
   } catch (error) {
     console.error("Logout error:", error.response?.data || error.message);
-    throw error;
+  } finally {
+    authServices.clearAuthData();
   }
 };
 
-// Fungsi fetchProfile
+// Fungsi Fetch Profile
 export const fetchProfile = async () => {
   try {
-    const response = await api.get('/user/profile')
-    return response.data
+    const token = authServices.getToken();
+    if (!token) throw new Error("Token tidak ditemukan.");
+
+    const response = await api.get('/user/profile');
+    return response.data;
   } catch (error) {
     console.error("Fetch profile error:", error.response?.data || error.message);
     throw error;
   }
 };
 
-// Fungsi update profile
+
+// Fungsi Update Profile
 export const updateProfile = async (formData) => {
   try {
     const response = await api.put('/user/profile', formData, {
@@ -82,6 +93,3 @@ export const updateProfile = async (formData) => {
     throw error;
   }
 };
-
-
-
