@@ -16,10 +16,10 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/users/{id}', [UserController::class, 'getUserById']);
     });
     Route::middleware(['permission:edit user'])->group(function () {
-        Route::put('/user/{id}', [UserController::class, 'editUserById']);
+        Route::put('/users/{id}', [UserController::class, 'editUserById']);
     });
     Route::middleware(['permission:delete user'])->group(function () {
-        Route::delete('/user/{id}', [UserController::class, 'deleteUserById']);
+        Route::delete('/users/{id}', [UserController::class, 'deleteUserById']);
     }); 
     Route::middleware(['permission:create role'])->group(function () {
         Route::post('/role', [RoleController::class, 'storeRole']);
