@@ -1,13 +1,13 @@
 <script setup>
 import DefaultLayout from "@/layout/DefaultLayout.vue";
+import AlertStatus from "@/components/alert/AlertStatus.vue";
 import SkeltonLoader from "@/components/loading-skelton/SkeltonLoader.vue";
 import { RouterLink, useRouter } from "vue-router";
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
-import { fetchUsers } from "@/api/auth-api";
+import { fetchUsers, permissionApi } from "@/api/auth-api";
 import SearchUser from "@/components/searchforms/SearchUser.vue";
 import PaginationPage from "@/components/pagination/PaginationPage.vue";
-
 
 const router = useRouter();
 const users = ref([]);
@@ -18,65 +18,42 @@ const usersPerPage = 10;
 const authStore = useAuthStore();
 const searchQuery = ref("");
 const isVisible = ref(false);
-const currentPermission = ref([]); // Inisialisasi sebagai array kosong
 const userPermissions = ref([]);
-const userIdForPermissions = ref(null); // Menyimpan ID pengguna untuk diakses di dalam fungsi
-
-const ontoggle = async (userId) => {
-  // console.log("User ID passed:", userId);
-  isVisible.value = !isVisible.value;
-  userIdForPermissions.value = userId; // Simpan ID pengguna
-
-  if (isVisible.value) {
-    try {
-      const userData = await authStore.fetchUserWithPermissions(userId);
-      // console.log('API response:', userData);
-      userPermissions.value = userData.permissions.map(permission => permission.replace(" ", "_")) || [];
-      // console.log('User permissions loaded:', userPermissions.value);
-    } catch (error) {
-      console.error("Failed to fetch user permissions:", error);
-    }
-  }
-};
-
-const savePermissions = async () => {
-  if (!userIdForPermissions.value) {
-    console.error("User ID is undefined");
-    alert('User ID is missing. Cannot save permissions.');
-    return;
-  }
-
-  const updateData = {
-    permissions: userPermissions.value.map(permission => ({ name: permission })),
-  };
-
-  console.log("Update Data to be sent:", updateData);
-
-  try {
-    await authStore.handleUpdateUser(userIdForPermissions.value, updateData);
-    alert('Update permissions is successful');
-    router.push("/user-list");
-    isVisible.value = false;
-  } catch (error) {
-    console.error("Error saving permissions:", error);
-    alert('Failed to update permissions');
-    if (error.response && error.response.data) {
-      console.error("Response data:", error.response.data); // Cek data kesalahan
-      console.error("Specific errors:", error.response.data.errors); // Lihat kesalahan spesifik
-    }
-  }
-};
+const userIdForPermissions = ref(null);
 
 const fetchUserData = async () => {
   isLoading.value = true;
   try {
     const response = await fetchUsers();
     users.value = response.users;
-  } catch (error) {
-    console.error("Error fetching users:", error);
+  } catch (err) {
+    error.value = "Failed to fetch users";
+    console.error("Error fetching users:", err);
   } finally {
     isLoading.value = false;
   }
+};
+
+const filteredUsers = computed(() => {
+  const query = searchQuery.value.toLowerCase();
+  return users.value.filter(user =>
+    user.name.toLowerCase().includes(query) ||
+    user.email.toLowerCase().includes(query)
+  );
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredUsers.value.length / usersPerPage);
+});
+
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * usersPerPage;
+  const end = start + usersPerPage;
+  return filteredUsers.value.slice(start, end).sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
 };
 
 const retryFetch = () => {
@@ -86,55 +63,88 @@ const retryFetch = () => {
 const handleDeleteUser = async (id) => {
   try {
     await authStore.handleDeleteUser(id);
-    users.value = users.value.filter((user) => user.id !== id);
-    alert('User successfully deleted');
-  } catch (error) {
-    console.error("Error deleting user:", error);
+    users.value = users.value.filter(user => user.id !== id);
+    alert("User successfully deleted");
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    alert("Failed to delete user.");
   }
 };
+
+const hasPermission = (permission) => {
+  return authStore.currentPermission?.includes(permission);
+};
+
+const ontoggle = async (userId) => {
+  isVisible.value = !isVisible.value;
+  userIdForPermissions.value = userId;
+  console.log("Available permissions:", authStore.currentPermission);
+
+  if (isVisible.value) {
+    try {
+      const userData = await authStore.fetchUserWithPermissions(userId);
+      userPermissions.value = userData.permission ? userData.permission : [];
+      console.log("User permissions:", userPermissions.value);
+
+    } catch (err) {
+      console.error("Failed to fetch user permissions:", err);
+    }
+  } else {
+    userPermissions.value = [];
+    userIdForPermissions.value = null;
+  }
+};
+
+const savePermissions = async () => {
+  if (!userIdForPermissions.value) {
+    authStore.notification.message = "User ID is missing.";
+    authStore.notification.type = "error";
+    authStore.notification.show = true;
+    return;
+  }
+
+  const updateData = {
+    permissions: userPermissions.value,
+  };
+
+  try {
+    await authStore.handleUpdateUser(userIdForPermissions.value, updateData);
+    authStore.notification.message = "Permissions updated successfully";
+    authStore.notification.type = "success";
+    authStore.notification.show = true;
+    isVisible.value = false;
+    router.push("/user-list");
+  } catch (err) {
+    console.error("Error saving permissions:", err);
+    authStore.notification.message = "Failed to update permissions.";
+    authStore.notification.type = "error";
+    authStore.notification.show = true;
+  }
+};
+
 
 onMounted(() => {
   if (!authStore.isLoggedIn) {
     router.push("/login");
   } else {
     fetchUserData();
-    authStore.fetchPermissionApi().then(() => {
-      console.log("Current Permissions:", authStore.currentPermission); // Pastikan ini menunjukkan data yang benar
-    });
+    authStore.fetchPermissionApi();
   }
 });
 
-const totalPages = computed(() => {
-  return Math.ceil(users.value.length / usersPerPage);
+// Reset to page 1 when search query changes
+watch(searchQuery, () => {
+  currentPage.value = 1;
 });
-
-const paginatedUsers = computed(() => {
-  const start = (currentPage.value - 1) * usersPerPage;
-  const end = start + usersPerPage;
-  return users.value.slice(start, end);
-});
-
-const handlePageChange = (page) => {
-  currentPage.value = page;
-};
-
-const hasNextPage = computed(() => currentPage.value < totalPages.value);
-const hasPrevPage = computed(() => currentPage.value > 1);
-
-const hasPermission = (permission) => {
-  return authStore.currentPermission ? authStore.currentPermission.includes(permission) : false;
-};
-
-const isChecked = (permission) => {
-  return userPermissions.value.includes(permission);
-};
-
 </script>
 
 <template>
   <DefaultLayout class="bg-whiteBgPrimary-100">
     <div class="min-h-screen flex flex-col gap-4 rounded-2xl bg-white p-4 md:p-8">
       <div class="w-full flex gap-3 items-center">
+        <!-- Notification -->
+        <AlertStatus :message="authStore.notification.message" :type="authStore.notification.type"
+          :is-visible="authStore.notification.show" @close="authStore.notification.show = false" /> 
         <!-- Filter Search -->
         <SearchUser @search="searchQuery = $event" />
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
@@ -161,7 +171,7 @@ const isChecked = (permission) => {
 
       <div v-else class="rounded-xl border border-wildsand-200 bg-white shadow-lg shadow-wildsand-100">
         <div class="py-6 px-4 md:px-6 xl:px-7">
-          <h4 class="text-base md:text-xl font-bold text-cobalt-950">Managed Users</h4>
+          <h4 class="text-base md:text-xl font-bold text-cobalt-950">Managed User</h4>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full table-auto border-collapse border-t border-b border-wildsand-200">
@@ -186,13 +196,14 @@ const isChecked = (permission) => {
                 </td>
                 <td>
                   <span :class="{
-                    'px-2 py-1 rounded-full text-sm size-fit': true,
-                    'bg-wildsand-200 text-codgray-900 border border-wildsand-600': user.status === 'inactive',
-                    'bg-green-100 text-green-600 border border-green-600': user.status === 'active',
+                    'px-4 py-2 rounded-full text-sm size-fit': true,
+                    'bg-green-100 text-green-600 border border-green-600': user.status === 'Active',
+                    'bg-red-100 text-red-600 border border-red-600': user.status === 'Inactive',
                   }">
                     {{ user.status }}
                   </span>
                 </td>
+
                 <td class="flex items-center gap-6 py-4 px-1">
                   <button @click="handleDeleteUser(user.id)" title="Delete" class="text-red-500">
                     <!-- Delete Icon -->
@@ -234,52 +245,44 @@ const isChecked = (permission) => {
                     </svg>
                   </button>
 
-                  <!-- Di dalam Modal Role Access Control -->
-                  <div v-if="isVisible" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div class="absolute inset-0 z-0 bg-codgray-950/40 backdrop-blur-sm"></div>
-                    <div
-                      class="w-full max-w-5xl mx-auto rounded-xl shadow-md bg-white relative z-10 flex flex-col gap-4 md:gap-6">
-                      <div class="px-4 py-3 md:px-6 bg-whiteBgPrimary-100 rounded-t-xl">
-                        <h4 class="text-base font-semibold text-codgray-950">Role Access Control</h4>
-                      </div>
-                      <div class="flex flex-col gap-4 w-full px-4 md:px-6">
-                        <div class="overflow-x-auto">
-                          <table class="w-full table-auto rounded-lg overflow-hidden shadow-sm">
-                            <thead>
-                              <tr class="border border-wildsand-200 text-codgray-950 capitalize text-sm leading-normal">
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left font-semibold rounded-tl-lg">Menu</th>
-                                <th class="px-3 py-2 md:px-6 md:py-3 text-left font-semibold rounded-tr-lg">Action</th>
-                              </tr>
-                            </thead>
-                            <tbody class="text-codgray-800 text-base">
-                              <tr class="border-t bg-white border-wildsand-200 hover:bg-wildsand-50/70">
-                                <td class="px-3 py-2 md:px-6 md:py-3 font-medium">
-                                  <label class="text-sm md:text-base">Manage User</label>
-                                </td>
-                                <td class="px-3 py-2 md:px-6 md:py-3">
-                                  <input type="checkbox" value="manage_user" v-model="userPermissions" class="mr-2" />
-                                </td>
-                              </tr>
-                              <tr class="border-t bg-white border-wildsand-200 hover:bg-wildsand-50/70">
-                                <td class="px-3 py-2 md:px-6 md:py-3 font-medium">
-                                  <label class="text-sm md:text-base">Update Issue</label>
-                                </td>
-                                <td class="px-3 py-2 md:px-6 md:py-3">
-                                  <input type="checkbox" value="update_issue" v-model="userPermissions" class="mr-2" />
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
+                  <!-- Permissions Modal -->
+                  <div v-if="isVisible"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" aria-modal="true"
+                    role="dialog" aria-labelledby="modal-title">
+                    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+                      <button @click="ontoggle(null)" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900"
+                        aria-label="Close modal">
+                        &times;
+                      </button>
+                      <h3 id="modal-title" class="text-lg font-bold mb-4 text-cobalt-950">
+                        Manage Permissions
+                      </h3>
+
+                      <form @submit.prevent="savePermissions">
+                        <div class="max-h-60 overflow-y-auto mb-4 grid grid-cols-2 gap-x-6 gap-y-3">
+                          <label v-for="permission in authStore.currentPermission" :key="permission"
+                            class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" :value="permission" v-model="userPermissions"
+                              :disabled="!hasPermission('assign permission')"
+                              class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700" />
+                            {{ permission }}
+                          </label>
                         </div>
-                      </div>
-                      <div class="p-4 md:p-6 flex gap-2 items-center w-full justify-end bg-white rounded-b-xl">
-                        <button @click="isVisible = false"
-                          class="px-3 py-2 md:px-4 md:py-2 rounded-lg text-sm text-cobalt-700 border border-cobalt-700">Close</button>
-                        <button @click="savePermissions(userId)"
-                          class="px-3 py-2 md:px-4 md:py-2 rounded-lg bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-sm text-white">Save</button>
-                      </div>
+
+                        <div class="flex justify-end gap-3">
+                          <button type="button" @click="ontoggle(null)"
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                            Cancel
+                          </button>
+                          <button type="submit" :disabled="!hasPermission('assign permission')"
+                            class="px-4 py-2 bg-cobalt-700 text-white rounded hover:bg-cobalt-800 disabled:opacity-50">
+                            Save
+                          </button>
+                        </div>
+                      </form>
                     </div>
                   </div>
+
                 </td>
               </tr>
             </tbody>

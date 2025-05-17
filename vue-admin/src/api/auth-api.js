@@ -62,12 +62,12 @@ export const fetchUsers = async () => {
 };
 
 // user by id api
-export const getUserById = async (id) => api.get(`/user/${id}`);
+export const getUserById = async (id) => api.get(`/users/${id}`);
 
 // delete user api
 export const deleteUserId = async (id) => {
   try {
-    const response = await api.delete(`/user/${id}`);
+    const response = await api.delete(`/users/${id}`);
     return response.data; 
   } catch (error) {
     console.error("Delete user error:", error.response?.data || error.message);
@@ -78,7 +78,7 @@ export const deleteUserId = async (id) => {
 // update user api
 export const updateUser = async (id, userData) => {
   try {
-    const response = await api.put(`/user/${id}`, userData);
+    const response = await api.put(`/users/${id}`, userData);
     return response.data;
   } catch (error) {
     console.error("Update user error:", error.response?.data || error.message);
@@ -121,4 +121,5 @@ export const permissionApi = async () => {
     console.error("Failed to fetch permissions:", error);
     throw error; 
   }
+  
 };

@@ -25,6 +25,22 @@ export const useAuthStore = defineStore("authStore", () => {
 
   const isLoggedIn = computed(() => authServices.isAuthenticated());
 
+  const notification = ref({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showNotification = (message, type = 'success') => {
+    notification.value.message = message;
+    notification.value.type = type;
+    notification.value.show = true;
+  
+    setTimeout(() => {
+      notification.value.show = false;
+    }, 3000); // Hide notification after 3 seconds
+  };
+
   const userPermissions = ref([]);
   // handle fetch permission api
   // Fetch all available permissions
@@ -32,7 +48,7 @@ export const useAuthStore = defineStore("authStore", () => {
     try {
         const permissions = await permissionApi();
         console.log("Fetched Permissions:", permissions);
-        currentPermission.value = permissions; // Ini seharusnya array dengan objek izin
+        currentPermission.value = permissions.map(p => p.name); 
     } catch (err) {
         console.error("Failed to fetch permission", err);
     }
@@ -236,6 +252,8 @@ const fetchUserWithPermissions = async (selectedUserId) => {
     loading,
     currentPermission,
     currentUser,
+    notification,
+    showNotification,
     fetchPermissionApi,
     fetchCurrentUserApi,
     fetchCurrentUser,
