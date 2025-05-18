@@ -75,7 +75,7 @@ export const deleteUserId = async (id) => {
   }
 };
 
-// update user api
+// update user api by id
 export const updateUser = async (id, userData) => {
   try {
     const response = await api.put(`/users/${id}`, userData);

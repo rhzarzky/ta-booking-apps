@@ -41,9 +41,8 @@ export const useAuthStore = defineStore("authStore", () => {
     }, 3000); // Hide notification after 3 seconds
   };
 
+  // Permissions
   const userPermissions = ref([]);
-  // handle fetch permission api
-  // Fetch all available permissions
   const fetchPermissionApi = async () => {
     try {
         const permissions = await permissionApi();
@@ -54,6 +53,7 @@ export const useAuthStore = defineStore("authStore", () => {
     }
 };
 
+  // Fetch user with permissions
 const fetchUserWithPermissions = async (selectedUserId) => {
   try {
       const response = await getUserById(selectedUserId); // Mengambil user berdasarkan ID

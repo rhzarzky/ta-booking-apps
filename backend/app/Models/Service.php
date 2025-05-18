@@ -27,4 +27,10 @@ class Service extends Model
     {
         return $this->hasOne(Schedule::class, 'service_id');
     }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
 }

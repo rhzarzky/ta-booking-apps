@@ -62,7 +62,7 @@ export const useServicesStore = defineStore('services', {
       }
     },
 
-    //deleteService
+    // Delete a service
     async deleteService(id) {
       this.isLoading = true;
       this.error = null;

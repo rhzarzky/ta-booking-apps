@@ -21,6 +21,7 @@ const isVisible = ref(false);
 const userPermissions = ref([]);
 const userIdForPermissions = ref(null);
 
+// Fetch Users
 const fetchUserData = async () => {
   isLoading.value = true;
   try {
@@ -34,6 +35,7 @@ const fetchUserData = async () => {
   }
 };
 
+// filter users based on search query
 const filteredUsers = computed(() => {
   const query = searchQuery.value.toLowerCase();
   return users.value.filter(user =>
@@ -42,6 +44,7 @@ const filteredUsers = computed(() => {
   );
 });
 
+// Pagination
 const totalPages = computed(() => {
   return Math.ceil(filteredUsers.value.length / usersPerPage);
 });
@@ -60,6 +63,7 @@ const retryFetch = () => {
   fetchUserData();
 };
 
+// Delete User
 const handleDeleteUser = async (id) => {
   try {
     await authStore.handleDeleteUser(id);
@@ -71,10 +75,12 @@ const handleDeleteUser = async (id) => {
   }
 };
 
+// Check if user has permission
 const hasPermission = (permission) => {
   return authStore.currentPermission?.includes(permission);
 };
 
+// Checked Box Permission
 const ontoggle = async (userId) => {
   isVisible.value = !isVisible.value;
   userIdForPermissions.value = userId;
@@ -95,6 +101,7 @@ const ontoggle = async (userId) => {
   }
 };
 
+// Save Permissions
 const savePermissions = async () => {
   if (!userIdForPermissions.value) {
     authStore.notification.message = "User ID is missing.";

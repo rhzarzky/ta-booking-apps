@@ -19,6 +19,11 @@ class ServiceController extends Controller
             ->map(function ($service) {
                 return [
                     'id' => $service->id,
+                    'user' => [
+                        'id' => $service->user_id,
+                        'name' => $service->user->name,
+                        'email' => $service->user->email,
+                    ],
                     'image' => $service->image ? asset('storage/' . $service->image) : null,
                     'title' => $service->title,
                     'description' => $service->description,
@@ -46,6 +51,11 @@ class ServiceController extends Controller
             'message' => 'Service retrieved successfully',
             'service' => [
                 'id' => $service->id,
+                'user' => [
+                    'id' => $service->user_id,
+                    'name' => $service->user->name,
+                    'email' => $service->user->email,
+                ],
                 'image' => $service->image ? asset('storage/' . $service->image) : null,
                 'title' => $service->title,
                 'description' => $service->description,
@@ -85,6 +95,8 @@ class ServiceController extends Controller
         $validated['time'] = json_encode($validated['time']);
 
         $service = Service::create($validated);
+        $service->user_id = auth()->user()->id;
+        $service->save();
 
         // Auto-generate service date
         $days = $request->days;
@@ -115,6 +127,11 @@ class ServiceController extends Controller
             'message' => 'Service created successfully',
             'service' => [
                 'id' => $service->id,
+                'user' => [
+                    'id' => $service->user_id,
+                    'name' => $service->user->name,
+                    'email' => $service->user->email,
+                ],
                 'image' => $service->image ? asset('storage/' . $service->image) : null,
                 'title' => $service->title,
                 'description' => $service->description,
