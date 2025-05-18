@@ -8,21 +8,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class ServiceController extends Controller
 {
     public function showAllService()
     {
         $services = Service::with('schedule')
-            ->select('id', 'image', 'title', 'description','location', 'option') 
+            ->select('id', 'user_id','image', 'title', 'description','location', 'option') 
             ->get()
             ->map(function ($service) {
                 return [
                     'id' => $service->id,
                     'user' => [
                         'id' => $service->user_id,
-                        'name' => $service->user->name,
-                        'email' => $service->user->email,
+                        'name' => $service->assigned->name,
+                        'email' => $service->assigned->email,
                     ],
                     'image' => $service->image ? asset('storage/' . $service->image) : null,
                     'title' => $service->title,
@@ -53,8 +54,8 @@ class ServiceController extends Controller
                 'id' => $service->id,
                 'user' => [
                     'id' => $service->user_id,
-                    'name' => $service->user->name,
-                    'email' => $service->user->email,
+                    'name' => $service->assigned->name,
+                    'email' => $service->assigned->email,
                 ],
                 'image' => $service->image ? asset('storage/' . $service->image) : null,
                 'title' => $service->title,
@@ -94,9 +95,10 @@ class ServiceController extends Controller
         $validated['days'] = json_encode($validated['days']);
         $validated['time'] = json_encode($validated['time']);
 
+        //save user_id that create service
+        $validated['user_id'] = Auth::id();
+
         $service = Service::create($validated);
-        $service->user_id = auth()->user()->id;
-        $service->save();
 
         // Auto-generate service date
         $days = $request->days;
@@ -129,8 +131,8 @@ class ServiceController extends Controller
                 'id' => $service->id,
                 'user' => [
                     'id' => $service->user_id,
-                    'name' => $service->user->name,
-                    'email' => $service->user->email,
+                    'name' => $service->assigned->name,
+                    'email' => $service->assigned->email,
                 ],
                 'image' => $service->image ? asset('storage/' . $service->image) : null,
                 'title' => $service->title,

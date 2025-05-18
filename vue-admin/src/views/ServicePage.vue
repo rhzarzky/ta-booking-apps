@@ -148,6 +148,7 @@ const deleteService = (id) => {
                                 <th class="px-6 py-3 text-left font-semibold">Title</th>
                                 <th class="px-6 py-3 text-left font-semibold">Image</th>
                                 <th class="px-6 py-3 text-left font-semibold">Description</th>
+                                <th class="px-6 py-3 text-left font-semibold">Assigned</th>
                                 <th class="px-6 py-3 text-left font-semibold">Location</th>
                                 <th class="px-6 py-3 text-left font-semibold">Option</th>
                                 <th class="px-6 py-3 text-left font-semibold">Day</th>
@@ -166,6 +167,7 @@ const deleteService = (id) => {
                                     <span v-else class="text-gray-400 italic">No Image</span>
                                 </td>
                                 <td class="px-6 py-4 font-medium">{{ service.description }}</td>
+                                <td class="px-6 py-4 font-medium">{{ service.user.email}}</td>
                                 <td class="px-6 py-4 font-medium">{{ service.location }}</td>
                                 <td class="px-6 py-4 font-medium">{{ Array.isArray(service.option) ?
                                     service.option.join(",") :
@@ -224,7 +226,6 @@ const deleteService = (id) => {
                                         </RouterLink>
                                     </div>
                                 </td>
-
                             </tr>
                         </tbody>
                     </table>

@@ -12,6 +12,7 @@ class Service extends Model
     protected $table = 'services';
 
     protected $fillable = [
+        'user_id',
         'image',
         'location',
         'title',
@@ -28,7 +29,7 @@ class Service extends Model
         return $this->hasOne(Schedule::class, 'service_id');
     }
 
-    public function admin()
+    public function assigned()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
