@@ -73,7 +73,6 @@ const routes = [
         path: 'detail-service/:id',
         name: 'client-detail-service',
         component: DetailService,
-        props: true, 
       }      
     ],
   },

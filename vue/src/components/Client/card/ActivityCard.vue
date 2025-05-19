@@ -1,8 +1,55 @@
+<script setup>
+import fallbackImage from '@/assets/images/booking.jpg'
+import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+
+const props = defineProps({
+  booking: Object,
+})
+
+const router = useRouter()
+
+const goToDetail = () => {
+  router.push({
+    name: 'client-detail-booking',
+    params: {
+      id: props.booking.id_booking
+    }
+  })
+}
+
+const formatDate = (dateStr) => {
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+  return new Date(dateStr).toLocaleDateString(undefined, options)
+}
+
+const formatTime = (timeStr) => {
+  if (!timeStr) return '-'
+  const [hour, minute] = timeStr.split(':')
+  return `${hour}:${minute}`
+}
+
+// 🎯 Dynamic status class berdasarkan booking.status
+const statusClass = computed(() => {
+  const status = props.booking.status
+  switch (status) {
+    case 'Approved':
+      return 'bg-green-100 text-green-700'
+    case 'Pending':
+      return 'bg-primary-100 text-primary-700'
+    case 'Declined':
+      return 'bg-red-100 text-red-700'
+    default:
+      return 'bg-gray-100 text-gray-700'
+  }
+})
+</script>
+
 <template>
   <div class="bg-white rounded-lg shadow p-4 mb-4">
     <div class="flex items-start gap-4">
       <img
-        :src="booking.image || fallbackImage"
+        :src="booking.service?.image || fallbackImage"
         alt="Booking"
         class="w-28 h-28 rounded object-cover"
       />
@@ -29,8 +76,11 @@
               <strong>Note:</strong> {{ booking.note }}
             </div>
           </div>
+
+          <!-- Dynamic Badge -->
           <span
-            class="text-xs text-white bg-indigo-500 px-2 py-1 rounded h-fit ml-2 whitespace-nowrap"
+            class="text-xs px-2 py-1 rounded h-fit ml-2 whitespace-nowrap"
+            :class="statusClass"
           >
             {{ booking.status }}
           </span>
@@ -46,39 +96,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import fallbackImage from '@/assets/images/booking.jpg'
-import { useRouter } from 'vue-router'
-import { computed } from 'vue'
-
-const props = defineProps({
-  booking: Object,
-})
-
-const router = useRouter()
-
-const goToDetail = () => {
-  router.push({
-    name: 'client-detail-booking',
-    params: {
-      id: props.booking.id_booking
-    }
-  })
-}
-
-
-const formatDate = (dateStr) => {
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
-  return new Date(dateStr).toLocaleDateString(undefined, options)
-}
-
-const formatTime = (timeStr) => {
-  if (!timeStr) return '-'
-  const [hour, minute] = timeStr.split(':')
-  return `${hour}:${minute}`
-}
-
-
-
-</script>

@@ -1,3 +1,74 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useServiceStore } from '@/stores/service'
+import fallbackImage from '@/assets/images/booking.jpg'
+
+// Lucide Icons
+import {
+  MapPin,
+  ListChecks,
+  CalendarClock,
+  CalendarRange,
+  ClipboardEdit,
+  Clock,
+} from 'lucide-vue-next'
+
+const route = useRoute()
+const router = useRouter()
+const store = useServiceStore()
+const service = ref(null)
+const isSubmitting = ref(false)
+
+const form = ref({
+  date: '',
+  time: '',
+  option: '',
+  note: '',
+})
+
+onMounted(async () => {
+  await store.fetchServiceById(route.params.id)
+  service.value = store.service
+})
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+const submitBooking = async () => {
+  try {
+    isSubmitting.value = true
+    const payload = {
+      time: form.value.time,
+      date: form.value.date,
+      note: form.value.note,
+      option: form.value.option,
+    }
+
+    console.log('Payload:', payload)
+
+    // Call the API to book service
+    await store.bookService(route.params.id, payload)
+
+    alert('Booking berhasil!')
+    router.push('/client/activity') // Redirect after booking success
+  } catch (err) {
+    console.error(err)
+    alert('Gagal booking')
+  } finally {
+    isSubmitting.value = false
+  }
+}
+</script>
+
+
 <template>
   <!-- Breadcrumb -->
   <div class="mb-6">
@@ -117,72 +188,3 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useServiceStore } from '@/stores/service'
-import fallbackImage from '@/assets/images/booking.jpg'
-
-// Lucide Icons
-import {
-  MapPin,
-  ListChecks,
-  CalendarClock,
-  CalendarRange,
-  ClipboardEdit,
-  Clock,
-} from 'lucide-vue-next'
-
-const route = useRoute()
-const router = useRouter()
-const store = useServiceStore()
-const service = ref(null)
-const isSubmitting = ref(false)
-
-const form = ref({
-  date: '',
-  time: '',
-  option: '',
-  note: '',
-})
-
-onMounted(async () => {
-  await store.fetchServiceById(route.params.id)
-  service.value = store.service
-})
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    weekday: 'short',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
-}
-
-const submitBooking = async () => {
-  try {
-    isSubmitting.value = true
-    const payload = {
-      time: form.value.time,
-      date: form.value.date,
-      note: form.value.note,
-      option: form.value.option,
-    }
-
-    console.log('Payload:', payload)
-
-    // Call the API to book service
-    await store.bookService(route.params.id, payload)
-
-    alert('Booking berhasil!')
-    router.push('/client/meeting') // Redirect after booking success
-  } catch (err) {
-    console.error(err)
-    alert('Gagal booking')
-  } finally {
-    isSubmitting.value = false
-  }
-}
-</script>

@@ -1,3 +1,45 @@
+<script setup>
+import { onMounted, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { bookingApi } from '@/api/booking-api'
+
+const route = useRoute()
+const booking = ref(null)
+
+onMounted(async () => {
+  try {
+    const result = await bookingApi.getBookingDetail(route.params.id)
+    booking.value = result
+  } catch (error) {
+    console.error('Failed to load booking detail:', error)
+  }
+})
+
+const formattedDate = computed(() => {
+  if (!booking.value) return ''
+  const date = new Date(booking.value.service.date)
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+})
+
+const statusClass = computed(() => {
+  if (!booking.value) return ''
+  const status = booking.value.service.status
+  switch (status) {
+    case 'Approved':
+      return 'bg-green-100 text-green-700 px-2 py-1 rounded'
+    case 'Pending':
+      return 'bg-primary-100 text-primary-700 px-2 py-1 rounded'
+    default:
+      return 'bg-red-100 text-red-700 px-2 py-1 rounded'
+  }
+})
+</script>
+
+
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
     <nav class="text-sm text-gray-500 mb-4">
@@ -69,43 +111,3 @@
   </div>
 </template>
 
-<script setup>
-import { onMounted, ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { bookingApi } from '@/api/booking-api'
-
-const route = useRoute()
-const booking = ref(null)
-
-onMounted(async () => {
-  try {
-    const result = await bookingApi.getBookingDetail(route.params.id)
-    booking.value = result
-  } catch (error) {
-    console.error('Failed to load booking detail:', error)
-  }
-})
-
-const formattedDate = computed(() => {
-  if (!booking.value) return ''
-  const date = new Date(booking.value.service.date)
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-})
-
-const statusClass = computed(() => {
-  if (!booking.value) return ''
-  const status = booking.value.service.status
-  switch (status) {
-    case 'Approved':
-      return 'bg-green-100 text-green-700 px-2 py-1 rounded'
-    case 'Pending':
-      return 'bg-yellow-100 text-yellow-700 px-2 py-1 rounded'
-    default:
-      return 'bg-red-100 text-red-700 px-2 py-1 rounded'
-  }
-})
-</script>

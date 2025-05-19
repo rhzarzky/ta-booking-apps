@@ -28,36 +28,12 @@
     </div>
 
     <!-- Pagination -->
-    <div class="flex justify-between items-center mt-6 text-sm text-gray-500">
-      <p>Page {{ currentPage }} of {{ totalPages }}</p>
-      <div class="flex items-center gap-1">
-        <button
-          @click="changePage(currentPage - 1)"
-          :disabled="currentPage === 1"
-          class="px-3 py-1 border rounded hover:bg-gray-200 disabled:opacity-50"
-        >
-          Prev
-        </button>
-        <button
-          v-for="page in totalPages"
-          :key="page"
-          :class="[
-            'px-3 py-1 rounded border',
-            page === currentPage ? 'bg-indigo-600 text-white' : 'bg-white hover:bg-gray-100'
-          ]"
-          @click="changePage(page)"
-        >
-          {{ page }}
-        </button>
-        <button
-          @click="changePage(currentPage + 1)"
-          :disabled="currentPage === totalPages"
-          class="px-3 py-1 border rounded hover:bg-gray-200 disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
-    </div>
+        <PaginationPage
+      :currentPage="currentPage"
+      :totalPages="totalPages"
+      @page-change="changePage"
+    />
+
   </div>
 </template>
 
@@ -66,6 +42,7 @@ import { ref, computed, onMounted } from 'vue'
 import { serviceApi } from '@/api/service-api'
 import MeetingCard from '@/components/Client/card/ServiceCard.vue'
 import fallbackImage from '@/assets/images/booking.jpg'
+import PaginationPage from '@/components/Client/Pagination/PaginationPage.vue'
 
 const items = ref([])
 const currentPage = ref(1)

@@ -46,37 +46,11 @@
     </div>
 
     <!-- Pagination: SELALU MUNCUL -->
-    <div class="flex justify-between items-center mt-6 text-sm text-gray-500">
-      <p>Showing page {{ currentPage }} of {{ totalPages }}</p>
-      <div class="flex items-center">
-        <button
-          class="border border-indigo-600 h-10 w-8 flex items-center justify-center rounded-tl rounded-bl"
-          @click="changePage(currentPage - 1)"
-          :disabled="currentPage === 1"
-        >
-          &lt;
-        </button>
-        <button
-          v-for="page in totalPages"
-          :key="page"
-          class="border border-indigo-600 h-10 w-8 flex items-center justify-center"
-          :class="{
-            'bg-indigo-600 text-white': page === currentPage,
-            'bg-white text-indigo-600': page !== currentPage,
-          }"
-          @click="changePage(page)"
-        >
-          {{ page }}
-        </button>
-        <button
-          class="border border-indigo-600 h-10 w-8 flex items-center justify-center rounded-tr rounded-br"
-          @click="changePage(currentPage + 1)"
-          :disabled="currentPage === totalPages"
-        >
-          &gt;
-        </button>
-      </div>
-    </div>
+    <PaginationPage
+      :currentPage="currentPage"
+      :totalPages="totalPages"
+      @page-change="changePage"
+    />
   </div>
 </template>
 
@@ -84,6 +58,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useBookingStore } from '@/stores/booking'
 import ActivityCard from '@/components/Client/card/ActivityCard.vue'
+import PaginationPage from '@/components/Client/Pagination/PaginationPage.vue'
 
 const bookingStore = useBookingStore()
 const currentPage = ref(1)
@@ -135,6 +110,7 @@ const bookingCounts = computed(() => {
   return counts
 })
 
+
 // Pagination hasil filter
 const paginatedBookings = computed(() => {
   const start = (currentPage.value - 1) * perPage
@@ -151,6 +127,7 @@ function changePage(page) {
     currentPage.value = page
   }
 }
+
 
 const loading = computed(() => bookingStore.loading)
 </script>
