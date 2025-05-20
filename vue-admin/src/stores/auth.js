@@ -12,6 +12,7 @@ import {
   updateProfile,
   currentUserApi,
   permissionApi,
+  roleApi,
 } from "@/api/auth-api";
 import { authServices } from "@/services/auth-services";
 
@@ -25,6 +26,7 @@ export const useAuthStore = defineStore("authStore", () => {
 
   const isLoggedIn = computed(() => authServices.isAuthenticated());
 
+  // Notification
   const notification = ref({
     show: false,
     message: "",
@@ -51,7 +53,20 @@ export const useAuthStore = defineStore("authStore", () => {
     } catch (err) {
         console.error("Failed to fetch permission", err);
     }
-};
+  };
+  
+  // Role
+  const userRoles = ref([]);
+  const fetchRoleApi = async () => {
+    try {
+      const roles = await roleApi();
+      console.log("Fetched Roles:", roles);
+      return roles; //return the array
+    } catch (err) {
+      console.error("Failed to fetch roles", err);
+      return []; 
+    }
+  };
 
   // Fetch user with permissions
 const fetchUserWithPermissions = async (selectedUserId) => {
@@ -210,7 +225,7 @@ const fetchUserWithPermissions = async (selectedUserId) => {
         }
         throw error;
     }
-};
+  };
 
   // handle user profile api
   const handleUserProfile = async () => {
@@ -249,11 +264,13 @@ const fetchUserWithPermissions = async (selectedUserId) => {
     user,
     isLoggedIn,
     userPermissions,
+    userRoles,
     loading,
     currentPermission,
     currentUser,
     notification,
     showNotification,
+    fetchRoleApi,
     fetchPermissionApi,
     fetchCurrentUserApi,
     fetchCurrentUser,

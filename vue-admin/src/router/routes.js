@@ -4,6 +4,8 @@ import LoginPage from "@/views/LoginPage.vue";
 import UserPage from "@/views/UserPage.vue";
 import UnknownPage from "@/views/error/UnknownPage.vue";
 import CreateService from "@/views/CreateService.vue";
+import EditUser from "@/views/EditUser.vue";
+import ChangePasswordUser from "@/views/ChangePasswordUser.vue";
 
 const routes = [{
         path: "/login-admin",
@@ -19,6 +21,7 @@ const routes = [{
         component: AdminDashboard,
         meta: {
             requiresAuth: true,
+            breadcrumbs: "Admin Dashboard",
             excludeRole: ["user"], 
             title: "Admin Dashboard",
         },
@@ -29,6 +32,7 @@ const routes = [{
         component: ServicePage,
         meta: {
             title: "Service",
+            breadcrumbs: "Service",
             excludeRole: ["user"], 
             requiresAuth: true,
         },
@@ -50,6 +54,29 @@ const routes = [{
         component: UserPage,
         meta: {
             title: "User List",
+            breadcrumbs: "User List",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/edit-profile/:id",
+        name: "Edit Profile",
+        component: EditUser,
+        meta: {
+            title: "Edit Profile",
+            breadcrumbs: "Edit Profile",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/change-password-user/:id",
+        name: "Change Password User",
+        component: ChangePasswordUser,
+        meta: {
+            title: "Change Password User",
+            breadcrumbs: "Change Password User",
             excludeRole: ["user"], 
             requiresAuth: true,
         },

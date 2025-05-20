@@ -136,8 +136,6 @@ class UserController extends Controller
                 'message' => 'User not found',
             ], 404);
         } catch (Exception $e) {
-            Log::error('User Profile Update Error: ' . $e->getMessage());
-
             return response()->json([
                 'status' => 'error',
                 'message' => 'An error occurred while updating the user profile',

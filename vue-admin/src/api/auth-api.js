@@ -121,5 +121,16 @@ export const permissionApi = async () => {
     console.error("Failed to fetch permissions:", error);
     throw error; 
   }
-  
 };
+
+//  role api
+export const roleApi = async () => {
+  try {
+    const response = await api.get("/role");
+    console.log("Role API Response:", response.data); 
+    return response.data; // Ubah dari return response; menjadi return response.data untuk memastikan data yang benar
+  } catch (error) {
+    console.error("Failed to fetch roles:", error);
+    throw error; 
+  }
+}
