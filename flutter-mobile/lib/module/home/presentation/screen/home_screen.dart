@@ -1,4 +1,5 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/home/presentation/screen/bookmark_screen.dart';
 import 'package:Appointly/module/home/presentation/widget/chart_status.dart';
 import 'package:Appointly/module/home/presentation/widget/recently_pending_card.dart';
 import 'package:Appointly/module/home/presentation/widget/status_card.dart';
@@ -114,7 +115,14 @@ class _HomeScreenState extends State<HomeScreen> {
               'assets/image/Logo.png',
             ),
             IconButton.filled(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BookmarkScreen(),
+                  ),
+                );
+              },
               icon: Icon(
                 Icons.bookmark_outline_rounded,
                 color: ColorPallete.darkBlack,

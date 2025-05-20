@@ -60,6 +60,8 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
         );
         // Kembalikan ke halaman sebelumnya jika ID tidak valid
         Future.delayed(Duration(seconds: 2), () {
+          if (!mounted) return;
+
           Navigator.pop(context);
         });
         return;
@@ -292,12 +294,24 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           // Add null safety check for note
           _buildNoteSection(booking.note ?? ''),
           SizedBox(height: 16),
-          _buildButtonSend(),
-          SizedBox(height: 16),
-          // Add navigation to VisualMap for Offline meetings
-          if (booking.option == 'Offline')
-            _buildVisualMapButton(context, booking),
-          SizedBox(height: 16),
+          if (booking.option == 'Online') ...[
+            Column(
+              children: [
+                _buildButtonSend(booking),
+                const SizedBox(height: 16),
+              ],
+            )
+          ] else if (booking.option == 'Offline') ...[
+            Row(
+              children: [
+                _buildButtonSend(booking),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildVisualMapButton(context, booking),
+                ),
+              ],
+            )
+          ]
         ],
       ),
     );
@@ -565,6 +579,8 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                                 throw 'Could not launch $parsedUrl';
                               }
                             } catch (e) {
+                              if (!mounted) return;
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                     content: Text('Could not open URL: $e')),
@@ -626,36 +642,54 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     );
   }
 
-  Widget _buildButtonSend() {
-    return SizedBox(
-      width: double.infinity,
-      child: Container(
-        decoration: BoxDecoration(
-            gradient: ColorPallete.gradientPrimary,
-            borderRadius: BorderRadius.circular(8)),
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => MainTabScreen()),
-              (route) => false,
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            padding: EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+  Widget _buildButtonSend(detail.BookingDetail booking) {
+    final bool isOnline = booking.option == 'Online';
+
+    return Container(
+      width: !isOnline ? 64 : double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: ColorPallete.primaryDark,
+            width: 2,
+            strokeAlign: BorderSide.strokeAlignInside),
+      ),
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => MainTabScreen()),
+            (route) => false,
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: ColorPallete.backgroundBody,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            'Back to Home',
-            style: GoogleFonts.ubuntu(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.home_filled,
+              color: ColorPallete.primaryDark,
+              size: 24,
             ),
-          ),
+            if (isOnline) ...[
+              const SizedBox(width: 8),
+              Text(
+                'Back to Home',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: ColorPallete.primaryDark,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -698,19 +732,31 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
         },
         child: Container(
           width: double.infinity,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           decoration: BoxDecoration(
-            color: ColorPallete.primaryColor,
-            borderRadius: BorderRadius.circular(8),
+            gradient: ColorPallete.gradientPrimary,
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            'Lihat Lokasi di Peta',
-            style: GoogleFonts.ubuntu(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Lihat di Maps',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.near_me_sharp,
+                color: Colors.white,
+                size: 20,
+              ),
+            ],
           ),
         ),
       ),

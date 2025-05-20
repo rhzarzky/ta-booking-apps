@@ -3,6 +3,7 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:ui';
 
 class CardService extends StatelessWidget {
   final String imageService;
@@ -12,6 +13,7 @@ class CardService extends StatelessWidget {
   final List<String> timeService;
   final List<String> provideService;
   final VoidCallback onTap;
+  final VoidCallback onSave;
 
   const CardService({
     super.key,
@@ -22,6 +24,7 @@ class CardService extends StatelessWidget {
     required this.timeService,
     required this.provideService,
     required this.onTap,
+    required this.onSave,
   });
 
   @override
@@ -37,26 +40,72 @@ class CardService extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: double.infinity,
-              height:200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12.0),
-                image: (imageService.isNotEmpty)
-                    ? DecorationImage(
-                        image: imageService.startsWith('http')
-                            ? NetworkImage(imageService)
-                            : AssetImage(imageService) as ImageProvider,
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: (imageService.isEmpty)
-                  ? Image.asset(
-                      'assets/image/404page.png',
-                      fit: BoxFit.contain,
-                    )
-                  : null,
+            Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 240,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12.0),
+                    image: (imageService.isNotEmpty)
+                        ? DecorationImage(
+                            image: imageService.startsWith('http')
+                                ? NetworkImage(imageService)
+                                : AssetImage(imageService) as ImageProvider,
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: (imageService.isEmpty)
+                      ? Image.asset(
+                          'assets/image/404page.png',
+                          fit: BoxFit.contain,
+                        )
+                      : null,
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white.withOpacity(0.3),
+                              Colors.white.withOpacity(0.1),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          onPressed: onSave,
+                          icon: Icon(
+                            Icons.bookmark_outline_rounded,
+                            color: Colors.white,
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          iconSize: 24,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 16),
             Column(
