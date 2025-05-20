@@ -8,7 +8,6 @@ import 'package:logger/logger.dart';
 
 class NotificationHelper {
   static final Logger _logger = Logger();
-
   static Future<void> showBookingNotification({
     required BuildContext context,
     required String serviceName,
@@ -18,6 +17,10 @@ class NotificationHelper {
     required String userId,
     required int bookingId,
   }) async {
+    print('🔔 NotificationHelper: Creating notification');
+    print('📝 Details: userId=$userId, bookingId=$bookingId');
+    print(
+        '📝 Service: $serviceName, Date: $date, Time: $time, Option: $option');
     _logger.d('Creating notification for booking $bookingId, user $userId');
 
     final title = 'Booking Confirmed!';
@@ -50,12 +53,11 @@ class NotificationHelper {
           ),
         ),
         payload: payload,
-      );
-
-      // Tambahkan notifikasi ke bloc
+      ); // Tambahkan notifikasi ke bloc
       if (context.mounted) {
-        _logger.d(
-            'Adding notification to bloc: bookingId=$bookingId, userId=$userId');
+        print('🔄 Adding notification to NotificationBloc');
+        print(
+            '📝 Notification: title=$title, userId=$userId, bookingId=$bookingId');
         BlocProvider.of<NotificationBloc>(context, listen: false).add(
           AddNotification(
             title: title,
@@ -66,7 +68,7 @@ class NotificationHelper {
             bookingId: bookingId,
           ),
         );
-        _logger.d('Notification added to bloc successfully');
+        print('✅ Notification successfully added to bloc');
       }
     } catch (e) {
       _logger.e('Error showing notification: $e');

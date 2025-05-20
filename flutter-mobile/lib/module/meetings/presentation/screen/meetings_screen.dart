@@ -5,13 +5,17 @@ import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_scr
 import 'package:Appointly/module/meetings/presentation/screen/history_meeting.dart';
 import 'package:Appointly/module/meetings/presentation/widget/card_service.dart';
 import 'package:Appointly/module/meetings/presentation/widget/search_bar.dart';
+import 'package:Appointly/module/meetings/presentation/widget/empty_state_service.dart';
+import 'package:Appointly/module/meetings/model/saved_service_model.dart';
+import 'package:Appointly/module/meetings/repository/saved_service_repository.dart';
+import 'package:Appointly/module/meetings/model/service_model.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-import 'package:Appointly/module/meetings/presentation/widget/empty_state_service.dart';
+// Repository is already imported above
 
 class MeetingsScreen extends StatefulWidget {
   final String userId;
@@ -32,6 +36,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
   bool _isSearchBarVisible = true;
   String _searchQuery = '';
   List<dynamic> _filteredResults = [];
+  final _savedServiceRepository = SavedServiceRepository();
 
   @override
   void initState() {
@@ -85,6 +90,26 @@ class _MeetingsScreenState extends State<MeetingsScreen>
       _searchQuery = query;
       _filteredResults = filteredResults;
     });
+  }
+
+  void _onSaveService(Service service) async {
+    final savedService = SavedServiceModel(
+      id: service.id,
+      title: service.title,
+      description: service.description,
+      image: service.image,
+      location: service.location,
+      option: service.option,
+    );
+
+    await _savedServiceRepository.saveService(savedService);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Service has been saved to your bookmarks'),
+        backgroundColor: ColorPallete.primaryDark,
+      ),
+    );
   }
 
   @override
@@ -170,6 +195,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                                 locationService: '',
                                 provideService: ['Online'],
                                 onTap: () {},
+                                onSave: () {},
                               ),
                             );
                           }),
@@ -264,6 +290,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                                       ),
                                     ));
                               },
+                              onSave: () => _onSaveService(service),
                             ),
                           );
                         },

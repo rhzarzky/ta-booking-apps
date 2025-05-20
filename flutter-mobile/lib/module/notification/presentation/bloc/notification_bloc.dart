@@ -11,21 +11,26 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final Logger _logger = Logger();
 
   NotificationBloc() : super(NotificationInitial()) {
-    // Load notifications dari SharedPreferences saat inisialisasi
-    _loadSavedNotifications();
+    print('🏃 Initializing NotificationBloc');
 
     on<AddNotification>((event, emit) async {
+      print('📥 Adding new notification: ${event.title}');
       final currentNotifications =
           List<Map<String, dynamic>>.from(state.notifications);
       emit(NotificationLoading());
       try {
-        await Future.delayed(
-          Duration(
-            milliseconds: 300,
-          ),
-        );
+        // Get current notifications from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        final String? existingData = prefs.getString('notifications');
+        List<Map<String, dynamic>> allNotifications = [];
 
-        // Tambahkan notifikasi baru
+        if (existingData != null) {
+          final List<dynamic> decoded = jsonDecode(existingData);
+          allNotifications =
+              decoded.map((item) => Map<String, dynamic>.from(item)).toList();
+        }
+
+        // Create new notification
         final Map<String, dynamic> newNotification = {
           'title': event.title,
           'body': event.body,
@@ -35,14 +40,20 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           'bookingId': event.bookingId,
         };
 
-        _logger.d('Menambahkan notifikasi: $newNotification');
-        currentNotifications.insert(0, newNotification);
+        // Add to beginning of list
+        allNotifications.insert(0, newNotification);
 
-        // Simpan ke SharedPreferences untuk persistensi
-        _saveNotifications(currentNotifications);
+        // Save back to SharedPreferences
+        await prefs.setString('notifications', jsonEncode(allNotifications));
+        print('💾 Saved notification: ${event.title} for user ${event.userId}');
 
-        emit(NotificationLoaded(currentNotifications));
+        // Emit only notifications for this user
+        final userNotifications = allNotifications
+            .where((n) => n['userId'].toString() == event.userId)
+            .toList();
+        emit(NotificationLoaded(userNotifications));
       } catch (e) {
+        print('❌ Error adding notification: $e');
         _logger.e('Error adding notification: $e');
         emit(NotificationError(message: e.toString()));
       }
@@ -51,77 +62,80 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     on<GetNotifications>((event, emit) async {
       emit(NotificationLoading());
       try {
-        await Future.delayed(
-          Duration(
-            milliseconds: 300,
-          ),
-        );
-        final currentNotifications =
-            List<Map<String, dynamic>>.from(state.notifications);
+        print('🔍 Getting notifications for user: ${event.userId}');
 
-        _logger.d(
-            'Memuat ${currentNotifications.length} notifikasi, userId: ${event.userId}');
+        // Load from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        final String? storedData = prefs.getString('notifications');
 
-        // Debug: Cetak semua notifikasi yang ada
-        for (var notif in currentNotifications) {
-          _logger.d(
-              'Notifikasi: ${notif['title']} - userId: ${notif['userId']} - bookingId: ${notif['bookingId']}');
+        if (storedData != null) {
+          print('📦 Found stored notifications: $storedData');
+          final List<dynamic> decodedList = jsonDecode(storedData);
+
+          // Convert to list of maps and filter by userId
+          final notifications = decodedList
+              .map((item) => Map<String, dynamic>.from(item))
+              .where((notif) => notif['userId'].toString() == event.userId)
+              .toList();
+
+          print(
+              '✅ Found ${notifications.length} notifications for user ${event.userId}');
+          print('📝 Notifications:');
+          for (var notif in notifications) {
+            print('  - ${notif['title']} (ID: ${notif['bookingId']})');
+          }
+
+          emit(NotificationLoaded(notifications));
+        } else {
+          print('❌ No notifications found in storage');
+          emit(NotificationLoaded([]));
         }
-
-        emit(NotificationLoaded(currentNotifications));
       } catch (e) {
         _logger.e('Error getting notifications: $e');
         emit(NotificationError(message: e.toString()));
       }
     });
 
-    on<ClearNotifications>((event, emit) {
-      final currentNotifications =
-          List<Map<String, dynamic>>.from(state.notifications);
-      currentNotifications.removeWhere(
-          (notification) => notification['userId'] == event.userId);
+    on<ClearNotifications>((event, emit) async {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final String? storedData = prefs.getString('notifications');
 
-      // Simpan perubahan ke SharedPreferences
-      _saveNotifications(currentNotifications);
+        if (storedData != null) {
+          final List<dynamic> decodedList = jsonDecode(storedData);
+          final List<Map<String, dynamic>> allNotifications = decodedList
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
 
-      emit(NotificationLoaded(currentNotifications));
+          // Remove notifications for this user
+          final filteredNotifications = allNotifications
+              .where((notif) => notif['userId'].toString() != event.userId)
+              .toList();
+
+          // Save back to SharedPreferences
+          await prefs.setString(
+              'notifications', jsonEncode(filteredNotifications));
+
+          emit(NotificationLoaded([]));
+        }
+      } catch (e) {
+        _logger.e('Error clearing notifications: $e');
+        emit(NotificationError(message: e.toString()));
+      }
     });
   }
 
-  // Simpan notifikasi ke SharedPreferences
   Future<void> _saveNotifications(
       List<Map<String, dynamic>> notifications) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final String notificationsJson = jsonEncode(notifications);
       await prefs.setString('notifications', notificationsJson);
-      _logger.d('Berhasil menyimpan ${notifications.length} notifikasi');
+      print('💾 Saved ${notifications.length} notifications to storage');
+      _logger.d('Successfully saved notifications');
     } catch (e) {
+      print('❌ Error saving notifications: $e');
       _logger.e('Error saving notifications: $e');
-    }
-  }
-
-  // Muat notifikasi dari SharedPreferences
-  Future<void> _loadSavedNotifications() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? notificationsJson = prefs.getString('notifications');
-
-      if (notificationsJson != null && notificationsJson.isNotEmpty) {
-        final List<dynamic> decodedList = jsonDecode(notificationsJson);
-        final List<Map<String, dynamic>> notificationsList =
-            decodedList.map((item) => Map<String, dynamic>.from(item)).toList();
-
-        _logger.d(
-            'Berhasil memuat ${notificationsList.length} notifikasi dari penyimpanan');
-        emit(NotificationLoaded(notificationsList));
-      } else {
-        _logger.d('Tidak ada notifikasi tersimpan');
-        emit(NotificationLoaded([]));
-      }
-    } catch (e) {
-      _logger.e('Error loading notifications: $e');
-      emit(NotificationError(message: e.toString()));
     }
   }
 }

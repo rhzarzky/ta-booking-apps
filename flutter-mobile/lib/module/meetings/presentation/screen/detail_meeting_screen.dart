@@ -852,11 +852,12 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                   date: formattedDate,
                   notes: note,
                   time: time24,
-                ));
-
-            // Listen for the booking response
+                )); // Listen for the booking response
             context.read<ServiceBloc>().stream.listen((state) {
               if (state is ServiceSucees) {
+                print('🔔 Booking successful! Creating notification...');
+                print(
+                    '📝 Booking details: ID=${state.bookingId}, Service=${service.title}');
                 // Show notification after successful booking
                 NotificationHelper.showBookingNotification(
                   context: context,
