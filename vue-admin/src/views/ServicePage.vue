@@ -229,10 +229,10 @@ const deleteService = (id) => {
                             </tr>
                         </tbody>
                     </table>
-                    <!-- Pagination Controls -->
-                    <PaginationPage :current-page="currentPage" :total-pages="totalPages" :has-next-page="hasNextPage"
-                        :has-prev-page="hasPrevPage" @page-change="handlePageChange" />
                 </div>
+                <!-- Pagination Controls -->
+                <PaginationPage :current-page="currentPage" :total-pages="totalPages" :has-next-page="hasNextPage"
+                    :has-prev-page="hasPrevPage" @page-change="handlePageChange" />
             </div>
         </div>
     </DefaultLayout>

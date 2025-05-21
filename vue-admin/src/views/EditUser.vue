@@ -3,6 +3,7 @@ import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { ref, reactive, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import AlertStatus from "@/components/alert/AlertStatus.vue";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -57,7 +58,7 @@ onMounted(() => {
   if (userId) {
     fetchUserData(userId); // Hanya panggil jika userId tidak undefined
   } else {
-    notification.value = "Invalid user ID.";
+    authStore.showNotification("User ID is not provided.", "error");
   }
 });
 
@@ -71,8 +72,8 @@ const updateUser = async () => {
   };
   try {
     await authStore.handleUpdateUser(route.params.id, userData);
-    notification.value = "User updated successfully!";
-    router.push("/users-list");
+    authStore.showNotification("User updated successfully.", "success");
+    router.push("/user-list");
   } catch (error) {
     console.error("Error updating user:", error);
     notification.value = error.response?.data?.errors || {
@@ -93,6 +94,9 @@ const cancel = () => {
   <DefaultLayout class="bg-whiteBgPrimary-100">
     <div class="max-h-fit md:p-9 p-4 flex flex-col gap-6 bg-white rounded-2xl">
       <div class="flex flex-col gap-1">
+        <!-- Notification -->
+        <AlertStatus :message="authStore.notification.message" :type="authStore.notification.type"
+          :is-visible="authStore.notification.show" @close="authStore.notification.show = false" />
         <h2 class="text-codgray-900 md:text-2xl text-base font-semibold">
           Edit User Account
         </h2>
@@ -158,11 +162,6 @@ const cancel = () => {
             class="md:px-6 md:py-3 px-4 max-w-fit font-semibold py-2 bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white rounded-xl w-36">
             Save
           </button>
-        </div>
-
-        <!-- Notifikasi -->
-        <div v-if="notification" class="mt-4 p-4 bg-green-100 text-green-700 rounded">
-          {{ notification }}
         </div>
       </form>
     </div>

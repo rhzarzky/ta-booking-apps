@@ -6,6 +6,7 @@ import UnknownPage from "@/views/error/UnknownPage.vue";
 import CreateService from "@/views/CreateService.vue";
 import EditUser from "@/views/EditUser.vue";
 import ChangePasswordUser from "@/views/ChangePasswordUser.vue";
+import CreateUser from "@/views/CreateUser.vue";
 
 const routes = [{
         path: "/login-admin",
@@ -55,6 +56,17 @@ const routes = [{
         meta: {
             title: "User List",
             breadcrumbs: "User List",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/create-user",
+        name: "Create User",
+        component: CreateUser,
+        meta: {
+            title: "Create User",
+            breadcrumbs: "Create User",
             excludeRole: ["user"], 
             requiresAuth: true,
         },

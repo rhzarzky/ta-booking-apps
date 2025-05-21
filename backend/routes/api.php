@@ -15,6 +15,9 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/users', [UserController::class, 'showAllUser']);
         Route::get('/users/{id}', [UserController::class, 'getUserById']);
     });
+    Route::middleware(['permission:create user'])->group(function () {
+        Route::post('/users', [UserController::class, 'createUser']);
+    });
     Route::middleware(['permission:edit user'])->group(function () {
         Route::put('/users/{id}', [UserController::class, 'editUserById']);
     });

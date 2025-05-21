@@ -314,4 +314,51 @@ class UserController extends Controller
             ], 500);
         }
     }
+    public function createUser(Request $request)
+    {
+        $validate = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'nullable|string|exists:roles,name',
+            'status' => 'nullable|in:Active,Inactive',
+        ]);
+
+        if ($validate->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validate->errors(),
+            ], 422);
+        }
+
+        try {
+            $user = new User();
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->password = Hash::make($request->password);
+            $user->status = $request->status ?? 'Active';
+            $user->save();
+
+            if ($request->has('role')) {
+                $user->assignRole($request->role);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'User created successfully',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->getRoleNames(),
+                    'status' => $user->status,                   
+                ],
+            ], 201);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while creating the user',
+            ], 500);
+        }
+    }
 }

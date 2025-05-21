@@ -20,6 +20,8 @@ const searchQuery = ref("");
 const isVisible = ref(false);
 const userPermissions = ref([]);
 const userIdForPermissions = ref(null);
+const showDeleteModal = ref(false);
+const userToDelete = ref(null);
 
 // Fetch Users
 const fetchUserData = async () => {
@@ -63,15 +65,23 @@ const retryFetch = () => {
   fetchUserData();
 };
 
-// Delete User
-const handleDeleteUser = async (id) => {
+// Delete User Confirmation
+const confirmDelete = (id) => {
+  userToDelete.value = id;
+  showDeleteModal.value = true;
+};
+
+const handleDeleteConfirmed = async () => {
   try {
-    await authStore.handleDeleteUser(id);
-    users.value = users.value.filter(user => user.id !== id);
-    alert("User successfully deleted");
+    await authStore.handleDeleteUser(userToDelete.value);
+    users.value = users.value.filter(user => user.id !== userToDelete.value);
+    authStore.showNotification("User deleted successfully.", "success");
   } catch (err) {
     console.error("Error deleting user:", err);
-    alert("Failed to delete user.");
+    authStore.showNotification("Failed to delete user.", "error");
+  } finally {
+    showDeleteModal.value = false;
+    userToDelete.value = null;
   }
 };
 
@@ -104,9 +114,7 @@ const ontoggle = async (userId) => {
 // Save Permissions
 const savePermissions = async () => {
   if (!userIdForPermissions.value) {
-    authStore.notification.message = "User ID is missing.";
-    authStore.notification.type = "error";
-    authStore.notification.show = true;
+    authStore.showNotification("User ID is missing.", "error");
     return;
   }
 
@@ -116,16 +124,12 @@ const savePermissions = async () => {
 
   try {
     await authStore.handleUpdateUser(userIdForPermissions.value, updateData);
-    authStore.notification.message = "Permissions updated successfully";
-    authStore.notification.type = "success";
-    authStore.notification.show = true;
+    authStore.showNotification("Permissions updated successfully.", "success");
     isVisible.value = false;
     router.push("/user-list");
   } catch (err) {
     console.error("Error saving permissions:", err);
-    authStore.notification.message = "Failed to update permissions.";
-    authStore.notification.type = "error";
-    authStore.notification.show = true;
+    authStore.showNotification("Failed to update permissions.", "error");
   }
 };
 
@@ -151,12 +155,12 @@ watch(searchQuery, () => {
       <div class="w-full flex gap-3 items-center">
         <!-- Notification -->
         <AlertStatus :message="authStore.notification.message" :type="authStore.notification.type"
-          :is-visible="authStore.notification.show" @close="authStore.notification.show = false" /> 
+          :is-visible="authStore.notification.show" @close="authStore.notification.show = false" />
         <!-- Filter Search -->
         <SearchUser @search="searchQuery = $event" />
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
           <!-- Add User Button -->
-          <RouterLink to="/createuser"
+          <RouterLink to="/create-user"
             class="flex gap-2 items-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25 hover:transition hover:ease-in-out">
             Add User
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
@@ -212,7 +216,7 @@ watch(searchQuery, () => {
                 </td>
 
                 <td class="flex items-center gap-6 py-4 px-1">
-                  <button @click="handleDeleteUser(user.id)" title="Delete" class="text-red-500">
+                  <button @click="confirmDelete(user.id)" title="Delete" class="text-red-500">
                     <!-- Delete Icon -->
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path
@@ -220,6 +224,26 @@ watch(searchQuery, () => {
                         stroke="#E20E0E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </button>
+                  <transition name="fade">
+                    <div v-if="showDeleteModal"
+                      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                      <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+                        <h2 class="text-lg font-semibold text-gray-800">Confirm Delete</h2>
+                        <p class="text-gray-600 mt-2">Are you sure you want to delete this user?</p>
+
+                        <div class="mt-4 flex justify-end gap-2">
+                          <button @click="showDeleteModal = false"
+                            class="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300">
+                            Cancel
+                          </button>
+                          <button @click="handleDeleteConfirmed"
+                            class="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700">
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </transition>
 
                   <RouterLink title="Edit" :to="`/edit-profile/${user.id}`">
                     <!-- Edit Icon -->
@@ -294,10 +318,10 @@ watch(searchQuery, () => {
               </tr>
             </tbody>
           </table>
-          <!-- Pagination Controls -->
-          <PaginationPage :current-page="currentPage" :total-pages="totalPages" :has-next-page="hasNextPage"
-            :has-prev-page="hasPrevPage" @page-change="handlePageChange" />
         </div>
+        <!-- Pagination Controls -->
+        <PaginationPage :current-page="currentPage" :total-pages="totalPages" :has-next-page="hasNextPage"
+          :has-prev-page="hasPrevPage" @page-change="handlePageChange" />
       </div>
     </div>
   </DefaultLayout>
