@@ -14,7 +14,7 @@ export const createServiceApi = (FormData) => api.post("/service", FormData, {
 });
 
 // PUT /service/:id with payload
-export const editServiceApi = (id, data) => api.put(`/service/${id}`, data);
+export const editServiceApi = (id, data) => api.post(`/service/${id}`, data);
 
 // DELETE /service/:id
 export const deleteServiceApi = (id) => api.delete(`/service/${id}`);

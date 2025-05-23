@@ -5,6 +5,8 @@ import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { useAuthStore } from "@/stores/auth";
 import showIcon from "@/assets/image/showps.png";
 import hideIcon from "@/assets/image/hideps.png";
+import alertStatus from "@/components/alert/AlertStatus.vue";
+import AlertStatus from "@/components/alert/AlertStatus.vue";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -16,6 +18,7 @@ const post = reactive({
   password: "",
   confirmPassword: "",
   role: "",
+  status: "",
 });
 
 const validation = ref([]);
@@ -63,14 +66,15 @@ const store = async () => {
     role: post.role,
   };
   try {
-    const response = await authStore.handleRegister(userData);
-    notification.value = "User created successfully";
-    router.push({ path: "/user-list" }).then(() => {
-      window.location.reload();
-    });
+    await authStore.handleCreateUser(userData);
+    authStore.showNotification("User created successfully.", "success");
+    router.push("/user-list");
   } catch (error) {
-    validation.value = error.response?.data?.errors || {};
-    console.error("Error during registration:", error);
+    console.error("Error creating user:", error);
+    authStore.showNotification("Error creating user", "error");
+    if (error.response) {
+      console.error("Response data:", error.response.data);
+    }
   }
 };
 
@@ -84,6 +88,9 @@ const cancel = () => {
   <DefaultLayout class="bg-whiteBgPrimary-100">
     <div class="max-h-fit md:p-9 p-4 flex flex-col gap-6 bg-white rounded-2xl">
       <div class="flex flex-col gap-1">
+        <!-- Notification -->
+        <AlertStatus :message="authStore.notification.message" :type="authStore.notification.type"
+          :is-visible="authStore.notification.show" @close="authStore.notification.show = false" />
         <h2 class="text-codgray-900 md:text-2xl text-base font-semibold">
           Create your account
         </h2>

@@ -11,6 +11,7 @@ const post = reactive({
     image: null,
     title: "",
     description: "",
+    assigned: "",
     location: "",
     option: [],
     time: [],
@@ -30,8 +31,10 @@ const cancel = () => {
 // Submit function for storing service
 const store = async () => {
     const formData = new FormData();
+    form.append('_method', 'PUT');
     formData.append("title", post.title);
     formData.append("description", post.description);
+    formData.append("assigned", post.assigned);
     formData.append("location", post.location);
     formData.append("end_date", post.end_date);
 
@@ -53,10 +56,10 @@ const store = async () => {
         formData.append(`days[${i}]`, day);
     });
 
-    const { success, validationErrors } = await serviceStore.createService(formData);
+    const { success, validationErrors } = await serviceStore.editService(formData);
 
     if (success) {
-        notification.value = "Service created successfully!";
+        notification.value = "Service updated successfully!";
         router.push({ path: "/service" });
     } else {
         validation.value = validationErrors || {};
@@ -70,11 +73,8 @@ const store = async () => {
         <div class="max-h-fit md:p-9 p-4 flex flex-col gap-6 bg-white rounded-2xl">
             <div class="flex flex-col gap-1">
                 <h2 class="text-codgray-900 md:text-2xl text-base font-semibold">
-                    Create Service
+                    Edit Service
                 </h2>
-                <p class="md:text-base text-sm text-wildsand-400">
-                    Start here! Complete this field to move forward
-                </p>
             </div>
             <form @submit.prevent="store" class="flex flex-col gap-6">
                 <!-- Title -->
@@ -117,6 +117,22 @@ const store = async () => {
                     <!-- validation -->
                     <div class="mt-2 text-red-600" v-if="validation.description">
                         {{ validation.description[0] }}
+                    </div>
+                </div>
+
+                <!-- Assigned -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="assigned">Assigned
+                        <span class="text-red-600">*</span>
+                    </label>
+                    <select id="assigned"
+                        class="w-full h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base"
+                        v-model="post.assigned">
+                        <option value="" disabled>Select a user</option>
+                    </select>
+                    <!-- validation -->
+                    <div class="mt-2 text-red-600" v-if="validation.assigned">
+                        {{ validation.assigned[0] }}
                     </div>
                 </div>
 
@@ -224,7 +240,7 @@ const store = async () => {
                     <!-- Submit Button -->
                     <button type="submit"
                         class="md:px-6 md:py-3 px-4 max-w-fit font-semibold py-2 bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white rounded-xl w-36">
-                        Create Service
+                        Edit Service
                     </button>
                 </div>
 

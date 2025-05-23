@@ -33,6 +33,17 @@ export const login = async (credentials) => {
   }
 };
 
+// create user api
+export const createUser = async (userData) => {
+  try {
+    const response = await api.post("/users", userData);
+    return response.data;
+  } catch (error) {
+    console.error("Create user error", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // logout api
 export const logout = async () => {
   try {

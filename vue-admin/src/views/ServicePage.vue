@@ -18,7 +18,7 @@ onMounted(() => {
     servicesStore.fetchServices();
 });
 
-// Step 1: Filtered services based on search and selected option
+// Filtered services based on search and selected option
 const filteredServices = computed(() => {
     return servicesStore.services.filter((service) => {
         const matchesSearch = service.title.toLowerCase().includes(searchQuery.value.toLowerCase());
@@ -29,24 +29,24 @@ const filteredServices = computed(() => {
     });
 });
 
-// Step 2: Total pages based on filtered results
+// Total pages based on filtered results
 const totalPages = computed(() => {
     return Math.ceil(filteredServices.value.length / itemsPerPage);
 });
 
-// Step 3: Paginated results from filtered services
+// Paginated results from filtered services
 const paginatedServices = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return filteredServices.value.slice(start, end);
 });
 
-// Step 4: Page navigation
+// Page navigation
 const handlePageChange = (page) => {
     currentPage.value = page;
 };
 
-// Step 5: Has next/prev page
+// Has next/prev page
 const hasNextPage = computed(() => currentPage.value < totalPages.value);
 const hasPrevPage = computed(() => currentPage.value > 1);
 
@@ -85,7 +85,11 @@ const handleDeleteConfirmed = async () => {
         servicesStore.showNotification("Service deleted successfully.", "success");
     } catch (err) {
         console.error("Error deleting service:", err);
-        servicesStore.showNotification("Failed to delete service.", "error");
+        if (err.response && err.response.status === 403) {
+            servicesStore.showNotification("You are not authorized to delete this service.", "error");
+        } else {
+            servicesStore.showNotification("Failed to delete service.", "error");
+        }
     } finally {
         showDeleteModal.value = false;
         serviceToDelete.value = null;
@@ -138,14 +142,14 @@ const handleDeleteConfirmed = async () => {
                 <SkeltonLoader type="table" size="medium" :rows="10" :columns="7" />
             </div>
 
-            <!-- Error -->
+            <!-- Error
             <div v-else-if="servicesStore.error" class="py-8 text-center" role="alert">
                 <div class="text-red-500 mb-4">{{ servicesStore.error }}</div>
                 <button @click="servicesStore.fetchServices"
                     class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
                     Retry
                 </button>
-            </div>
+            </div> -->
 
             <!-- Empty -->
             <div v-else-if="filteredServices.length === 0" class="py-8 text-center text-gray-500" role="status">
@@ -251,7 +255,7 @@ const handleDeleteConfirmed = async () => {
                                             </div>
                                         </transition>
 
-                                        <RouterLink title="Edit">
+                                        <RouterLink title="Edit" :to="`/edit-service/${service.id}`">
                                             <!-- Edit Icon -->
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                                 xmlns="http://www.w3.org/2000/svg">

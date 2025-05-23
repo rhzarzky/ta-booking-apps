@@ -77,7 +77,6 @@ const baseMenuItems = ref([
         label: "Dashboard",
         route: "/dashboard",
         // requiredPermission: "update issue",
-        // children: [{ label: "sentry" }],
       },
       {
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -89,7 +88,6 @@ const baseMenuItems = ref([
         label: "Service",
         route: "/service",
         // requiredPermission: "update issue",
-        // children: [{ label: "sentry" }],
       },
       {
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -107,7 +105,6 @@ const baseMenuItems = ref([
         label: "Booking",
         route: "/booking",
         // requiredPermission: "update issue",
-        // children: [{ label: "sentry" }],
       },
     ],
   },
@@ -126,14 +123,6 @@ const adminMenuItems = ref([
         route: "/user-list",
         requiredPermission: "show user",
       },
-      // {
-      //   icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 16 16">
-      //           <path fill="none" stroke="currentColor" d="M8 4.5h6m-12 0h2.5m0 0a2 2 0 1 0 4 0a2 2 0 0 0-4 0Zm-2.5 7h6m3.5 0H14m-2.5 0a2 2 0 1 1-4 0a2 2 0 0 1 4 0Z" />
-      //         </svg>
-      //   `,
-      //   label: "Control Access",
-      //   route: "/control-access",
-      // },
     ],
   },
 ]);

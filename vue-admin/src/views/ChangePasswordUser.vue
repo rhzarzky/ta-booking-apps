@@ -82,6 +82,7 @@ const saveUserUpdates = async () => {
     await authStore.handleUpdateUser(userIdToEdit.value, userData);
     isEditing.value = false;
     authStore.showNotification("Password updated successfully.", "success");
+    router.push({ path: "/user-list" });
   } catch (error) {
     console.error("FULL ERROR OBJECT:", error);
 
@@ -100,7 +101,7 @@ const saveUserUpdates = async () => {
       errorMessage = error.message;
     }
 
-    authStore.showNotification("Failed to update password: ", "error:" + errorMessage);
+    authStore.showNotification("Failed to update password", "error");
   }
 };
 

@@ -39,6 +39,26 @@ export const useServicesStore = defineStore('services', {
       }
     },
 
+    // Fetching service details by ID
+    async fetchServiceDetail(id) {
+      this.isLoading = true;
+      this.error = null;
+      try {
+        const response = await getServiceDetailApi(id);  // Calling the getServiceApi function
+
+        if (response.data.status === 'success') {
+          return response.data.service;
+        } else {
+          throw new Error(response.data.message || 'Failed to fetch service details');
+        }
+      } catch (err) {
+        this.error = err.message || 'An unexpected error occurred';
+        this.showNotification(this.error, 'error');
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     // Create a new service
     async createService(FormData) {
       this.isLoading = true;
@@ -46,16 +66,13 @@ export const useServicesStore = defineStore('services', {
       try {
         const response = await createServiceApi(FormData);
 
-        if (response.data.status === 'success') {
-          this.services.push(response.data.service);  // Add the new service
-          this.showNotification('Service created successfully!', 'success');
-          return { success: true };
-        } else {
+        if (response.data.status !== 'success') {
           throw new Error(response.data.message || 'Failed to create service');
         }
+          this.services.push(response.data.service);  // Add the new service
+          return { success: true };
       } catch (err) {
         this.error = err.response?.data?.errors || err.message || 'An unexpected error occurred';
-        this.showNotification(this.error, 'error');
         return { success: false, validationErrors: err.response?.data?.errors };
       } finally {
         this.isLoading = false;
@@ -67,16 +84,17 @@ export const useServicesStore = defineStore('services', {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await deleteServiceApi(id);  // Calling the deleteServiceApi function
-
+        const response = await deleteServiceApi(id);
+    
         if (response.data.status !== 'success') {
           throw new Error(response.data.message || 'Failed to delete service');
         }
-        this.services = this.services.filter(service => service.id !== id);  // Remove the deleted service
-        this.showNotification('Service deleted successfully!', 'success');
+    
+        this.services = this.services.filter(service => service.id !== id);
+        return true; 
       } catch (err) {
         this.error = err.message || 'An unexpected error occurred';
-        this.showNotification(this.error, 'error');
+        throw err; 
       } finally {
         this.isLoading = false;
       }

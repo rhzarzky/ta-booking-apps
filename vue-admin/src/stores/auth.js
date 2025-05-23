@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 
 import {
   login,
+  createUser,
   logout,
   deleteUserId,
   fetchUsers,
@@ -161,6 +162,25 @@ const fetchUserWithPermissions = async (selectedUserId) => {
     }
   };
 
+  // handle create user
+  const handleCreateUser = async (userData) => {
+    try {
+      const response = await createUser(userData);
+      if (response.data && response.data.user) {
+        users.value.push(response.data.user); // Menambahkan pengguna baru ke dalam store
+        return response.data;
+      }
+    } catch (error) {
+      console.error("Create user failed:", error);
+      if (error.response && error.response.status === 422) {
+        errors.value = error.response.data.errors;
+      } else {
+        errors.value = { general: "Create user failed. Please try again" };
+      }
+      throw error;
+    }
+  };
+
   // handle get user by id
   const handleGetUserById = async (id) => {
     if (!id) {
@@ -279,6 +299,7 @@ const fetchUserWithPermissions = async (selectedUserId) => {
     handleLogin,
     handleLogout,
     handleDeleteUser,
+    handleCreateUser,
     handleGetUserById,
     handleUpdateUser,
     handleUserProfile,

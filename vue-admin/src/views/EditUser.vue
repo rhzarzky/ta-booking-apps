@@ -76,9 +76,7 @@ const updateUser = async () => {
     router.push("/user-list");
   } catch (error) {
     console.error("Error updating user:", error);
-    notification.value = error.response?.data?.errors || {
-      general: ["Update failed. Please check your input."],
-    };
+    authStore.showNotification(error.response.data.responseMessage, "error");
     if (error.response) {
       console.error("Response data:", error.response.data);
     }

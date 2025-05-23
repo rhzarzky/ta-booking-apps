@@ -147,109 +147,115 @@ class ServiceController extends Controller
         ], 201);
     }
     public function editService(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
-            'title' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string|max:255',
-            'location'  => 'sometimes|string|max:255',
-            'option' => 'sometimes|array',
-            'option.*' => 'in:Offline,Online',
-            'days' => 'sometimes|array',
-            'days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
-            'time' => 'sometimes|array',
-            'time.*' => 'required|date_format:H:i',
-            'end_date' => 'sometimes|date|after_or_equal:today', 
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
+        'title' => 'sometimes|string|max:255',
+        'description' => 'sometimes|string|max:255',
+        'location' => 'sometimes|string|max:255',
+        'option' => 'sometimes|array',
+        'option.*' => 'in:Offline,Online',
+        'days' => 'sometimes|array',
+        'days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
+        'time' => 'sometimes|array',
+        'time.*' => 'required|date_format:H:i',
+        'end_date' => 'sometimes|date|after_or_equal:today',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        try {
-            $service = Service::findOrFail($id);
-            $validated = $validator->validated();
-
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('services', 'public');
-                $validated['image'] = $imagePath;
-            }
-
-            if (isset($validated['option'])) {
-                $validated['option'] = json_encode($validated['option']);
-            }
-
-            if (isset($validated['days'])) {
-                $validated['days'] = json_encode($validated['days']);
-            }
-
-            if (isset($validated['time'])) {
-                $validated['time'] = json_encode($validated['time']);
-            }
-
-            // update service
-            $service->update($validated);
-
-            if (isset($validated['days']) || isset($validated['end_date'])) {
-                $days = isset($validated['days']) ? json_decode($validated['days'], true) : json_decode($service->days, true);
-                $endDate = isset($validated['end_date']) ? Carbon::parse($validated['end_date']) : Carbon::parse($service->end_date);
-                $today = Carbon::now();
-                $date = [];
-
-                while ($today->lte($endDate)) {
-                    if (in_array($today->format('l'), $days)) {
-                        $date[] = [
-                            'date' => $today->format('Y-m-d'),
-                            'day' => $today->format('l'),
-                        ];
-                    }
-                    $today->addDay();
-                }
-
-                Schedule::updateOrCreate(
-                    ['service_id' => $service->id], 
-                    [
-                        'days' => json_encode($days),
-                        'time' => json_encode($request->time),
-                        'end_date' => $request->end_date,
-                        'date' => json_encode($date),
-                    ]
-                );
-            }
-
-            return response()->json([
-                'status' => 'success',
-                'message' => 'Service updated successfully',
-                'service' => [
-                    'id' => $service->id,
-                    'image' => $service->image ? asset('storage/' . $service->image) : null,
-                    'title' => $service->title,
-                    'description' => $service->description,
-                    'location'  => $service->location,
-                    'option' => json_decode($service->option, true),
-                    'days' => json_decode($service->schedule->days, true),
-                    'time' => json_decode($service->schedule->time, true),
-                    'date' => json_decode($service->schedule->date, true),
-                    'end_date' => $service->schedule->end_date,
-                ],
-            ], 200);
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Service not found',
-            ], 404);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while updating the service.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Validation failed',
+            'errors' => $validator->errors(),
+        ], 422);
     }
+
+    try {
+        $service = Service::findOrFail($id);
+        $validated = $validator->validated();
+
+        // Handle image
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('services', 'public');
+            $validated['image'] = $imagePath;
+        }
+
+        // Encode option, days, and time if provided
+        if ($request->has('option')) {
+            $validated['option'] = json_encode($validated['option']);
+        }
+
+        if ($request->has('days')) {
+            $validated['days'] = json_encode($validated['days']);
+        }
+
+        if ($request->has('time')) {
+            $validated['time'] = json_encode($validated['time']);
+        }
+
+        // Update service
+        $service->update($validated);
+
+        // Handle schedule creation/update
+        if ($request->has('days') || $request->has('end_date') || $request->has('time')) {
+            $days = $request->has('days') ? json_decode($validated['days'], true) : json_decode($service->schedule->days ?? '[]', true);
+            $time = $request->has('time') ? json_decode($validated['time'], true) : json_decode($service->schedule->time ?? '[]', true);
+            $endDate = $request->has('end_date') ? Carbon::parse($validated['end_date']) : Carbon::parse(optional($service->schedule)->end_date);
+
+            $today = Carbon::now();
+            $date = [];
+
+            while ($today->lte($endDate)) {
+                if (in_array($today->format('l'), $days)) {
+                    $date[] = [
+                        'date' => $today->format('Y-m-d'),
+                        'day' => $today->format('l'),
+                    ];
+                }
+                $today->addDay();
+            }
+
+            Schedule::updateOrCreate(
+                ['service_id' => $service->id],
+                [
+                    'days' => json_encode($days),
+                    'time' => json_encode($time),
+                    'end_date' => $endDate->format('Y-m-d'),
+                    'date' => json_encode($date),
+                ]
+            );
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Service updated successfully',
+            'service' => [
+                'id' => $service->id,
+                'image' => $service->image ? asset('storage/' . $service->image) : null,
+                'title' => $service->title,
+                'description' => $service->description,
+                'location' => $service->location,
+                'option' => json_decode($service->option ?? '[]', true),
+                'days' => json_decode(optional($service->schedule)->days ?? '[]', true),
+                'time' => json_decode(optional($service->schedule)->time ?? '[]', true),
+                'date' => json_decode(optional($service->schedule)->date ?? '[]', true),
+                'end_date' => optional($service->schedule)->end_date,
+            ],
+        ], 200);
+    } catch (ModelNotFoundException $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Service not found',
+        ], 404);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'An error occurred while updating the service.',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
+
     public function deleteService($id)
     {
         $service = Service::find($id);
