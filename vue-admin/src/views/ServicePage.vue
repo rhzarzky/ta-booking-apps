@@ -11,6 +11,8 @@ const searchQuery = ref("");
 const selectedOption = ref("all");
 const currentPage = ref(1);
 const itemsPerPage = 10;
+const showDeleteModal = ref(false);
+const serviceToDelete = ref(null);
 
 onMounted(() => {
     servicesStore.fetchServices();
@@ -71,9 +73,23 @@ const editService = (id) => {
     console.log("Editing service with ID:", id);
 };
 
-// Delete service
-const deleteService = (id) => {
-    servicesStore.deleteService(id);
+// Delete service Confirmation
+const confirmDelete = (id) => {
+    serviceToDelete.value = id;
+    showDeleteModal.value = true;
+};
+
+const handleDeleteConfirmed = async () => {
+    try {
+        await servicesStore.deleteService(serviceToDelete.value);
+        servicesStore.showNotification("Service deleted successfully.", "success");
+    } catch (err) {
+        console.error("Error deleting service:", err);
+        servicesStore.showNotification("Failed to delete service.", "error");
+    } finally {
+        showDeleteModal.value = false;
+        serviceToDelete.value = null;
+    }
 };
 </script>
 
@@ -167,7 +183,7 @@ const deleteService = (id) => {
                                     <span v-else class="text-gray-400 italic">No Image</span>
                                 </td>
                                 <td class="px-6 py-4 font-medium">{{ service.description }}</td>
-                                <td class="px-6 py-4 font-medium">{{ service.user.email}}</td>
+                                <td class="px-6 py-4 font-medium">{{ service.user.email }}</td>
                                 <td class="px-6 py-4 font-medium">{{ service.location }}</td>
                                 <td class="px-6 py-4 font-medium">{{ Array.isArray(service.option) ?
                                     service.option.join(",") :
@@ -204,7 +220,7 @@ const deleteService = (id) => {
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-center gap-6 h-full">
-                                        <button @click="" title="Delete" class="text-red-500">
+                                        <button @click="confirmDelete(service.id)" title="Delete" class="text-red-500">
                                             <!-- Delete Icon -->
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                                 xmlns="http://www.w3.org/2000/svg">
@@ -214,6 +230,26 @@ const deleteService = (id) => {
                                                     stroke-linejoin="round" />
                                             </svg>
                                         </button>
+                                        <transition name="fade">
+                                            <div v-if="showDeleteModal"
+                                                class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                                                <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
+                                                    <h2 class="text-lg font-semibold text-gray-800">Confirm Delete</h2>
+                                                    <p class="text-gray-600 mt-2">Are you sure you want to delete this
+                                                        service?</p>
+                                                    <div class="mt-4 flex justify-end gap-2">
+                                                        <button @click="showDeleteModal = false"
+                                                            class="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300">
+                                                            Cancel
+                                                        </button>
+                                                        <button @click="handleDeleteConfirmed"
+                                                            class="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700">
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </transition>
 
                                         <RouterLink title="Edit">
                                             <!-- Edit Icon -->

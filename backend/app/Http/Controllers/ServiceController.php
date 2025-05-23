@@ -231,7 +231,7 @@ class ServiceController extends Controller
                     'description' => $service->description,
                     'location'  => $service->location,
                     'option' => json_decode($service->option, true),
-                    'days' => json_decode($service->days, true),
+                    'days' => json_decode($service->schedule->days, true),
                     'time' => json_decode($service->schedule->time, true),
                     'date' => json_decode($service->schedule->date, true),
                     'end_date' => $service->schedule->end_date,

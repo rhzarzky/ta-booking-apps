@@ -7,6 +7,7 @@ import CreateService from "@/views/CreateService.vue";
 import EditUser from "@/views/EditUser.vue";
 import ChangePasswordUser from "@/views/ChangePasswordUser.vue";
 import CreateUser from "@/views/CreateUser.vue";
+import EditService from "@/views/EditService.vue";
 
 const routes = [{
         path: "/login-admin",
@@ -45,6 +46,17 @@ const routes = [{
         meta: {
             title: "Create Service",
             breadcrumbs: "Create Service",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/edit-service/:id",
+        name: "Edit Service",
+        component: EditService,
+        meta: {
+            title: "Edit Service",
+            breadcrumbs: "Edit Service",
             excludeRole: ["user"], 
             requiresAuth: true,
         },
