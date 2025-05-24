@@ -70,16 +70,7 @@ const submitBooking = async () => {
 
 
 <template>
-  <!-- Breadcrumb -->
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Detail Service</h1>
-    <p class="text-sm text-gray-500 mt-1">
-      <router-link to="/client/dashboard" class="hover:underline">Dashboard</router-link> /
-      <router-link to="/client/meeting" class="hover:underline">Service</router-link> /
-      <span class="text-indigo-600">Detail Service</span>
-    </p>
-  </div>
-  <div class="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
+  <div class="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-1">
     <div class="flex flex-col md:flex-row gap-6">
       <!-- Left Content -->
       <div class="md:w-2/3">

@@ -57,6 +57,7 @@
             class="w-full px-4 py-2 border bg-gray-100 text-gray-500 rounded-md"
           />
         </div>
+
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row justify-end gap-4 pt-4">
           <button

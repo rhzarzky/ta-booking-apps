@@ -11,22 +11,30 @@ import ChangePassword from '@/views/Client/ChangePassword.vue';
 import DetailService from '@/views/Client/DetailService.vue';
 import DetailBooking from '@/views/Client/DetailBooking.vue';
 
-
 const routes = [
   {
     path: '/',
     name: 'landing-page',
     component: LandingPage,
+    meta: {
+      title: 'Landing Page'
+    },
   },
   {
     path: '/login',
     name: 'login',
     component: LoginClient,
+    meta: {
+      title: 'Login',
+    },
   },
   {
     path: '/register',
     name: 'register',
     component: RegisterClient,
+    meta: {
+      title: 'Register',
+    },
   },
   {
     path: '/client',
@@ -37,43 +45,75 @@ const routes = [
         path: 'dashboard',
         name: 'client-dashboard',
         component: Dashboard,
+        meta: {
+          title: 'Dashboard ',
+          breadcrumbs: 'Dashboard',
+        },
       },
       {
         path: 'meeting',
         name: 'client-meeting',
         component: Meeting,
+        meta: {
+          title: 'Service',
+          breadcrumbs: 'Service',
+        },
       },
       {
         path: 'activity',
         name: 'client-activity',
         component: Activity,
+        meta: {
+          title: 'Activity',
+          breadcrumbs: 'Activity',
+        },
       },
       {
         path: 'profile',
         name: 'client-profile',
         component: Profile,
+        meta: {
+          title: 'User Profile',
+          breadcrumbs: 'Profile',
+        },
       },
       {
         path: 'edit-profile',
         name: 'client-edit-profile',
         component: EditProfile,
+        meta: {
+          title: 'Edit Profile',
+          breadcrumbs: 'Edit Profile',
+        },
       },
       {
         path: 'change-password',
         name: 'client-change-password',
         component: ChangePassword,
+        meta: {
+          title: 'Change Password',
+          breadcrumbs: 'Change Password',
+        },
       },
       {
         path: 'detail-booking/:id',
         name: 'client-detail-booking',
         component: DetailBooking,
-        props: true, 
-      },    
+        props: true,
+        meta: {
+          title: 'Booking Details',
+          breadcrumbs: 'Detail Booking',
+        },
+      },
       {
         path: 'detail-service/:id',
         name: 'client-detail-service',
         component: DetailService,
-      }      
+        meta: {
+          title: 'Service Details',
+          breadcrumbs: 'Detail Service',
+        },
+      },
     ],
   },
 ];

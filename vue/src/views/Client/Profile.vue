@@ -37,14 +37,6 @@ export default {
 
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
-    <!-- Breadcrumb -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-semibold">Profile</h1>
-      <nav class="text-sm text-gray-500">
-        <router-link to="/client/dashboard" class="hover:underline">Dashboard</router-link> /
-        <span class="text-indigo-600 capitalize">Profile</span>
-      </nav>
-    </div>
 
     <!-- Profile Header -->
     <div class="flex items-center space-x-6 mb-8">

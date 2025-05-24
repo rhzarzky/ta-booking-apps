@@ -1,3 +1,4 @@
+// src/api/auth-api.js
 import api from './api';
 import { ref } from 'vue';
 import { authServices } from '@/services/auth-services';
@@ -17,7 +18,6 @@ export const login = async (credentials) => {
     }
     return response.data;
   } catch (error) {
-    console.error("Login error:", error.response?.data || error.message);
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors;
     } else {
@@ -41,7 +41,6 @@ export const register = async (userData) => {
     }
     return response.data;
   } catch (error) {
-    console.error("Register error:", error.response?.data || error.message);
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors;
     } else {
@@ -69,7 +68,6 @@ export const fetchProfile = async () => {
   try {
     const token = authServices.getToken();
     if (!token) throw new Error("Token tidak ditemukan.");
-
     const response = await api.get('/user/profile');
     return response.data;
   } catch (error) {
@@ -78,11 +76,10 @@ export const fetchProfile = async () => {
   }
 };
 
-
 // Fungsi Update Profile
 export const updateProfile = async (formData) => {
   try {
-    const response = await api.put('/user/profile', formData, {
+    const response = await api.post('/user/profile', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

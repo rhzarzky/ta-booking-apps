@@ -1,36 +1,37 @@
 <script setup>
-import { ref, computed, defineProps, defineEmits } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { computed } from "vue";
 import { useSidebarStore } from "@/stores/sidebar";
-import SidebarDropdown from "./SidebarDropdown.vue";
 
-const props = defineProps({ item: Object, selected: String });
-const emit = defineEmits(["update:selected"]);
+const props = defineProps({
+  icon: [Object, Function],
+  label: String,
+  to: String,
+  isOpen: Boolean,
+});
 
-const sidebarStore = useSidebarStore();
-const isActive = computed(() => props.selected === props.item.label);
-const isOpen = ref(false);
+const route = useRoute();
+const router = useRouter();
+const sidebar = useSidebarStore();
+
+const isActive = computed(() => route.path === props.to);
 
 const handleClick = () => {
-  if (props.item.children) {
-    isOpen.value = !isOpen.value;
-  } else {
-    emit("update:selected", props.item.label);
-  }
+  sidebar.setSelected(props.label);
+  sidebar.setPage(props.label);
+  router.push(props.to);
 };
 </script>
 
 <template>
-  <li>
-    <div
-      class="flex items-center gap-2 p-3 cursor-pointer rounded-md hover:bg-gray-100"
-      :class="{ 'bg-gray-200': isActive }"
-      @click="handleClick"
-    >
-      <span>{{ item.icon }}</span>
-      <span v-if="sidebarStore.isOpen">{{ item.label }}</span>
-      <span v-if="item.children">▼</span>
-    </div>
-
-    <SidebarDropdown v-if="item.children" :items="item.children" v-show="isOpen" />
-  </li>
+  <button
+    @click="handleClick"
+    class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left"
+    :class="[
+      isActive ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100 hover:text-black'
+    ]"
+  >
+    <component :is="icon" class="w-5 h-5" />
+    <span v-if="isOpen">{{ label }}</span>
+  </button>
 </template>
