@@ -68,11 +68,6 @@ function closeDateModal() {
     isDateModalVisible.value = false
 }
 
-// Edit service
-const editService = (id) => {
-    console.log("Editing service with ID:", id);
-};
-
 // Delete service Confirmation
 const confirmDelete = (id) => {
     serviceToDelete.value = id;
@@ -86,7 +81,7 @@ const handleDeleteConfirmed = async () => {
     } catch (err) {
         console.error("Error deleting service:", err);
         if (err.response && err.response.status === 403) {
-            servicesStore.showNotification("You are not authorized to delete this service.", "error");
+            servicesStore.showNotification(err.response.data.responseMessage, "error");
         } else {
             servicesStore.showNotification("Failed to delete service.", "error");
         }

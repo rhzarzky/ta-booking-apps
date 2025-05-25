@@ -14,7 +14,11 @@ export const createServiceApi = (FormData) => api.post("/service", FormData, {
 });
 
 // PUT /service/:id with payload
-export const editServiceApi = (id, data) => api.post(`/service/${id}`, data);
+export const editServiceApi = (id, FormData) => api.post(`/service/${id}`, FormData, {
+  headers: {
+    "Content-Type": "multipart/form-data",
+    },
+});
 
 // DELETE /service/:id
 export const deleteServiceApi = (id) => api.delete(`/service/${id}`);

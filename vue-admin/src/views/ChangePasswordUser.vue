@@ -84,24 +84,7 @@ const saveUserUpdates = async () => {
     authStore.showNotification("Password updated successfully.", "success");
     router.push({ path: "/user-list" });
   } catch (error) {
-    console.error("FULL ERROR OBJECT:", error);
-
-    let errorMessage = "An unexpected error occurred.";
-
-    if (error.response && error.response.data) {
-      const responseErrors = error.response.data.errors;
-      if (responseErrors) {
-        errorMessage = Object.values(responseErrors).flat().join(", ");
-      } else if (error.response.data.message) {
-        errorMessage = error.response.data.message;
-      } else {
-        errorMessage = JSON.stringify(error.response.data);
-      }
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-
-    authStore.showNotification("Failed to update password", "error");
+    authStore.showNotification(error.response.data.responseMessage, "error");
   }
 };
 

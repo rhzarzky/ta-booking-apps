@@ -71,9 +71,11 @@ const store = async () => {
     router.push("/user-list");
   } catch (error) {
     console.error("Error creating user:", error);
-    authStore.showNotification("Error creating user", "error");
+    authStore.showNotification(error.response.data.responseMessage, "error");
     if (error.response) {
       console.error("Response data:", error.response.data);
+      authStore.showNotification("Error creating user", "error");
+      validation.value = error.response.data.errors || {};
     }
   }
 };

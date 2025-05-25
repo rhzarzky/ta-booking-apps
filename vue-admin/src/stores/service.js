@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import {
   getServiceApi,
+  getServiceDetailApi,  
   createServiceApi,
   editServiceApi,
   deleteServiceApi,
@@ -63,17 +64,38 @@ export const useServicesStore = defineStore('services', {
     async createService(FormData) {
       this.isLoading = true;
       this.error = null;
+
       try {
         const response = await createServiceApi(FormData);
 
         if (response.data.status !== 'success') {
           throw new Error(response.data.message || 'Failed to create service');
         }
-          this.services.push(response.data.service);  // Add the new service
-          return { success: true };
+
+        this.services.push(response.data.service);
+        return { success: true };
+
       } catch (err) {
-        this.error = err.response?.data?.errors || err.message || 'An unexpected error occurred';
-        return { success: false, validationErrors: err.response?.data?.errors };
+        const responseMessage = err?.response?.data?.responseMessage;
+        const validationErrors = err?.response?.data?.errors;
+
+        this.error =
+          responseMessage ||
+          validationErrors ||
+          err.message ||
+          'An unexpected error occurred';
+
+        if (responseMessage) {
+          this.showNotification(responseMessage, 'error');
+        } else {
+          this.showNotification('Failed to create service.', 'error');
+        }
+
+        return {
+          success: false,
+          validationErrors: validationErrors || null,
+          message: responseMessage || null,
+        };
       } finally {
         this.isLoading = false;
       }
@@ -101,17 +123,19 @@ export const useServicesStore = defineStore('services', {
     },
 
     // Edit an existing service
-    async editService(id, updatedData) {
+    async editService(id, FormData) {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await editServiceApi(id, updatedData);  // Calling the editServiceApi function
-
+        const response = await editServiceApi(id, FormData);
+    
         if (response.data.status === 'success') {
-          // Update the service in the state
           const index = this.services.findIndex(service => service.id === id);
           if (index !== -1) {
-            this.services[index] = response.data.service;
+            this.services[index] = {
+              ...this.services[index],
+              ...response.data.service,
+            };
           }
           this.showNotification('Service updated successfully!', 'success');
         } else {
@@ -120,10 +144,12 @@ export const useServicesStore = defineStore('services', {
       } catch (err) {
         this.error = err.message || 'An unexpected error occurred';
         this.showNotification(this.error, 'error');
+        console.error('Edit service failed:', err);
       } finally {
         this.isLoading = false;
       }
     },
+    
 
     // Display notifications
     showNotification(message, type = 'success') {
