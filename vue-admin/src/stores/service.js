@@ -123,11 +123,12 @@ export const useServicesStore = defineStore('services', {
     },
 
     // Edit an existing service
-    async editService(id, FormData) {
+    async editService(id, formData) {
       this.isLoading = true;
       this.error = null;
+    
       try {
-        const response = await editServiceApi(id, FormData);
+        const response = await editServiceApi(id, formData);
     
         if (response.data.status === 'success') {
           const index = this.services.findIndex(service => service.id === id);
@@ -138,18 +139,30 @@ export const useServicesStore = defineStore('services', {
             };
           }
           this.showNotification('Service updated successfully!', 'success');
+
+          return {
+            success: true,
+            validationErrors: null,
+          };
         } else {
-          throw new Error(response.data.message || 'Failed to update service');
+          return {
+            success: false,
+            validationErrors: response.data.errors || {},
+          };
         }
       } catch (err) {
         this.error = err.message || 'An unexpected error occurred';
         this.showNotification(this.error, 'error');
         console.error('Edit service failed:', err);
+    
+        return {
+          success: false,
+          validationErrors: err.response?.data?.errors || {},
+        };
       } finally {
         this.isLoading = false;
       }
     },
-    
 
     // Display notifications
     showNotification(message, type = 'success') {
