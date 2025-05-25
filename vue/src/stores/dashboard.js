@@ -1,57 +1,63 @@
-import { defineStore } from 'pinia';
-import { bookingApi } from '@/api/booking-api';
+import { defineStore } from 'pinia'
+import { bookingApi } from '@/api/booking-api'
 
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
     summary: {
       pending: 0,
       approved: 0,
-      declined: 0
+      declined: 0,
     },
     latestBookings: [],
+    allBookings: [],
     loading: false,
-    error: null
+    error: null,
   }),
 
   actions: {
     async fetchDashboardData() {
-      this.loading = true;
-      this.error = null;
+      this.loading = true
+      this.error = null
 
       try {
-        const services = await bookingApi.getUserBookings();
-        const allBookings = services || [];
+        const services = await bookingApi.getUserBookings()
 
-        const summary = {
-          pending: 0,
-          approved: 0,
-          declined: 0
-        };
+        const approved = services.Approved || []
+        const pending = services.Pending || []
+        const declined = services.Declined || []
 
-        allBookings.forEach((booking) => {
-          const status = booking.status?.toLowerCase();
-          if (status === 'pending') summary.pending++;
-          else if (status === 'approved') summary.approved++;
-          else if (status === 'declined') summary.declined++;
-        });
+        // Simpan jumlah status
+        this.summary = {
+          approved: approved.length,
+          pending: pending.length,
+          declined: declined.length,
+        }
 
-        // Ambil 10 booking terbaru berdasarkan tanggal
-        const sortedBookings = allBookings
-          .slice()
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-          .slice(0, 10);
+        // Gabungkan semua bookings menjadi satu array
+        const allBookings = [...approved, ...pending, ...declined]
 
-        this.summary = summary;
-        this.latestBookings = sortedBookings;
+        // Simpan ke allBookings
+        this.allBookings = allBookings
 
-      } catch (err) {
-        this.error = 'Gagal memuat data dashboard.';
-        this.summary = { pending: 0, approved: 0, declined: 0 };
-        this.latestBookings = [];
-        console.error(err);
+        // Sort by date and time
+        const sorted = allBookings.sort((a, b) => {
+          const dateA = new Date(`${a.date}T${a.time}`)
+          const dateB = new Date(`${b.date}T${b.time}`)
+          return dateB - dateA // urutkan dari terbaru ke terlama
+        })
+
+        // Ambil 5 booking terbaru
+        this.latestBookings = sorted.slice(0, 5).map((booking, index) => ({
+          ...booking,
+          displayNo: index + 1,
+          displayDateTime: `${booking.date} ${booking.time}`,
+        }))
+      } catch (error) {
+        this.error = 'Gagal memuat data dashboard.'
+        console.error('Error fetching dashboard data:', error)
       } finally {
-        this.loading = false;
+        this.loading = false
       }
-    }
-  }
-});
+    },
+  },
+})
