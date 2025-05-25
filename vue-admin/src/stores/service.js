@@ -151,7 +151,7 @@ export const useServicesStore = defineStore('services', {
           };
         }
       } catch (err) {
-        this.error = err.message || 'An unexpected error occurred';
+        this.error = err.response.data.responseMessage || 'An unexpected error occurred';
         this.showNotification(this.error, 'error');
         console.error('Edit service failed:', err);
     
