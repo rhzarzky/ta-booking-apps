@@ -16,7 +16,7 @@ const post = reactive({
     image: null,
     title: "",
     description: "",
-    assigned: "",
+    user_id: "",
     location: "",
     option: [],
     time: [],
@@ -38,7 +38,7 @@ const loadService = async () => {
     if (data) {
         post.title = data.title;
         post.description = data.description;
-        post.assigned = data.user.id || ""; // assuming user_id is the assigned user
+        post.user_id = data.user.id || ""; // assuming user_id is the assigned user
         post.location = data.location;
         post.option = data.option || [];
         post.time = data.time || [""];
@@ -68,7 +68,7 @@ const edit = async () => {
     formData.append("_method", "PUT");
     formData.append("title", post.title);
     formData.append("description", post.description);
-    formData.append("assigned", post.assigned);
+    formData.append("user_id", post.user_id);
     formData.append("location", post.location);
     formData.append("end_date", post.end_date);
 
@@ -147,7 +147,7 @@ const edit = async () => {
                     <label for="assigned" class="text-sm md:text-base text-wildsand-600 flex gap-1">
                         Assigned
                     </label>
-                    <select id="assigned" v-model="post.assigned"
+                    <select id="assigned" v-model="post.user_id"
                         class="w-full h-12 p-2 border border-wildsand-300 rounded-md">
                         <option value="" disabled>Select a user</option>
                         <option v-for="user in assignedUsers" :key="user.id" :value="user.id">

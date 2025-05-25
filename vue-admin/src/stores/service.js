@@ -123,12 +123,12 @@ export const useServicesStore = defineStore('services', {
     },
 
     // Edit an existing service
-    async editService(id, formData) {
+    async editService(id, FormData) {
       this.isLoading = true;
       this.error = null;
     
       try {
-        const response = await editServiceApi(id, formData);
+        const response = await editServiceApi(id, FormData);
     
         if (response.data.status === 'success') {
           const index = this.services.findIndex(service => service.id === id);
