@@ -70,23 +70,23 @@ export const useAuthStore = defineStore("authStore", () => {
   };
 
   // Fetch user with permissions
-const fetchUserWithPermissions = async (selectedUserId) => {
-  try {
-      const response = await getUserById(selectedUserId); // Mengambil user berdasarkan ID
-      console.log("API response:", response); // Tambah logisasi ini
-      if (response.data && response.data.user) {
-          const userData = response.data.user;
-          return {
-              ...userData,
-              permissions: userData.permissions || [],
-          };
-      }
-      throw new Error("User not found");
-  } catch (err) {
-      console.error("Error fetching user with permissions:", err);
-      throw err;
-  }
-};
+  const fetchUserWithPermissions = async (selectedUserId) => {
+    try {
+        const response = await getUserById(selectedUserId); // Mengambil user berdasarkan ID
+        console.log("API response:", response); // Tambah logisasi ini
+        if (response.data && response.data.user) {
+            const userData = response.data.user;
+            return {
+                ...userData,
+                permissions: userData.permissions || [],
+            };
+        }
+        throw new Error("User not found");
+    } catch (err) {
+        console.error("Error fetching user with permissions:", err);
+        throw err;
+    }
+  };
 
   // handle fetch current user api
   const fetchCurrentUserApi = async () => {
@@ -99,28 +99,43 @@ const fetchUserWithPermissions = async (selectedUserId) => {
     }
   };
 
+  // Fetch current user
   const fetchCurrentUser = async () => {
     try {
-      await fetchCurrentUserApi();  // Mengambil info pengguna yang sedang login
+      await fetchCurrentUserApi();
     } catch (err) {
       console.error("failed to fetch current user", err);
     }
   };
 
-  // handle all users api
+  // Fetch all users
   const fetchUsersApi = async () => {
     try {
-      const response = await fetchUsers();
+      const response = await fetchUsers(); 
+      console.log("fetchUsers response:", response); // Debug log
+  
       if (
-        response?.data?.status === "success" &&
-        Array.isArray(response.data.users)
+        response?.status === "success" &&
+        Array.isArray(response.users)
       ) {
-        users.value = response.data.users;
+        const userList = response.users;
+        users.value = userList;
+  
+        return {
+          success: true,
+          users: userList,
+        };
       } else {
         console.warn("Unexpected response format:", response);
         users.value = [];
+  
+        return {
+          success: false,
+          users: [],
+        };
       }
     } catch (err) {
+      console.error("fetchUsers error:", err);
       if (err.response?.status === 403 || err.response?.status === 401) {
         errors.value = {
           general: [
@@ -132,8 +147,11 @@ const fetchUserWithPermissions = async (selectedUserId) => {
           general: "Failed to fetch users. Please try again.",
         };
       }
-
-      throw err;
+  
+      return {
+        success: false,
+        users: [],
+      };
     }
   };
 

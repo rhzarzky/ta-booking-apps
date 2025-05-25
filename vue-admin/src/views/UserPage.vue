@@ -78,7 +78,7 @@ const handleDeleteConfirmed = async () => {
     authStore.showNotification("User deleted successfully.", "success");
   } catch (err) {
     console.error("Error deleting user:", err);
-    authStore.showNotification("Failed to delete user.", "error");
+    authStore.showNotification(err.response.data.responseMessage, "error");
   } finally {
     showDeleteModal.value = false;
     userToDelete.value = null;

@@ -3,8 +3,9 @@ import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { useServicesStore } from "@/stores/service";
-const serviceStore = useServicesStore();
+import AlertStatus from "@/components/alert/AlertStatus.vue";
 
+const servicesStore = useServicesStore();
 const router = useRouter();
 
 const post = reactive({
@@ -53,22 +54,29 @@ const store = async () => {
         formData.append(`days[${i}]`, day);
     });
 
-    const { success, validationErrors } = await serviceStore.createService(formData);
+    const { success, validationErrors, message } = await servicesStore.createService(formData);
 
     if (success) {
-        notification.value = "Service created successfully!";
+        servicesStore.showNotification("Service created successfully.", "success");
         router.push({ path: "/service" });
     } else {
         validation.value = validationErrors || {};
+        if (message) {
+            servicesStore.showNotification(message, "error");
+        } else {
+            servicesStore.showNotification("Failed to create service.", "error");
+        }
     }
 };
-
 </script>
 
 <template>
     <DefaultLayout class="bg-whiteBgPrimary-100">
         <div class="max-h-fit md:p-9 p-4 flex flex-col gap-6 bg-white rounded-2xl">
             <div class="flex flex-col gap-1">
+                <!-- Notifikasi -->
+                <AlertStatus :message="servicesStore.notification.message" :type="servicesStore.notification.type"
+                    :is-visible="servicesStore.notification.show" @close="servicesStore.notification.show = false" />
                 <h2 class="text-codgray-900 md:text-2xl text-base font-semibold">
                     Create Service
                 </h2>
@@ -139,7 +147,7 @@ const store = async () => {
                     <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="option">Option
                         <span class="text-red-600">*</span>
                     </label>
-                    <div>
+                    <div class="grid grid-cols-3 gap-2">
                         <label><input type="checkbox" value="Offline" v-model="post.option" /> Offline</label>
                         <label><input type="checkbox" value="Online" v-model="post.option" /> Online</label>
                     </div>
@@ -182,10 +190,10 @@ const store = async () => {
 
                 <!-- Days (Multiple Checkboxes) -->
                 <div class="flex flex-col gap-2">
-                    <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="days">Day
+                    <label class="text-sm md:text-base text-wildsand-600 flex gap-1">Days
                         <span class="text-red-600">*</span>
                     </label>
-                    <div>
+                    <div class="grid grid-cols-3 gap-2">
                         <label><input type="checkbox" value="Monday" v-model="post.days" /> Monday</label>
                         <label><input type="checkbox" value="Tuesday" v-model="post.days" /> Tuesday</label>
                         <label><input type="checkbox" value="Wednesday" v-model="post.days" /> Wednesday</label>
@@ -194,8 +202,7 @@ const store = async () => {
                         <label><input type="checkbox" value="Saturday" v-model="post.days" /> Saturday</label>
                         <label><input type="checkbox" value="Sunday" v-model="post.days" /> Sunday</label>
                     </div>
-                    <!-- validation -->
-                    <div class="mt-2 text-red-600" v-if="validation.days">
+                    <div v-if="validation.days" class="mt-2 text-red-600">
                         {{ validation.days[0] }}
                     </div>
                 </div>
