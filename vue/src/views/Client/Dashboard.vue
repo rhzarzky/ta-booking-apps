@@ -1,101 +1,82 @@
 <template>
-  <div class="p-8">
-    <h1 class="text-2xl font-bold mb-8">Dashboard</h1>
-
+  <div class="p-4 space-y-6">
     <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-      <div class="rounded-xl p-6 text-white" style="background: linear-gradient(135deg, #7f00ff, #3c8ce7)">
-        <h2 class="text-3xl font-semibold">5</h2>
-        <p class="text-lg font-semibold mt-1">Approved Event</p>
-        <p class="text-sm mt-2">
-          Last 30 days
-          <span class="text-green-500 font-semibold ml-1">+5 ▲</span>
-        </p>
-      </div>
-
-      <div class="rounded-xl p-6 text-white" style="background: linear-gradient(135deg, #a8c66c, #4b5320)">
-        <h2 class="text-3xl font-semibold">5</h2>
-        <p class="text-lg font-semibold mt-1">Under Review</p>
-        <p class="text-sm mt-2">
-          Last 30 days
-          <span class="text-green-500 font-semibold ml-1">+5 ▲</span>
-        </p>
-      </div>
-
-      <div class="rounded-xl p-6 text-white" style="background: linear-gradient(135deg, #808080, #505050)">
-        <h2 class="text-3xl font-semibold">5</h2>
-        <p class="text-lg font-semibold mt-1">Declined Event</p>
-        <p class="text-sm mt-2">
-          Last 30 days
-          <span class="text-red-500 font-semibold ml-1">-5 ▼</span>
-        </p>
-      </div>
-    </div>
+    <SummaryCards :stats="summary" />
 
     <!-- Analytics Chart -->
     <AnalyticsChart />
 
-    <!-- Recent Activity Table -->
-    <div class="bg-white p-6 rounded-lg shadow">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">Recent Activity</h2>
-        <a href="#" class="text-sm text-indigo-600 hover:underline">view all activities</a>
-      </div>
-      <table class="min-w-full">
-        <thead class="bg-indigo-50">
-          <tr>
-            <th class="text-left py-2 px-2">No</th>
-            <th class="text-left py-2 px-2">Activity</th>
-            <th class="text-left py-2 px-2">Status</th>
-            <th class="text-left py-2 px-2">Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(activity, index) in activities" :key="index" class="border-b">
-            <td class="py-2 px-2">{{ index + 1 }}</td>
-            <td class="py-2 px-2">{{ activity.name }}</td>
-            <td class="py-2 px-2">
-              <span
-                :class="[
-                  'text-xs font-semibold px-2 py-1 rounded',
-                  activity.status === 'Approved'
-                    ? 'bg-purple-500 text-white'
-                    : activity.status === 'Under Review'
-                    ? 'bg-lime-300 text-black'
-                    : 'bg-gray-400 text-white',
-                ]"
-              >
-                {{ activity.status }}
-              </span>
-            </td>
-            <td class="py-2 px-2">{{ activity.date }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+<!-- Header recent activity -->
+<div class="flex items-center justify-between mb-2">
+  <h2 class="text-lg font-semibold">Recent Activity</h2>
+  <router-link to="/client/activity" class="text-blue-600 hover:underline text-sm">
+    View all activities
+  </router-link>
+</div>
+
+<!-- main Konten recent activity -->
+<div class="bg-white shadow rounded-lg p-4">
+  <div v-if="loading" class="text-gray-500">Loading data...</div>
+  <div v-else-if="error" class="text-red-500">{{ error }}</div>
+  <div v-else>
+    <table class="min-w-full table-auto text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 text-left">No</th>
+          <th class="px-4 py-2 text-left">Service</th>
+          <th class="px-4 py-2 text-left">Date</th>
+          <th class="px-4 py-2 text-left">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="booking in latestBookings" :key="booking.id" class="border-t">
+          <td class="px-4 py-2">{{ booking.displayNo }}</td>
+          <td class="px-4 py-2">{{ booking.service?.title || '-' }}</td>
+          <td class="px-4 py-2">{{ booking.displayDateTime }}</td>
+          <td class="px-4 py-2">
+            <span :class="statusClass(booking.status)">
+              {{ booking.status }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
   </div>
 </template>
 
-<script>
-import AnalyticsChart from '@/components/Client/AnalyticsChart.vue'
+<script setup>
+import { onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useDashboardStore } from '@/stores/dashboard';
+import SummaryCards from '@/components/Client/card/SummaryCards.vue';
+import AnalyticsChart from '@/components/Client/AnalyticsChart.vue';
 
-export default {
-  name: 'Dashboard',
-  components: {
-    AnalyticsChart,
-  },
-  data() {
-    return {
-      activities: [
-        { name: 'Service electrical house', status: 'Approved', date: 'Aug 23, 2025 04:00 AM' },
-        { name: 'Service electrical house', status: 'Under Review', date: 'Aug 23, 2025 04:00 AM' },
-        { name: 'Service electrical house', status: 'Declined', date: 'Aug 23, 2025 04:00 AM' },
-        { name: 'Service electrical house', status: 'Approved', date: 'Aug 23, 2025 04:00 AM' },
-        { name: 'Service electrical house', status: 'Declined', date: 'Aug 23, 2025 04:00 AM' },
-        { name: 'Service electrical house', status: 'Under Review', date: 'Aug 23, 2025 04:00 AM' },
-        { name: 'Service electrical house', status: 'Approved', date: 'Aug 23, 2025 04:00 AM' },
-      ],
-    }
-  },
+const dashboardStore = useDashboardStore();
+const { summary, latestBookings, loading, error } = storeToRefs(dashboardStore);
+
+onMounted(() => {
+  dashboardStore.fetchDashboardData();
+});
+
+function formatDate(dateStr) {
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(dateStr).toLocaleDateString('id-ID', options);
+}
+
+function statusClass(status) {
+  const base = 'px-2 py-1 rounded text-xs font-medium';
+  switch ((status || '').toLowerCase()) {
+    case 'pending':
+      return `${base} bg-lime-100 text-lime-700`;
+    case 'approved':
+      return `${base} bg-purple-100 text-purple-700`;
+    case 'declined':
+      return `${base} bg-red-100 text-red-700`;
+    default:
+      return `${base} bg-gray-100 text-gray-700`;
+  }
 }
 </script>
