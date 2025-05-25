@@ -41,15 +41,7 @@ const statusClass = computed(() => {
 
 
 <template>
-  <div class="p-8 bg-gray-100 min-h-screen">
-    <nav class="text-sm text-gray-500 mb-4">
-      <router-link to="/client/dashboard" class="hover:underline">Dashboard</router-link>
-      /
-      <router-link to="/client/activity" class="hover:underline">Activity</router-link>
-      /
-      <span class="text-indigo-600 capitalize">Detail Booking</span>
-    </nav>
-
+  <div class="p-2 bg-gray-100 min-h-screen">
     <div v-if="booking" class="bg-white rounded-xl overflow-hidden shadow-md">
       <div class="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-400 text-xl">
         <template v-if="booking.service.image">

@@ -1,28 +1,26 @@
 <template>
   <div class="flex h-screen bg-gray-100">
-    <!-- Form Register -->
+    <!-- Form Section -->
     <div class="w-1/2 flex items-center justify-center p-8">
       <div class="w-full max-w-lg">
-        <!-- Logo -->
         <img src="@/assets/images/Appointly.png" alt="Logo Appointly" class="h-10 mb-6" />
 
         <h2 class="text-3xl font-bold text-gray-800">Unlock Your Experience!</h2>
         <p class="text-gray-500 mb-6">Create an account and unlock your next great scheduling.</p>
 
-        <!-- Error Notification -->
+        <!-- Error -->
         <div v-if="errorMessage" class="bg-red-100 text-red-700 px-4 py-3 rounded mb-4">
           {{ errorMessage }}
         </div>
 
-        <!-- Form -->
         <form @submit.prevent="handleRegister" class="space-y-4">
           <div>
             <label class="block text-gray-700 font-medium">Full Name</label>
             <input
               type="text"
               v-model="name"
-              placeholder="John Doe"
               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+              placeholder="John Doe"
               required
             />
           </div>
@@ -31,8 +29,8 @@
             <input
               type="email"
               v-model="email"
-              placeholder="johndoe@gmail.com"
               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+              placeholder="johndoe@gmail.com"
               required
             />
           </div>
@@ -42,8 +40,8 @@
               <input
                 :type="showPassword ? 'text' : 'password'"
                 v-model="password"
-                placeholder="Min. 8 Characters"
                 class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                placeholder="Min. 8 Characters"
                 required
               />
               <svg
@@ -55,17 +53,14 @@
                 class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
                 viewBox="0 0 16 16"
               >
-                <template v-if="!showPassword">
-                  <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
-                  <path
-                    d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"
-                  />
-                </template>
-                <template v-else>
-                  <path
-                    d="M13.359 11.238c.78-.813 1.369-1.814 1.641-2.684..."
-                  />
-                </template>
+                <path
+                  v-if="!showPassword"
+                  d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"
+                />
+                <path
+                  v-else
+                  d="M13.359 11.238c.78-.813 1.369-1.814 1.641-2.684..."
+                />
               </svg>
             </div>
           </div>
@@ -75,8 +70,8 @@
               <input
                 :type="showConfirmPassword ? 'text' : 'password'"
                 v-model="confirmPassword"
-                placeholder="Confirm your password"
                 class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                placeholder="Confirm your password"
                 required
               />
               <svg
@@ -88,20 +83,25 @@
                 class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
                 viewBox="0 0 16 16"
               >
-                <template v-if="!showConfirmPassword">
-                  <path d="M10.5 8a2.5 2.5 0 1 1-5 0..." />
-                </template>
-                <template v-else>
-                  <path d="M13.359 11.238c.78-.813 1.369-1.814 1.641-2.684..." />
-                </template>
+                <path
+                  v-if="!showConfirmPassword"
+                  d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"
+                />
+                <path
+                  v-else
+                  d="M13.359 11.238c.78-.813 1.369-1.814 1.641-2.684..."
+                />
               </svg>
             </div>
           </div>
+
           <button
             type="submit"
-            class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700"
+            class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 flex items-center justify-center"
+            :disabled="isLoading"
           >
-            Get Started
+            <span v-if="isLoading" class="loader mr-2"></span>
+            {{ isLoading ? 'Registering...' : 'Get Started' }}
           </button>
         </form>
 
@@ -159,13 +159,13 @@ export default {
       confirmPassword: '',
       showPassword: false,
       showConfirmPassword: false,
-      errorMessage: '', // Buat nampung error di atas form
+      errorMessage: '',
+      isLoading: false,
     }
   },
   methods: {
     async handleRegister() {
       this.errorMessage = ''
-
       if (this.password.length < 8) {
         this.errorMessage = 'Password must be at least 8 characters long.'
         return
@@ -184,36 +184,40 @@ export default {
       }
 
       try {
+        this.isLoading = true
         const response = await register(userData)
 
         if (response.status === 'success') {
-          await Swal.fire({
-            icon: 'success',
-            title: 'Account Created Successfully!',
-            text: 'Your account has been created. Please login to continue.',
-            timer: 2000,
-            showConfirmButton: false,
-          })
-          this.$router.push('/login')
+          this.$router.push({ path: '/verify-email', query: { email: this.email } })
         }
       } catch (error) {
-        console.error('Registration error:', error)
-
-        if (error.response && error.response.data) {
-          const resData = error.response.data
-
-          if (resData.errors && resData.errors.email && resData.errors.email[0]) {
-            this.errorMessage = 'The email is already registered. Please use a different email.'
-          } else if (resData.message) {
-            this.errorMessage = resData.message
-          } else {
-            this.errorMessage = 'An error occurred. Please try again later.'
-          }
+        if (error.response?.data?.errors?.email) {
+          this.errorMessage = error.response.data.errors.email[0]
+        } else if (error.response?.data?.message) {
+          this.errorMessage = error.response.data.message
         } else {
-          this.errorMessage = 'An error occurred. Please try again later.'
+          this.errorMessage = 'Something went wrong. Please try again.'
         }
+      } finally {
+        this.isLoading = false
       }
     },
   },
 }
 </script>
+
+<style scoped>
+.loader {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>

@@ -10,6 +10,8 @@ import EditProfile from '@/views/Client/EditProfile.vue';
 import ChangePassword from '@/views/Client/ChangePassword.vue';
 import DetailService from '@/views/Client/DetailService.vue';
 import DetailBooking from '@/views/Client/DetailBooking.vue';
+import VerifyEmail from '@/views/VerifyEmail.vue';
+import EmailVerificationSuccess from '@/views/EmailVerificationSuccess.vue';
 
 const routes = [
   {
@@ -34,6 +36,22 @@ const routes = [
     component: RegisterClient,
     meta: {
       title: 'Register',
+    },
+  },
+  {
+    path: '/verify-email',
+    name: 'verify-email',
+    component: VerifyEmail,
+    meta: {
+      title: 'Verifikasi Email',
+    },
+  },
+  {
+    path: '/email-verified',
+    name: 'email-verified',
+    component: EmailVerificationSuccess,
+    meta: {
+      title: 'Email Terverifikasi',
     },
   },
   {
