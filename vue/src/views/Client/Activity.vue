@@ -11,7 +11,7 @@
           class="border px-3 py-2 rounded"
         />
         <button
-          v-for="status in ['All', 'Approved', 'Pending', 'Declined']"
+          v-for="status in ['All', 'Pending', 'Approved', 'Declined']"
           :key="status"
           :class="[
             'border px-3 py-2 rounded',

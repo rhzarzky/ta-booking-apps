@@ -10,6 +10,7 @@
       <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded">Schedule</span>
     </div>
 
+    
     <div class="text-xs text-gray-500 space-y-1 mb-4">
       <div><strong>Option:</strong> {{ option }}</div>
       <div><strong>Days:</strong> {{ days }}</div>

@@ -12,6 +12,7 @@ import DetailService from '@/views/Client/DetailService.vue';
 import DetailBooking from '@/views/Client/DetailBooking.vue';
 import VerifyEmail from '@/views/VerifyEmail.vue';
 import EmailVerificationSuccess from '@/views/EmailVerificationSuccess.vue';
+import UnknownPage from '@/views/error/UnknownPage.vue';
 
 const routes = [
   {
@@ -54,6 +55,16 @@ const routes = [
       title: 'Email Terverifikasi',
     },
   },
+  {
+        path: "/:pathMatch(.*)*",
+        name: "404 Error",
+        component: UnknownPage,
+        meta: {
+            title: "404 Error",
+            breadcrumbs: "404 Error",
+            requiresAuth: false,
+        },
+    },
   {
     path: '/client',
     component: DefaultLayout,

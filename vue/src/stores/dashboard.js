@@ -43,7 +43,7 @@ export const useDashboardStore = defineStore('dashboard', {
         const sorted = allBookings.sort((a, b) => {
           const dateA = new Date(`${a.date}T${a.time}`)
           const dateB = new Date(`${b.date}T${b.time}`)
-          return dateB - dateA // urutkan dari terbaru ke terlama
+          return dateA - dateB // urutkan dari terbaru ke terlama
         })
 
         // Ambil 5 booking terbaru

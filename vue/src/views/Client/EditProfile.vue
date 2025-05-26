@@ -1,15 +1,5 @@
 <template>
-  <div class="p-4 sm:p-8 max-w-4xl mx-auto">
-    <!-- Breadcrumb -->
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Edit Profile</h1>
-      <p class="text-sm text-gray-500 mt-1">
-        <router-link to="/client/dashboard" class="hover:underline">Dashboard</router-link> /
-        <router-link to="/client/profile" class="hover:underline">Profile</router-link> /
-        <span class="text-indigo-600">Edit Profile</span>
-      </p>
-    </div>
-
+  <div class=" sm:p-8 max-w-4xl mx-auto">
     <!-- Form Container -->
     <div class="bg-white shadow-lg rounded-xl p-6 sm:p-10">
       <form @submit.prevent="handleSubmit" class="space-y-6">
