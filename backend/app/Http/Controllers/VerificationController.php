@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\URL;
 
 class VerificationController extends Controller
@@ -29,11 +30,7 @@ class VerificationController extends Controller
         $user->email_verified_at = now();
         $user->save();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Your email has been successfully verified! You can now log in to your account.',
-            'redirect_to' => url('/login'),
-        ], 200);
+        return redirect(env('APP_FRONTEND_URL'). '/login');
     }
 }
 

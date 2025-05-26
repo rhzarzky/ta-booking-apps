@@ -20,7 +20,7 @@ class VerifyEmailNotification extends Notification
         $url = URL::temporarySignedRoute(
             'verification.verify.jwt',
             Carbon::now()->addMinutes(60),
-            ['id' => $notifiable->id, 'hash' => sha1($notifiable->email)]
+            ['id' => $notifiable->id, 'hash' => sha1($notifiable->email)],
         );
 
         return (new MailMessage)
