@@ -8,6 +8,7 @@ import EditUser from "@/views/EditUser.vue";
 import ChangePasswordUser from "@/views/ChangePasswordUser.vue";
 import CreateUser from "@/views/CreateUser.vue";
 import EditService from "@/views/EditService.vue";
+import BookingPage from "@/views/BookingPage.vue";
 
 const routes = [{
         path: "/login-admin",
@@ -102,6 +103,17 @@ const routes = [{
             title: "Change Password User",
             breadcrumbs: "Change Password User",
             excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/booking",
+        name: "Booking",
+        component: () => BookingPage,
+        meta: {
+            title: "Booking",
+            breadcrumbs: "Booking",
+            excludeRole: ["user"],
             requiresAuth: true,
         },
     },
