@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import { useBookingStore } from '@/stores/booking';   
+import { useBookingStore } from '@/stores/booking';
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
 import SkeltonLoader from "@/components/loading-skelton/SkeltonLoader.vue";
@@ -102,7 +102,7 @@ watch([searchQuery, selectedOption], () => {
             </div> -->
 
             <!-- Empty -->
-            <div v-else-if="filteredbookings.length === 0" class="py-8 text-center text-gray-500" role="status">
+            <div v-else-if="filteredBookings.length === 0" class="py-8 text-center text-gray-500" role="status">
                 <span>No booking found.</span>
             </div>
 
@@ -116,11 +116,11 @@ watch([searchQuery, selectedOption], () => {
                         <thead class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
                             <tr>
                                 <th class="px-6 py-3 text-left font-semibold">Service Title</th>
-                                <th class="px-6 py-3 text-left font-semibold">User</th>
                                 <th class="px-6 py-3 text-left font-semibold">Option</th>
                                 <th class="px-6 py-3 text-left font-semibold">Date</th>
                                 <th class="px-6 py-3 text-left font-semibold">Time</th>
                                 <th class="px-6 py-3 text-left font-semibold">Note</th>
+                                <th class="px-6 py-3 text-left font-semibold">User</th>
                                 <th class="px-6 py-3 text-left font-semibold">Location</th>
                                 <th class="px-6 py-3 text-left font-semibold">Status</th>
                                 <th class="px-6 py-3 text-left font-semibold">Actions</th>
@@ -130,21 +130,19 @@ watch([searchQuery, selectedOption], () => {
                             <tr v-for="booking in paginatedBookings" :key="booking.id"
                                 class="border-b border-wildsand-200 hover:bg-wildsand-50 transition-colors duration-150">
                                 <td class="px-6 py-4 font-medium">{{ booking.service.title }}</td>
+                                <td class="px-6 py-4 font-medium">{{ booking.service.option }}</td>
+                                <td class="px-6 py-4 font-medium">{{ booking.service.date }}</td>
+                                <td class="px-6 py-4 font-medium">{{ booking.service.time }}</td>
+                                <td class="px-6 py-4 font-medium">{{ booking.service.note }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.user.name }}</td>
-                                <td class="px-6 py-4 font-medium">{{ booking.option }}</td>
-                                <td class="px-6 py-4 font-medium">{{ booking.date }}</td>
-                                <td class="px-6 py-4 font-medium">{{ booking.time }}</td>
-                                <td class="px-6 py-4 font-medium">{{ booking.note }}</td>
-                                <td class="px-6 py-4 font-medium">{{ booking.location }}</td>
+                                <td class="px-6 py-4 font-medium">{{ booking.service.location }}</td>
                                 <td class="px-6 py-4">
-                                    <span
-                                        :class="{
-                                            'bg-yellow-100 text-yellow-800': booking.status === 'Pending',
-                                            'bg-green-100 text-green-800': booking.status === 'Approved',
-                                            'bg-red-100 text-red-800': booking.status === 'Rejected'
-                                        }"
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold">
-                                        {{ booking.status }}
+                                    <span :class="{
+                                        'bg-yellow-100 text-yellow-800': booking.service.status === 'Pending',
+                                        'bg-green-100 text-green-800': booking.service.status === 'Approved',
+                                        'bg-red-100 text-red-800': booking.service.status === 'Rejected'
+                                    }" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold">
+                                        {{ booking.service.status }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
@@ -180,7 +178,7 @@ watch([searchQuery, selectedOption], () => {
                                             </div>
                                         </transition>
 
-                                        <RouterLink title="Edit" >
+                                        <RouterLink title="Edit">
                                             <!-- Edit Icon -->
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                                 xmlns="http://www.w3.org/2000/svg">

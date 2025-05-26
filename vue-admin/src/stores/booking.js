@@ -23,21 +23,22 @@ export const useBookingStore = defineStore('booking', {
             this.isLoading = true;
             this.error = null;
             try {
-                const response = await getBookingApi(); 
-
-                if (response.data.status === 'success') {
-                    this.bookings = response.data.bookings;
-                } else {
-                    throw new Error(response.data.message || 'Failed to fetch bookings');
-                }
+              const response = await getBookingApi();
+          
+              if (response.data.status === 'success') {
+                // Ambil semua bookings dari berbagai status dan gabungkan jadi satu array
+                this.bookings = Object.values(response.data.bookings).flat();
+              } else {
+                throw new Error(response.data.message || 'Failed to fetch bookings');
+              }
             } catch (err) {
-                this.error = err.message || 'An unexpected error occurred';
-                this.showNotification(this.error, 'error');
+              this.error = err.message || 'An unexpected error occurred';
+              this.showNotification(this.error, 'error');
             } finally {
-                this.isLoading = false;
+              this.isLoading = false;
             }
-        },
-
+          },
+          
         // Fetching booking details by ID
         async fetchBookingDetail(id) {
             this.isLoading = true;
