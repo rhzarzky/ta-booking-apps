@@ -2,7 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{AuthController, RoleController, ServiceController, 
-    UserController, BookingController, VerificationController,ForgotPasswordController};
+    UserController, BookingController, VerificationController,ForgotPasswordController,
+    BookingCompletionController, ReviewController};
 use App\Http\Middleware\JwtMiddleware;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -68,23 +69,22 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     
     Route::get('/user/profile', [UserController::class, 'userProfile']);
     Route::put('/user/profile', [UserController::class, 'updateProfile']);
-
-    // Booking completion routes (using separate controller)
-    Route::post('/booking/{id}/complete', [CompletionController::class, 'markAsCompleted']);
-    Route::get('/booking/completable', [CompletionController::class, 'getCompletableBookings']);
-    Route::get('/booking/{id}/completion-status', [CompletionController::class, 'getCompletionStatus']);
     
-    // Review routes
+    
+    Route::post('/booking/{id}/complete', [BookingCompletionController::class, 'markAsCompleted']);
+    Route::get('/booking/{id}/completion-status', [BookingCompletionController::class, 'getCompletionStatus']);
+    
+    // Admin routes for completion
+    Route::middleware(['permission:confirm booking'])->group(function () {
+        Route::post('/admin/booking/{id}/complete', [BookingCompletionController::class, 'adminMarkAsCompleted']);
+        Route::post('/admin/process-expired-reviews', [BookingCompletionController::class, 'processExpiredReviews']);
+    });
+    
     Route::post('/booking/{id}/review', [ReviewController::class, 'submitReview']);
     Route::get('/booking/{id}/review', [ReviewController::class, 'getReview']);
     Route::get('/booking/{id}/can-review', [ReviewController::class, 'canReview']);
     Route::get('/service/{id}/reviews', [ReviewController::class, 'getServiceReviews']);
     Route::get('/user/reviews', [ReviewController::class, 'getUserReviews']);
-    
-    // Notification routes
-    Route::get('/notifications', [NotificationController::class, 'getUserNotifications']);
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount']);
     
     Route::post('/logout', [AuthController::class, 'logout']);
 });

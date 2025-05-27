@@ -2,6 +2,7 @@ import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/model/booking_model.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
+import 'package:Appointly/module/meetings/presentation/screen/review_screen.dart';
 import 'package:Appointly/module/meetings/presentation/widget/card_appointment.dart';
 import 'package:Appointly/module/meetings/presentation/widget/filter_bottomsheet.dart';
 import 'package:flutter/material.dart';
@@ -151,7 +152,7 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             titleCard: booking.service.title,
             descCard: booking.service.description,
             dateCard: formattedDate,
-            locationCard: booking.service.location ,
+            locationCard: booking.service.location,
             durationCard: booking.time,
             linkCard: () {
               Navigator.push(
@@ -165,6 +166,16 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             },
             noteCard: booking.note ?? '',
             statusCard: booking.status,
+            reviewButton: booking.status.toLowerCase() == 'approved'
+                ? () {
+                    _showReviewDialog(context, booking);
+                  }
+                : null,
+            linkViewReview: booking.status.toLowerCase() == 'approved'
+                ? () {
+                    _navigateToReviews(context, booking);
+                  }
+                : null,
           ),
         );
       },
@@ -260,5 +271,108 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
 
   void _navigateBack(BuildContext context) {
     Navigator.pop(context);
+  }
+
+  void _showReviewDialog(BuildContext context, Booking booking) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        double rating = 0.0;
+        String comment = '';
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(
+                'Review ${booking.service.title}',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'How was your experience?',
+                    style: GoogleFonts.ubuntu(fontSize: 14),
+                  ),
+                  SizedBox(height: 16),
+                  // Rating stars
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: ColorPallete.primaryColor,
+                          size: 30,
+                        ),
+                      );
+                    }),
+                  ),
+                  SizedBox(height: 16),
+                  TextField(
+                    onChanged: (value) => comment = value,
+                    decoration: InputDecoration(
+                      hintText: 'Write your review...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: rating > 0
+                      ? () {
+                          // Submit review
+                          _submitReview(booking.idBooking, rating, comment);
+                          Navigator.pop(context);
+                        }
+                      : null,
+                  child: Text('Submit Review'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _navigateToReviews(BuildContext context, Booking booking) {
+    // Navigate to reviews screen for this service
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ReviewsScreen(),
+      ),
+    );
+  }
+
+  void _submitReview(int bookingId, double rating, String comment) {
+    // Implementasi submit review ke API
+    // Bisa menggunakan bloc atau service
+    print(
+        'Submitting review for booking $bookingId: $rating stars, comment: $comment');
+
+    // TODO: Implement API call to submit review
+    // context.read<ReviewBloc>().add(SubmitReviewEvent(
+    //   bookingId: bookingId,
+    //   rating: rating,
+    //   comment: comment,
+    // ));
   }
 }

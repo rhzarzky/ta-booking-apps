@@ -9,6 +9,8 @@ class CardAppointment extends StatelessWidget {
   final String locationCard;
   final String durationCard;
   final VoidCallback linkCard;
+  final VoidCallback? reviewButton;
+  final VoidCallback? linkViewReview;
   final String noteCard;
   final String statusCard;
   final String? onlineLocCard;
@@ -22,6 +24,8 @@ class CardAppointment extends StatelessWidget {
     required this.locationCard,
     required this.durationCard,
     required this.linkCard,
+    this.reviewButton,
+    this.linkViewReview,
     required this.noteCard,
     required this.statusCard,
     this.onlineLocCard,
@@ -89,7 +93,6 @@ class CardAppointment extends StatelessWidget {
                 ],
               ),
             ),
-
             // Content
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -98,16 +101,23 @@ class CardAppointment extends StatelessWidget {
                 children: [
                   // Info boxes with icons
                   _buildInfoGrid(),
-
                   const SizedBox(height: 16),
-
                   // Note Section
                   if (noteCard.isNotEmpty) _buildNoteSection(),
-
                   const SizedBox(height: 12),
-
+                  _buildViewReviewLink(),
+                  const SizedBox(height: 12),
                   // View Button
-                  _buildViewButton(),
+                  Row(
+                    children: [
+                      _buildViewButton(),
+                      if (statusCard.toLowerCase() == 'approved' &&
+                          reviewButton != null) ...[
+                        SizedBox(width: 12),
+                        _buildReviewButton(),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -330,30 +340,94 @@ class CardAppointment extends StatelessWidget {
     );
   }
 
-  Widget _buildViewButton() {
-    return InkWell(
-      onTap: linkCard,
-      child: Container(
-        width: double.infinity,
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: ColorPallete.primaryColor,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: ColorPallete.primaryColor.withOpacity(0.2),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
+  Widget _buildViewReviewLink() {
+    if (statusCard.toLowerCase() != 'approved') {
+      return SizedBox.shrink();
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        if (linkViewReview != null)
+          TextButton(
+            onPressed: linkViewReview,
+            child: Row(
+              children: [
+                Text(
+                  'View Reviews',
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: ColorPallete.primaryColor,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_outward_rounded,
+                  color: ColorPallete.primaryColor,
+                  size: 14,
+                ),
+              ],
             ),
-          ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildViewButton() {
+    return Expanded(
+      child: InkWell(
+        onTap: linkCard,
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: ColorPallete.primaryColor,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: ColorPallete.primaryColor.withOpacity(0.2),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Text(
+            'View Details',
+            style: GoogleFonts.ubuntu(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
         ),
-        child: Text(
-          'View Details',
-          style: GoogleFonts.ubuntu(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildReviewButton() {
+    if (statusCard.toLowerCase() != 'approved' || reviewButton == null) {
+      return SizedBox.shrink();
+    }
+
+    return Expanded(
+      child: TextButton.icon(
+        onPressed: reviewButton,
+        label: Text('Review Now',
+            style: GoogleFonts.ubuntu(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: ColorPallete.primaryColor,
+            )),
+        icon: Icon(
+          Icons.stars_outlined,
+          color: ColorPallete.primaryColor,
+        ),
+        style: TextButton.styleFrom(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: ColorPallete.primaryColor),
           ),
         ),
       ),
