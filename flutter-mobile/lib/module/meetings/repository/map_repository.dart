@@ -6,7 +6,8 @@ class MapRepository {
   final String token = AppConfig.mapboxAccessToken;
   final Dio _dio = Dio();
 
-  // get location address
+  ///Method ini digunakan untuk mengkonversi alamat menjadi koordinat (geocoding)
+
   Future<Map<String, dynamic>> getAddressCoordinates(String address) async {
     try {
       // Pastikan alamat tidak kosong
@@ -14,11 +15,12 @@ class MapRepository {
         throw Exception('Alamat lokasi kosong');
       }
 
-      // Encode alamat untuk URL
+      // mengenkode alamat agar aman digunakan dalam URL
       final encodedAddress = Uri.encodeComponent(address);
 
       print('Mencoba geocode alamat: $encodedAddress');
 
+      /// (membatasi hasil hanya 1 lokasi)
       final response = await _dio.get(
         'https://api.mapbox.com/geocoding/v5/mapbox.places/$encodedAddress.json',
         queryParameters: {
@@ -50,7 +52,8 @@ class MapRepository {
     }
   }
 
-  // get travel time and distance
+  /// Method ini digunakan untuk mendapatkan informasi perjalanan antara dua titik koordinat
+  /// Menerima 4 parameter: koordinat awal (startLat, startLng) dan koordinat tujuan (endLat, endLng)
   Future<Map<String, dynamic>> getTravelInfo(
     double startLat,
     double startLng,
@@ -58,6 +61,9 @@ class MapRepository {
     double endLng,
   ) async {
     try {
+      /// annotations: Meminta data distance dan duration
+      /// overview: 'full' untuk mendapatkan detail rute lengkap
+      /// geometries: 'geojson' untuk format geometri
       final response = await _dio.get(
         'https://api.mapbox.com/directions/v5/mapbox/driving/$startLng,$startLat;$endLng,$endLat',
         queryParameters: {

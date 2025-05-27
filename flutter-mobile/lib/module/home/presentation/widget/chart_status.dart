@@ -57,7 +57,6 @@ class ChartStatus extends StatelessWidget {
                   child: BarChart(
                     BarChartData(
                       alignment: BarChartAlignment.spaceAround,
-                      maxY: _calculateMaxY(chartData),
                       barGroups: _getBarGroups(chartData),
                       titlesData: FlTitlesData(
                         topTitles: const AxisTitles(
@@ -143,17 +142,6 @@ class ChartStatus extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  double _calculateMaxY(List<DailyAppointmentData> chartData) {
-    double maxValue = 0;
-    for (var data in chartData) {
-      final total = data.approved + data.pending + data.declined;
-      if (total > maxValue) {
-        maxValue = total.toDouble();
-      }
-    }
-    return maxValue > 0 ? (maxValue * 1.2) : 5;
   }
 
   List<BarChartGroupData> _getBarGroups(List<DailyAppointmentData> chartData) {

@@ -1,3 +1,4 @@
+import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/map_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/map_event.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/map_state.dart';
@@ -209,7 +210,7 @@ class _VisualMapState extends State<VisualMap> {
                         child: FloatingActionButton(
                           mini: true,
                           backgroundColor: Colors.white,
-                          child: Icon(Icons.my_location, color: Colors.blue),
+                          child: Icon(Icons.my_location, color: ColorPallete.primaryColor),
                           onPressed: () {
                             setState(() {
                               _currentMarkerAdded = false;
@@ -283,7 +284,7 @@ class _VisualMapState extends State<VisualMap> {
                           label: Text('Perbarui Rute'),
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 12),
-                            backgroundColor: Colors.blue,
+                            backgroundColor: ColorPallete.primaryColor,
                             foregroundColor: Colors.white,
                           ),
                         ),
@@ -315,7 +316,7 @@ class _VisualMapState extends State<VisualMap> {
             '📍 Lokasi Meeting',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.blue[800],
+              color: ColorPallete.primaryColor,
             ),
           ),
           SizedBox(height: 8),
@@ -774,10 +775,10 @@ class _VisualMapState extends State<VisualMap> {
           Container(
             padding: EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: ColorPallete.primaryColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Colors.blue, size: 24),
+            child: Icon(icon, color: ColorPallete.primaryColor, size: 24),
           ),
           SizedBox(width: 12),
           Expanded(

@@ -1,24 +1,14 @@
+import 'package:Appointly/core/service/api_service.dart';
 import 'package:Appointly/module/meetings/model/service_model.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logger/logger.dart';
 
 class ServiceRepository {
-  final Dio _dio;
+  final Dio _dio = ApiService.instance;
   final Logger _logger = Logger();
 
-  ServiceRepository()
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: 'http://192.168.100.18:8000/v1',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            validateStatus: (status) => status! < 500,
-            connectTimeout: Duration(seconds: 30),
-            receiveTimeout: Duration(seconds: 30),
-          ),
-        );
+
 
   void updateToken(String? token) {
     if (token != null && token.isNotEmpty) {

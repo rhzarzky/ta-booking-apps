@@ -88,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildApprovalText(state),
                     const SizedBox(height: 16),
                     _buildStatusCarousel(state),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
                     _buildAppointmentInsights(),
                     const SizedBox(height: 20),
                     _buildRecentAppointments(),
@@ -191,7 +191,6 @@ class _HomeScreenState extends State<HomeScreen> {
               endColor: ColorPallete.primaryDark,
               iconAsset: 'assets/icons/calendar-check-white.svg',
             ),
-            const SizedBox(width: 12),
             StatusCard(
               iconAsset: 'assets/icons/calendar-time-white.svg',
               title: 'Under Review',
@@ -201,7 +200,6 @@ class _HomeScreenState extends State<HomeScreen> {
               startColor: ColorPallete.accent400,
               endColor: ColorPallete.accentDark,
             ),
-            const SizedBox(width: 12),
             StatusCard(
               iconAsset: 'assets/icons/calendar-x-white.svg',
               title: 'Declined Event',

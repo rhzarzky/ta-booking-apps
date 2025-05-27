@@ -43,15 +43,15 @@ class CardBookmarks extends StatelessWidget {
   Widget build(BuildContext context) {
     // Define colors based on service type
     Color getStartColor() {
-      if (isOnline) return const Color(0xFF7B68EE); // Purple for online
-      if (isOffline) return const Color(0xFF4CAF50); // Green for offline
-      return const Color(0xFF7B68EE); // Default color
+      if (isOnline) return const Color(0xFF7B68EE); 
+      if (isOffline) return const Color(0xFF4CAF50); 
+      return const Color(0xFF7B68EE); 
     }
 
     Color getEndColor() {
-      if (isOnline) return const Color(0xFF4A4A4A); // Dark grey for online
-      if (isOffline) return const Color(0xFF2E7D32); // Dark green for offline
-      return const Color(0xFF4A4A4A); // Default color
+      if (isOnline) return const Color(0xFF4A4A4A); 
+      if (isOffline) return const Color(0xFF2E7D32); 
+      return const Color(0xFF4A4A4A); 
     }
 
     final defaultStartColor = getStartColor();

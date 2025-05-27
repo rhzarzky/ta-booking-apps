@@ -54,7 +54,7 @@ class SuccessState extends StatelessWidget {
                         color: ColorPallete.darkBlack,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
                       'Stay updated on your appointment status and check your email for any updates.',
                       style: GoogleFonts.ubuntu(
@@ -69,7 +69,6 @@ class SuccessState extends StatelessWidget {
                         children: [
                           _buildViewAppointmentButton(context),
                           const SizedBox(height: 8),
-                          _buildViewNotificationsButton(context),
                         ],
                       )
                     else
@@ -120,10 +119,10 @@ class SuccessState extends StatelessWidget {
         child: Container(
           width: double.infinity,
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           decoration: BoxDecoration(
             color: ColorPallete.primaryColor,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
             'View Appointment',
@@ -131,41 +130,6 @@ class SuccessState extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: Colors.white,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildViewNotificationsButton(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => NotificationScreen(
-                userId: userId,
-              ),
-            ),
-          );
-        },
-        child: Container(
-          width: double.infinity,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-          decoration: BoxDecoration(
-            color: ColorPallete.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            'View Notifications',
-            style: GoogleFonts.ubuntu(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: ColorPallete.primaryColor,
             ),
           ),
         ),

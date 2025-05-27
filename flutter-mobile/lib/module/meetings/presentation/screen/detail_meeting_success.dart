@@ -8,13 +8,11 @@ import 'package:Appointly/core/common/main_tab_screen.dart';
 import 'package:Appointly/module/meetings/model/booking_detail_model.dart'
     as detail;
 import 'package:Appointly/module/meetings/presentation/widget/expanded_text.dart';
-import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
 import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:Appointly/module/meetings/model/booking_model.dart';
-import 'package:Appointly/module/meetings/model/service_model.dart' as service;
 import 'package:Appointly/module/meetings/presentation/screen/visual_map.dart';
 
 class DetailMeetingSuccess extends StatefulWidget {
@@ -629,7 +627,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            note.isNotEmpty ? note : 'No notes provided',
+            note.isNotEmpty ? note : 'You have no notes',
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.ubuntu(
@@ -667,7 +665,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           backgroundColor: ColorPallete.backgroundBody,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
         child: Row(
@@ -735,7 +733,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           decoration: BoxDecoration(
             gradient: ColorPallete.gradientPrimary,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
