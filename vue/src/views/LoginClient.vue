@@ -40,24 +40,19 @@ const handleLogin = async () => {
   }
 }
 </script>
-
 <template>
-  <div class="flex h-screen bg-gray-100">
-    <!-- Form Login -->
-    <div class="w-1/2 flex items-center justify-center p-8">
+  <div class="flex flex-col md:flex-row h-screen bg-gray-100">
+    <div class="w-full md:w-1/2 flex items-center justify-center p-8">
       <div class="w-full max-w-md">
-        <!-- Logo -->
-        <img src="@/assets/images/Appointly.png" alt="Logo Appointly" class="h-10 mb-6" />
+        <img src="@/assets/images/Appointly.png" alt="Logo Appointly" class="h-10 mb-6 mx-auto md:mx-0" />
 
-        <h2 class="text-3xl font-bold text-gray-800">Welcome Back!</h2>
-        <p class="text-gray-500 mb-6">Login to continue to your account.</p>
+        <h2 class="text-3xl font-bold text-gray-800 text-center md:text-left">Welcome Back!</h2>
+        <p class="text-gray-500 mb-6 text-center md:text-left">Login to continue to your account.</p>
 
-        <!-- Error Message -->
         <div v-if="loginError" class="mb-4 text-red-500 font-semibold text-center">
           {{ loginError }}
         </div>
 
-        <!-- Form Login -->
         <form @submit.prevent="handleLogin" class="space-y-4">
           <div>
             <label class="block text-gray-700 font-medium">Email</label>
@@ -79,7 +74,6 @@ const handleLogin = async () => {
                 class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
                 required
               />
-              <!-- SVG Toggle -->
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="20"
@@ -104,7 +98,6 @@ const handleLogin = async () => {
             </div>
           </div>
 
-          <!-- Tombol Login -->
           <button
             type="submit"
             class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 flex justify-center items-center"
@@ -114,38 +107,37 @@ const handleLogin = async () => {
             <span v-else>Login</span>
           </button>
         </form>
-
-        <!-- OR -->
-        <div class="flex items-center my-6">
+        <div class="mt-4 text-right">
+          <router-link to="/forgot-password" class="text-sm text-blue-600 hover:underline">
+            forgot password?
+          </router-link>
+        </div>
+        <!-- <div class="flex items-center my-2">
           <hr class="flex-grow border-gray-300" />
           <span class="px-4 text-gray-400">Or</span>
           <hr class="flex-grow border-gray-300" />
-        </div>
+        </div> -->
 
-        <!-- Google Login -->
-        <button
+        <!-- <button
           class="w-full flex items-center justify-center border py-3 rounded-lg font-semibold text-gray-700 hover:bg-gray-100"
         >
           <img src="@/assets/images/google.png" class="h-5 w-5 mr-2" />
           Continue with Google
-        </button>
+        </button> -->
 
-        <!-- Register Link -->
-        <p class="text-center text-gray-600 mt-6">
+        <p class="text-center text-gray-600 mt-3">
           Don't have an account?
           <router-link to="/register" class="text-indigo-600 font-semibold">Register</router-link>
         </p>
       </div>
     </div>
 
-    <!-- Image Section -->
-    <div class="w-1/2 flex items-center justify-center bg-gray-100 p-8 relative rounded-l-lg">
+    <div class="hidden md:flex w-full md:w-1/2 items-center justify-center bg-gray-100 p-8 relative rounded-l-lg">
       <img
         src="@/assets/images/gambar1.jpeg"
         class="w-full h-full object-cover object-center rounded-lg shadow-lg"
         style="max-width: 100%; max-height: 100vh"
       />
-      <!-- Teks di atas gambar -->
       <div
         class="absolute inset-0 flex flex-col justify-end text-white p-8 rounded-lg bg-black bg-opacity-30"
       >

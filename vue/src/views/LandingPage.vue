@@ -1,146 +1,141 @@
 <template>
-  <div>
-    <!-- Navbar -->
-    <nav class="bg-white shadow-md py-4 px-8">
+  <div class="relative min-h-screen bg-gray-50 font-sans text-gray-800 overflow-x-hidden">
+    <nav class="bg-white shadow-md py-4 px-4 sm:px-8 sticky top-0 z-50">
       <div class="container mx-auto flex justify-between items-center">
-        <!-- Logo -->
-        <div class="flex items-center space-x-2">
+        <router-link to="/" class="flex items-center space-x-2">
           <img src="@/assets/images/Appointly.png" alt="Appointly Logo" class="h-10" />
-        </div>
-
-        <!-- Menu Navigasi -->
-        <ul class="hidden md:flex space-x-6 text-gray-700">
-          <li><a href="#" class="text-primary-500 font-semibold">Home</a></li>
-          <li><a href="#" class="hover:text-primary-500">About us</a></li>
-          <li><a href="#" class="hover:text-primary-500">Services</a></li>
-          <li><a href="#" class="hover:text-primary-500">Contact us</a></li>
-          <li><a href="#" class="hover:text-primary-500">Blog</a></li>
-        </ul>
-
-        <!-- Tombol Sign In -->
-        <router-link
-          to="/login"
-          class="bg-primary-500 text-white px-5 py-2 rounded-lg hidden md:block"
-        >
-          Sign in
+          <span class="text-xl font-bold text-gray-800">Appointly</span>
         </router-link>
 
-        <!-- Tombol Hamburger (Mobile) -->
-        <button @click="toggleMenu" class="md:hidden text-gray-700 focus:outline-none">☰</button>
-      </div>
-
-      <!-- Menu Mobile -->
-      <div v-if="isOpen" class="md:hidden bg-white py-4 px-6">
-        <ul class="flex flex-col space-y-4 text-gray-700">
-          <li><a href="#" class="text-primary-500 font-semibold">Home</a></li>
-          <li><a href="#" class="hover:text-primary-500">About us</a></li>
-          <li><a href="#" class="hover:text-primary-500">Services</a></li>
-          <li><a href="#" class="hover:text-primary-500">Contact us</a></li>
-          <li><a href="#" class="hover:text-primary-500">Blog</a></li>
+        <ul class="hidden md:flex space-x-8 text-lg">
+          <li><a href="#home" class="text-indigo-600 font-semibold hover:text-indigo-800 transition duration-200">Home</a></li>
+          <li><a href="#about" class="hover:text-indigo-600 transition duration-200">About Us</a></li>
+          <li><a href="#services" class="hover:text-indigo-600 transition duration-200">Services</a></li>
+          <li><a href="#contact" class="hover:text-indigo-600 transition duration-200">Contact Us</a></li>
+          <li><a href="#blog" class="hover:text-indigo-600 transition duration-200">Blog</a></li>
         </ul>
 
-        <!-- Tombol Sign In untuk Mobile -->
         <router-link
           to="/login"
-          class="mt-4 primary-500 text-white px-5 py-2 rounded-lg w-full block text-center"
+          class="bg-indigo-600 text-white px-6 py-2 rounded-lg shadow-md hidden md:block hover:bg-indigo-700 transition duration-300 transform hover:-translate-y-1"
         >
           Sign In
         </router-link>
+
+        <button @click="toggleMenu" class="md:hidden text-gray-700 focus:outline-none p-2 rounded-md hover:bg-gray-100 transition duration-200">
+          <svg v-if="!isOpen" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
+
+      <transition name="slide-down">
+        <div v-if="isOpen" class="md:hidden bg-white py-4 px-6 shadow-lg absolute w-full left-0 mt-4 border-t border-gray-100">
+          <ul class="flex flex-col space-y-4 text-gray-700 text-lg">
+            <li><a href="#home" @click="isOpen = false" class="block text-indigo-600 font-semibold py-2 hover:bg-gray-50 rounded-md transition duration-200">Home</a></li>
+            <li><a href="#about" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">About Us</a></li>
+            <li><a href="#services" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">Services</a></li>
+            <li><a href="#contact" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">Contact Us</a></li>
+            <li><a href="#blog" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">Blog</a></li>
+          </ul>
+
+          <router-link
+            to="/login"
+            class="mt-6 bg-indigo-600 text-white px-6 py-3 rounded-lg w-full block text-center font-semibold shadow-md hover:bg-indigo-700 transition duration-300"
+          >
+            Sign In
+          </router-link>
+        </div>
+      </transition>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="pt-24 pb-12 bg-white">
-      <div class="container mx-auto flex flex-col md:flex-row items-center">
-        <!-- Bagian Kiri: Teks -->
-        <div class="md:w-1/2 text-center md:text-left px-6">
-          <h1 class="text-4xl font-bold leading-tight">
-            We create <span class="text-primary-500">solutions</span> for your business
+    <section id="home" class="py-20 md:py-32 bg-gradient-to-br from-indigo-50 to-blue-50 relative overflow-hidden">
+      <div class="container mx-auto flex flex-col md:flex-row items-center justify-between px-6">
+        <div class="md:w-1/2 text-center md:text-left animate-fade-in-up z-10">
+          <h1 class="text-5xl lg:text-6xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
+            We create <span class="text-indigo-600">solutions</span> for your business
           </h1>
-          <p class="text-gray-600 mt-4">
-            Our team keeps a keen eye on emerging trends and technologies to ensure your marketing campaigns remain cutting-edge.
+          <p class="text-gray-600 mt-6 text-lg max-w-lg md:max-w-none mx-auto md:mx-0">
+            Tim kami selalu mengikuti tren dan teknologi terbaru untuk memastikan kampanye pemasaran Anda tetap terdepan.
           </p>
-          <div class="mt-6 flex justify-center md:justify-start space-x-4">
+          <div class="mt-10 flex justify-center md:justify-start space-x-4">
             <router-link
               to="/register"
-              class="bg-[#694CF1] text-white px-6 py-3 rounded-lg"
+              class="bg-indigo-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-indigo-700 transition duration-300 transform hover:-translate-y-1 hover:scale-105"
             >
               Get Started
             </router-link>
-          </div>
+            </div>
         </div>
 
-        <!-- Bagian Kanan: Gambar -->
-        <div class="md:w-1/2 flex justify-center mt-8 md:mt-0">
-          <img src="@/assets/images/booking.jpg" alt="Hero Illustration" class="max-w-md">
+        <div class="md:w-1/2 flex justify-center mt-12 md:mt-0 relative animate-zoom-in">
+          <img src="@/assets/images/booking.jpg" alt="Hero Illustration" class="max-w-md w-full rounded-xl shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500 ease-in-out">
+          <div class="absolute -bottom-8 -left-8 bg-blue-200 w-24 h-24 rounded-full opacity-70 animate-pulse hidden md:block"></div>
+          <div class="absolute top-0 right-0 bg-yellow-200 w-16 h-16 rounded-full opacity-70 animate-bounce-slow hidden md:block"></div>
         </div>
       </div>
     </section>
 
-    <!-- Services Section -->
-    <section class="py-12 bg-white">
-      <div class="container mx-auto text-center">
-        <!-- Judul -->
-        <h2 class="text-3xl font-bold">
-          We Provide The Best <span class="text-primary-500">Services</span>
+    <section id="services" class="py-20 bg-white">
+      <div class="container mx-auto text-center px-6">
+        <h2 class="text-4xl font-extrabold text-gray-900 mb-4 animate-fade-in-up">
+          We Provide The Best <span class="text-indigo-600">Services</span>
         </h2>
-        <p class="text-gray-600 mt-2">
-          Let us unleash the full potential of your business with our data-driven strategies.
+        <p class="text-gray-600 mt-2 text-lg max-w-2xl mx-auto mb-12 animate-fade-in-up delay-200">
+          Biarkan kami mengeluarkan potensi penuh bisnis Anda dengan strategi berbasis data yang teruji dan inovatif.
         </p>
 
-        <!-- Grid Services -->
         <div
-          class="max-w-screen-lg mx-auto px-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10"
+          class="max-w-screen-lg mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
         >
           <div
             v-for="(service, index) in services"
             :key="index"
-            class="relative bg-white p-6 shadow-lg rounded-lg text-center border-t-4"
+            class="relative bg-white p-8 pt-12 shadow-lg rounded-xl text-center border-t-4 transform transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer"
             :class="service.color"
           >
-            <!-- Ikon dengan Background Kotak di Pojok Kiri Atas -->
             <div
-              class="absolute top-0 left-0 w-12 h-12 flex justify-center items-center rounded-br-3xl"
+              class="absolute -top-6 left-1/2 -translate-x-1/2 w-16 h-16 flex justify-center items-center rounded-full shadow-lg"
               :class="service.iconBg"
             >
-              <img :src="service.icon" :alt="service.title" class="w-6 h-6" />
+              <img :src="service.icon" :alt="service.title" class="w-8 h-8 filter invert" />
             </div>
 
-            <h3 class="text-lg font-semibold mt-6">{{ service.title }}</h3>
-            <p class="text-gray-600 mt-2 text-sm">
-              Lorem ipsum has been the industry's standard dummy text ever since the 1500s.
+            <h3 class="text-xl font-bold mt-6 text-gray-900">{{ service.title }}</h3>
+            <p class="text-gray-600 mt-3 text-base">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- How It Works Section -->
-    <section class="py-16 bg-primary-10">
-      <div class="container mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10">
-        <!-- Bagian Gambar -->
-        <div class="flex justify-center">
-          <img src="@/assets/images/landing2.png" alt="How It Works" class="max-w-sm">
+    <section id="about" class="py-20 bg-indigo-50">
+      <div class="container mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-12 px-6">
+        <div class="flex justify-center relative animate-fade-in-left">
+          <img src="@/assets/images/landing2.png" alt="How It Works" class="max-w-md w-full rounded-xl shadow-xl transform -rotate-3 hover:rotate-0 transition-transform duration-500 ease-in-out">
+          <div class="absolute -top-8 -right-8 bg-green-200 w-20 h-20 rounded-full opacity-70 animate-pulse-slow hidden md:block"></div>
         </div>
 
-        <!-- Bagian Teks -->
-        <div>
-          <h2 class="text-3xl font-bold">
-            Simple <span class="text-primary-500">Solutions!</span>
+        <div class="text-center md:text-left animate-fade-in-right">
+          <h2 class="text-4xl font-extrabold text-gray-900 mb-4">
+            Simple <span class="text-indigo-600">Solutions!</span>
           </h2>
-          <p class="text-gray-600 mt-2">
-            We understand that no two businesses are alike. That’s why we take the time to understand.
+          <p class="text-gray-600 mt-2 text-lg mb-8">
+            Kami memahami bahwa setiap bisnis berbeda. Itulah mengapa kami meluangkan waktu untuk memahami kebutuhan unik Anda.
           </p>
 
-          <!-- Daftar Langkah -->
-          <div class="mt-6 space-y-4">
-            <div v-for="(step, index) in steps" :key="index" class="flex items-start gap-4">
-              <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary-700 text-white font-bold">
+          <div class="space-y-6">
+            <div v-for="(step, index) in steps" :key="index" class="flex items-start gap-4 p-4 rounded-lg hover:bg-white transition duration-200 transform hover:scale-105 hover:shadow-md cursor-pointer">
+              <div class="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-lg flex-shrink-0">
                 {{ index + 1 }}
               </div>
               <div>
-                <h3 class="text-lg font-semibold">{{ step.title }}</h3>
-                <p class="text-gray-600 text-sm">{{ step.description }}</p>
+                <h3 class="text-xl font-bold text-gray-900">{{ step.title }}</h3>
+                <p class="text-gray-600 text-base mt-1">{{ step.description }}</p>
               </div>
             </div>
           </div>
@@ -148,69 +143,70 @@
       </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-primary-10 pt-12">
-      <div class="container mx-auto px-6">
-        <!-- Bagian Atas -->
-        <div class="flex flex-col md:flex-row justify-between items-center border-b border-gray-300 pb-6">
-          <h2 class="text-xl font-semibold text-primary-600">Ready to get started?</h2>
-          <button class="mt-4 md:mt-0 border border-primary-500 text-primary-500 py-2 px-4 rounded-lg hover:bg-primary-100 transition">
-            Contact Us
-          </button>
+    <section class="bg-indigo-600 text-white py-16 px-6">
+        <div class="container mx-auto flex flex-col md:flex-row items-center justify-between text-center md:text-left">
+            <h2 class="text-4xl font-extrabold leading-tight mb-6 md:mb-0 max-w-2xl">
+                Siap untuk memulai? <br class="hidden md:block"> Jangan ragu, kami siap membantu!
+            </h2>
+            <router-link
+                to="/contact"
+                class="bg-white text-indigo-600 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-gray-100 transition duration-300 transform hover:-translate-y-1 hover:scale-105"
+            >
+                Hubungi Kami
+            </router-link>
         </div>
+    </section>
 
-        <!-- Bagian Tengah -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 py-8 text-gray-700">
-          <!-- Brand -->
-          <div class="flex flex-col items-center md:items-start">
-            <div class="flex items-center space-x-2">
-              <img src="@/assets/images/Appointly.png" alt="Appointly" class="w-6 h-6">
-            </div>
-            <div class="flex space-x-4 mt-3">
-              <a href="#" class="text-blue-600 text-xl"><i class="fab fa-facebook"></i></a>
-              <a href="#" class="text-pink-500 text-xl"><i class="fab fa-instagram"></i></a>
-              <a href="#" class="text-blue-400 text-xl"><i class="fab fa-twitter"></i></a>
+    <footer id="contact" class="bg-gray-800 text-gray-300 pt-16 pb-8">
+      <div class="container mx-auto px-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-12 py-8 border-b border-gray-700">
+          <div class="flex flex-col items-center md:items-start text-center md:text-left">
+            <router-link to="/" class="flex items-center space-x-3 mb-4">
+              <img src="@/assets/images/Appointly.png" alt="Appointly" class="h-10" />
+            </router-link>
+            <p class="text-gray-400 text-sm mb-4">Solusi Penjadwalan Cerdas untuk Bisnis Anda.</p>
+            <div class="flex space-x-5 mt-3">
+              <a href="#" class="text-blue-500 hover:text-blue-400 transition transform hover:-translate-y-1 text-2xl"><i class="fab fa-facebook-f"></i></a>
+              <a href="#" class="text-pink-400 hover:text-pink-300 transition transform hover:-translate-y-1 text-2xl"><i class="fab fa-instagram"></i></a>
+              <a href="#" class="text-blue-300 hover:text-blue-200 transition transform hover:-translate-y-1 text-2xl"><i class="fab fa-twitter"></i></a>
+              <a href="#" class="text-red-500 hover:text-red-400 transition transform hover:-translate-y-1 text-2xl"><i class="fab fa-youtube"></i></a>
             </div>
           </div>
 
-          <!-- Links -->
           <div>
-            <h3 class="font-semibold">Company</h3>
-            <ul class="mt-2 space-y-1 text-sm">
-              <li><a href="#" class="hover:text-primary-500">About</a></li>
-              <li><a href="#" class="hover:text-primary-500">Contact</a></li>
-              <li><a href="#" class="hover:text-primary-500">Careers</a></li>
-              <li><a href="#" class="hover:text-primary-500">Team</a></li>
+            <h3 class="font-bold text-lg text-white mb-4">Perusahaan</h3>
+            <ul class="space-y-3 text-gray-400">
+              <li><a href="#about" class="hover:text-white transition duration-200">Tentang Kami</a></li>
+              <li><a href="#contact" class="hover:text-white transition duration-200">Kontak</a></li>
+              <li><a href="#" class="hover:text-white transition duration-200">Karir</a></li>
+              <li><a href="#" class="hover:text-white transition duration-200">Tim Kami</a></li>
             </ul>
           </div>
 
           <div>
-            <h3 class="font-semibold">Designs</h3>
-            <ul class="mt-2 space-y-1 text-sm">
-              <li><a href="#" class="hover:text-primary-500">Design contests</a></li>
-              <li><a href="#" class="hover:text-primary-500">1-to-1 Projects</a></li>
-              <li><a href="#" class="hover:text-primary-500">Find a designer</a></li>
-              <li><a href="#" class="hover:text-primary-500">Discover inspiration</a></li>
-              <li><a href="#" class="hover:text-primary-500">Pricing</a></li>
+            <h3 class="font-bold text-lg text-white mb-4">Layanan</h3>
+            <ul class="space-y-3 text-gray-400">
+              <li><a href="#services" class="hover:text-white transition duration-200">SEO/SEM</a></li>
+              <li><a href="#services" class="hover:text-white transition duration-200">Pemasaran Digital</a></li>
+              <li><a href="#services" class="hover:text-white transition duration-200">Kampanye Viral</a></li>
+              <li><a href="#services" class="hover:text-white transition duration-200">Solusi Kustom</a></li>
             </ul>
           </div>
 
           <div>
-            <h3 class="font-semibold">Resources</h3>
-            <ul class="mt-2 space-y-1 text-sm">
-              <li><a href="#" class="hover:text-primary-500">Become a designer</a></li>
-              <li><a href="#" class="hover:text-primary-500">Blog</a></li>
-              <li><a href="#" class="hover:text-primary-500">Design without borders</a></li>
-              <li><a href="#" class="hover:text-primary-500">99awards</a></li>
-              <li><a href="#" class="hover:text-primary-500">Affiliates</a></li>
+            <h3 class="font-bold text-lg text-white mb-4">Sumber Daya</h3>
+            <ul class="space-y-3 text-gray-400">
+              <li><a href="#" class="hover:text-white transition duration-200">Menjadi Desainer</a></li>
+              <li><a href="#blog" class="hover:text-white transition duration-200">Blog Kami</a></li>
+              <li><a href="#" class="hover:text-white transition duration-200">Panduan</a></li>
+              <li><a href="#" class="hover:text-white transition duration-200">Studi Kasus</a></li>
             </ul>
           </div>
         </div>
       </div>
 
-      <!-- Bagian Bawah -->
-      <div class="bg-primary-500 text-center text-white py-4">
-        <p class="text-sm">All rights gmedia 2025</p>
+      <div class="bg-gray-900 text-center text-gray-500 py-4 mt-8">
+        <p class="text-sm">&copy; 2025 Appointly. All rights reserved.</p>
       </div>
     </footer>
   </div>
@@ -224,35 +220,35 @@ export default {
       isOpen: false,
       services: [
         {
-          title: 'Seo/Sem',
-          icon: '../assets/icons/phone.svg',
-          color: 'border-yellow-400',
-          iconBg: 'bg-yellow-400 text-white',
+          title: 'SEO/SEM',
+          icon: '/icons/search-engine.svg', // Pastikan ikon ini ada dan benar path-nya
+          color: 'border-b-yellow-400', // Gunakan border-b untuk bawah
+          iconBg: 'bg-yellow-400',
         },
         {
-          title: 'Marketing',
-          icon: '/icons/marketing-icon.png',
-          color: 'border-green-500',
-          iconBg: 'bg-green-500 text-white',
+          title: 'Digital Marketing',
+          icon: '/icons/marketing-growth.svg', // Pastikan ikon ini ada dan benar path-nya
+          color: 'border-b-green-500',
+          iconBg: 'bg-green-500',
         },
         {
           title: 'Viral Campaign',
-          icon: '/icons/viral-icon.png',
-          color: 'border-purple-500',
-          iconBg: 'bg-purple-500 text-white',
+          icon: '/icons/viral-share.svg', // Pastikan ikon ini ada dan benar path-nya
+          color: 'border-b-purple-500',
+          iconBg: 'bg-purple-500',
         },
         {
-          title: 'Others',
-          icon: '/icons/others-icon.png',
-          color: 'border-red-500',
-          iconBg: 'bg-red-500 text-white',
+          title: 'Custom Solutions', // Ubah Others jadi lebih spesifik
+          icon: '/icons/solution.svg', // Pastikan ikon ini ada dan benar path-nya
+          color: 'border-b-red-500',
+          iconBg: 'bg-red-500',
         },
       ],
       steps: [
-        { title: "Contact us", description: "Contact us to boost your brand visibility." },
-        { title: "Consult", description: "Always available to answer your questions." },
-        { title: "Place order", description: "Buy our package today to proceed." },
-        { title: "Payment", description: "We receive payments in all types of banking." }
+        { title: "Hubungi Kami", description: "Jangkau tim kami untuk mendiskusikan kebutuhan Anda." },
+        { title: "Konsultasi Gratis", description: "Dapatkan sesi konsultasi personal untuk menemukan solusi terbaik." },
+        { title: "Mulai Proyek", description: "Setelah perencanaan, kami segera memulai proyek Anda." },
+        { title: "Lihat Hasil", description: "Saksikan bagaimana solusi kami membawa pertumbuhan nyata bagi bisnis Anda." }
       ],
     };
   },
@@ -264,3 +260,126 @@ export default {
 };
 </script>
 
+<style scoped>
+/* Transisi Slide Down untuk Mobile Menu */
+.slide-down-enter-active, .slide-down-leave-active {
+  transition: all 0.3s ease-out;
+  max-height: 500px; /* Nilai yang cukup besar untuk transisi */
+  opacity: 1;
+}
+.slide-down-enter-from, .slide-down-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Keyframes untuk Animasi */
+@keyframes fadeInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes bounceSlow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-5px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Aplikasi Animasi */
+.animate-fade-in-up {
+  animation: fadeInFromBottom 0.8s ease-out forwards;
+  opacity: 0; /* Pastikan elemen tersembunyi sebelum animasi */
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-left {
+  animation: fadeInFromLeft 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-fade-in-right {
+  animation: fadeInFromRight 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+.animate-bounce-slow {
+  animation: bounceSlow 4s infinite ease-in-out;
+}
+
+/* Delay Animasi */
+.delay-200 { animation-delay: 0.2s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-600 { animation-delay: 0.6s; }
+
+/* Invert filter untuk ikon SVG agar warnanya jadi putih */
+.filter-invert {
+    filter: invert(100%);
+}
+</style>

@@ -1,15 +1,91 @@
+<script>
+import { register } from '@/api/auth-api'
+
+export default {
+  name: 'RegisterClient',
+  data() {
+    return {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      showPassword: false,
+      showConfirmPassword: false,
+      errorMessage: '',
+      isLoading: false,
+    }
+  },
+  methods: {
+    async handleRegister() {
+      this.errorMessage = ''
+      if (this.password.length < 8) {
+        this.errorMessage = 'Password must be at least 8 characters long.'
+        return
+      }
+
+      if (this.password !== this.confirmPassword) {
+        this.errorMessage = 'Passwords do not match.'
+        return
+      }
+
+      const userData = {
+        name: this.name,
+        email: this.email,
+        password: this.password,
+        password_confirmation: this.confirmPassword,
+      }
+
+      try {
+        this.isLoading = true
+        const response = await register(userData)
+
+        if (response.status === 'success') {
+          // Simpan email di sessionStorage, bukan di URL
+          sessionStorage.setItem('verif_email', this.email)
+          this.$router.push({ path: '/verify-email' })
+        }
+      } catch (error) {
+        if (error.response?.data?.errors?.email) {
+          this.errorMessage = error.response.data.errors.email[0]
+        } else if (error.response?.data?.message) {
+          this.errorMessage = error.response.data.message
+        } else {
+          this.errorMessage = 'Something went wrong. Please try again.'
+        }
+      } finally {
+        this.isLoading = false
+      }
+    },
+  },
+}
+</script>
+
+<style scoped>
+.loader {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+</style>
+
 <template>
-  <div class="flex h-screen bg-gray-100">
-    <!-- Form Section -->
-    <div class="w-1/2 flex items-center justify-center p-8">
+  <div class="flex flex-col md:flex-row h-screen bg-gray-100">
+    <div class="w-full md:w-1/2 flex items-center justify-center p-8">
       <div class="w-full max-w-lg">
-        <img src="@/assets/images/Appointly.png" alt="Logo Appointly" class="h-10 mb-6" />
+        <img src="@/assets/images/Appointly.png" alt="Logo Appointly" class="h-10 mb-6 mx-auto md:mx-0" />
 
-        <h2 class="text-3xl font-bold text-gray-800">Unlock Your Experience!</h2>
-        <p class="text-gray-500 mb-6">Create an account and unlock your next great scheduling.</p>
+        <h2 class="text-3xl font-bold text-gray-800 text-center md:text-left">Unlock Your Experience!</h2>
+        <p class="text-gray-500 mb-6 text-center md:text-left">Create an account and unlock your next great scheduling.</p>
 
-        <!-- Error -->
-        <div v-if="errorMessage" class="bg-red-100 text-red-700 px-4 py-3 rounded mb-4">
+        <div v-if="errorMessage" class="bg-red-100 text-red-700 px-4 py-3 rounded mb-4 text-center">
           {{ errorMessage }}
         </div>
 
@@ -59,7 +135,7 @@
                 />
                 <path
                   v-else
-                  d="M13.359 11.238c.78-.813 1.369-1.814 1.641-2.684..."
+                  d="M13.359 11.238c.78-.813 1.369-1.814 1.641-2.684C14.671 6.47 11.723 3.5 8 3.5a7.03 7.03 0 0 0-2.078.31l1.423 1.423a3.5 3.5 0 0 1 3.594 3.594l1.42 1.42zM2.12 1.659l12.223 12.222-.708.708L10.89 12.1a7.025 7.025 0 0 1-2.89.6c-3.723 0-6.671-2.97-6.999-5.054.243-1.175 1.168-2.492 2.44-3.493L1.413 2.367l.707-.708z"
                 />
               </svg>
             </div>
@@ -89,7 +165,7 @@
                 />
                 <path
                   v-else
-                  d="M13.359 11.238c.78-.813 1.369-1.814 1.641-2.684..."
+                  d="M13.359 11.238c.78-.813 1.369-1.814 1.641-2.684C14.671 6.47 11.723 3.5 8 3.5a7.03 7.03 0 0 0-2.078.31l1.423 1.423a3.5 3.5 0 0 1 3.594 3.594l1.42 1.42zM2.12 1.659l12.223 12.222-.708.708L10.89 12.1a7.025 7.025 0 0 1-2.89.6c-3.723 0-6.671-2.97-6.999-5.054.243-1.175 1.168-2.492 2.44-3.493L1.413 2.367l.707-.708z"
                 />
               </svg>
             </div>
@@ -105,37 +181,33 @@
           </button>
         </form>
 
-        <!-- OR -->
-        <div class="flex items-center my-6">
+        <!-- <div class="flex items-center my-6">
           <hr class="flex-grow border-gray-300" />
           <span class="px-4 text-gray-400">Or</span>
           <hr class="flex-grow border-gray-300" />
         </div>
 
-        <!-- Google Login -->
         <button
           class="w-full flex items-center justify-center border py-3 rounded-lg font-semibold text-gray-700 hover:bg-gray-100"
         >
           <img src="@/assets/images/google.png" class="h-5 w-5 mr-2" />
           Continue with Google
-        </button>
+        </button> -->
 
-        <!-- Login Link -->
-        <p class="text-center text-gray-600 mt-6">
+        <p class="text-center text-gray-600 mt-2">
           Already have an account?
           <router-link to="/login" class="text-indigo-600 font-semibold">Sign in</router-link>
         </p>
       </div>
     </div>
 
-    <!-- Image Section -->
-    <div class="w-1/2 flex items-center justify-center bg-gray-100 p-8 relative rounded-l-lg">
+    <div class="hidden md:flex w-full md:w-1/2 items-center justify-center bg-gray-100 p-8 relative rounded-l-lg">
       <img
         src="@/assets/images/gambar1.jpeg"
         class="w-full h-full object-cover object-center rounded-lg shadow-lg"
         style="max-width: 100%; max-height: 100vh"
       />
-      <div class="absolute inset-0 flex flex-col justify-end text-white p-8 rounded-lg">
+      <div class="absolute inset-0 flex flex-col justify-end text-white p-8 rounded-lg bg-black bg-opacity-30">
         <h3 class="text-3xl font-bold">Say goodbye to manual scheduling hassles</h3>
         <p class="mt-2 text-lg">
           Our smart appointment booking system allows you to manage your schedule effortlessly.
@@ -145,79 +217,3 @@
   </div>
 </template>
 
-<script>
-import Swal from 'sweetalert2'
-import { register } from '@/api/auth-api'
-
-export default {
-  name: 'RegisterClient',
-  data() {
-    return {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      showPassword: false,
-      showConfirmPassword: false,
-      errorMessage: '',
-      isLoading: false,
-    }
-  },
-  methods: {
-    async handleRegister() {
-      this.errorMessage = ''
-      if (this.password.length < 8) {
-        this.errorMessage = 'Password must be at least 8 characters long.'
-        return
-      }
-
-      if (this.password !== this.confirmPassword) {
-        this.errorMessage = 'Passwords do not match.'
-        return
-      }
-
-      const userData = {
-        name: this.name,
-        email: this.email,
-        password: this.password,
-        password_confirmation: this.confirmPassword,
-      }
-
-      try {
-        this.isLoading = true
-        const response = await register(userData)
-
-        if (response.status === 'success') {
-          this.$router.push({ path: '/verify-email', query: { email: this.email } })
-        }
-      } catch (error) {
-        if (error.response?.data?.errors?.email) {
-          this.errorMessage = error.response.data.errors.email[0]
-        } else if (error.response?.data?.message) {
-          this.errorMessage = error.response.data.message
-        } else {
-          this.errorMessage = 'Something went wrong. Please try again.'
-        }
-      } finally {
-        this.isLoading = false
-      }
-    },
-  },
-}
-</script>
-
-<style scoped>
-.loader {
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid white;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-</style>

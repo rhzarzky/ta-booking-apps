@@ -10,7 +10,7 @@
       </div>
       <h1 class="text-2xl font-bold text-gray-800 mb-2">Cek Email Anda</h1>
       <p class="text-gray-600 mb-6">
-        Kami telah mengirimkan email verifikasi ke <span class="font-semibold text-indigo-600">{{ email }}</span>.
+        Kami telah mengirimkan email verifikasi ke <span class="font-semibold text-indigo-600">{{ maskedEmail }}</span>.<br>
         Silakan klik link verifikasi di email Anda untuk mengaktifkan akun.
       </p>
       <router-link to="/login"
@@ -24,26 +24,19 @@
 <script>
 export default {
   name: 'VerifyEmail',
+  data() {
+    return {
+      email: sessionStorage.getItem('verif_email') || ''
+    }
+  },
   computed: {
-    email() {
-      return this.$route.query.email || 'email Anda'
+    maskedEmail() {
+      const email = this.email
+      if (!email || !email.includes('@')) return 'email Anda'
+      const [user, domain] = email.split('@')
+      const maskedUser = user.length > 2 ? user.slice(0, 2) + '*'.repeat(user.length - 2) : user[0] + '*'
+      return `${maskedUser}@${domain}`
     }
   }
 }
 </script>
-
-<style scoped>
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.animate-fade-in {
-  animation: fade-in 0.6s ease-out;
-}
-</style>

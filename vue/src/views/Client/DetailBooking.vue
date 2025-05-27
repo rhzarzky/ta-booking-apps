@@ -37,8 +37,26 @@ const statusClass = computed(() => {
       return 'bg-red-100 text-red-700 px-2 py-1 rounded'
   }
 })
-</script>
 
+// Google Calendar Link Generator
+const generateGoogleCalendarUrl = computed(() => {
+  if (!booking.value) return '#'
+
+  const title = encodeURIComponent(booking.value.service.title)
+  const details = encodeURIComponent(booking.value.service.description || '')
+  const location = encodeURIComponent(booking.value.service.location || '')
+
+  const startDate = new Date(`${booking.value.service.date}T${booking.value.service.time}`)
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000) // +1 jam
+
+  const formatDate = (date) => {
+    return date.toISOString().replace(/-|:|\.\d\d\d/g, '')
+  }
+
+  const dates = `${formatDate(startDate)}/${formatDate(endDate)}`
+  return `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${dates}`
+})
+</script>
 
 <template>
   <div class="p-2 bg-gray-100 min-h-screen">
@@ -96,10 +114,20 @@ const statusClass = computed(() => {
             <p class="text-sm">{{ booking.service.note }}</p>
           </div>
         </div>
+
+        <!-- Tombol Tambahkan ke Kalender -->
+        <div class="mb-4 text-center">
+          <a
+            :href="generateGoogleCalendarUrl"
+            target="_blank"
+            class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          >
+            Tambahkan ke Google Calendar
+          </a>
+        </div>
       </div>
     </div>
 
     <div v-else class="text-center text-gray-500">Loading booking data...</div>
   </div>
 </template>
-

@@ -2,12 +2,16 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{AuthController, RoleController, ServiceController, 
-    UserController, BookingController, VerificationController};
+    UserController, BookingController, VerificationController,ForgotPasswordController};
 use App\Http\Middleware\JwtMiddleware;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify.jwt');
+Route::post('/forgot-password', [VerificationController::class, 'sendOtp']);
+Route::post('/verify-otp', [VerificationController::class, 'verifyOtp']);
+Route::post('/reset-password', [VerificationController::class, 'resetPassword']);
+Route::post('/resend-otp', [VerificationController::class, 'resendOtp']);
 
 Route::middleware([JwtMiddleware::class])->group(function () {
 

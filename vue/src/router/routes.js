@@ -12,6 +12,10 @@ import DetailService from '@/views/Client/DetailService.vue';
 import DetailBooking from '@/views/Client/DetailBooking.vue';
 import VerifyEmail from '@/views/VerifyEmail.vue';
 import EmailVerificationSuccess from '@/views/EmailVerificationSuccess.vue';
+import ForgotPassword from '@/views/ForgotPassword.vue';
+import VerifyOtp from '@/views/VerifyOtp.vue';
+import ResetPassword from '@/views/ResetPassword.vue';
+import SuccessReset from '@/views/SuccessReset.vue';
 import UnknownPage from '@/views/error/UnknownPage.vue';
 
 const routes = [
@@ -55,6 +59,39 @@ const routes = [
       title: 'Email Terverifikasi',
     },
   },
+    {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: ForgotPassword,
+    meta: {
+      title: 'Lupa Password',
+    },
+  },
+  {
+    path: '/verify-otp',
+    name: 'verify-otp',
+    component: VerifyOtp,
+    meta: {
+      title: 'Verifikasi OTP',
+    },
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: ResetPassword,
+    meta: {
+      title: 'Reset Password',
+    },
+  },
+  {
+    path: '/success-reset',
+    name: 'success-reset',
+    component: SuccessReset,
+    meta: {
+      title: 'success reset',
+    },
+  },
+
   {
         path: "/:pathMatch(.*)*",
         name: "404 Error",

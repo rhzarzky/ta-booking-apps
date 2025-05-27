@@ -3,12 +3,13 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from 'axios'
 import { authServices } from '@/services/auth-services'
-import { fetchProfile } from '@/api/auth-api'
+import { fetchProfile, sendOtp, verifyOtp, resetPassword, resendOtp } from '@/api/auth-api'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const errors = ref({})
   const loading = ref(false)
+  
 
   const isLoggedIn = computed(() => authServices.isAuthenticated())
   const userName = computed(() => user.value?.name || '')
@@ -106,6 +107,58 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const handleSendOtp = async (email) => {
+    loading.value = true
+    try {
+      errors.value = {}
+      const response = await sendOtp(email)
+      return response
+    } catch (error) {
+      // error sudah dikelola di auth-api.js
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const handleVerifyOtp = async (otp) => {
+    loading.value = true
+    try {
+      errors.value = {}
+      const response = await verifyOtp(otp)
+      return response
+    } catch (error) {
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const handleResetPassword = async (data) => {
+    errors.value = {}
+    loading.value = true
+    try {
+      await resetPassword(data)
+    } catch (error) {
+      // Error sudah disimpan di `auth-api.js`
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const handleResendOtp = async (email) => {
+    loading.value = true
+    try {
+      errors.value = {}
+      const response = await resendOtp(email)
+      return response
+    } catch (error) {
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     user,
     errors,
@@ -118,5 +171,9 @@ export const useAuthStore = defineStore('auth', () => {
     handleLogout,
     getCurrentUser,
     updateProfile,
+    handleSendOtp,
+    handleVerifyOtp,
+    handleResetPassword,
+    handleResendOtp,
   }
 })

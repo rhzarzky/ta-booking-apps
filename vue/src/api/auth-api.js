@@ -3,6 +3,7 @@ import api from './api';
 import { ref } from 'vue';
 import { authServices } from '@/services/auth-services';
 
+
 export const loading = ref(false);
 export const errors = ref({});
 
@@ -88,5 +89,69 @@ export const updateProfile = async (formData) => {
   } catch (error) {
     console.error("Update profile error:", error.response?.data || error.message);
     throw error;
+  }
+};
+
+// Kirim OTP ke email
+export const sendOtp = async (email) => {
+  loading.value = true;
+  errors.value = {};
+  try {
+    const response = await api.post('/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    errors.value = { general: error.response?.data.message || 'Failed to send OTP' };
+    throw error;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Verifikasi OTP
+export const verifyOtp = async (otp) => {
+  loading.value = true;
+  errors.value = {};
+  try {
+    const response = await api.post('/verify-otp', { otp });
+    return response.data;
+  } catch (error) {
+    errors.value = { general: error.response?.data.message || 'OTP verification failed' };
+    throw error;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Reset Password setelah OTP diverifikasi
+export const resetPassword = async (passwordData) => {
+  loading.value = true;
+  errors.value = {};
+  try {
+    const response = await api.post('/reset-password', passwordData);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 422) {
+      errors.value = error.response.data.errors;
+    } else {
+      errors.value = { general: error.response?.data.message || 'Reset password failed' };
+    }
+    throw error;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Kirim ulang OTP
+export const resendOtp = async (email) => {
+  loading.value = true;
+  errors.value = {};
+  try {
+    const response = await api.post('/resend-otp', { email });
+    return response.data;
+  } catch (error) {
+    errors.value = { general: error.response?.data.message || 'Failed to resend OTP' };
+    throw error;
+  } finally {
+    loading.value = false;
   }
 };
