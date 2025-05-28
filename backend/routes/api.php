@@ -74,12 +74,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::post('/booking/{id}/complete', [BookingCompletionController::class, 'markAsCompleted']);
     Route::get('/booking/{id}/completion-status', [BookingCompletionController::class, 'getCompletionStatus']);
     
-    // Admin routes for completion
-    Route::middleware(['permission:confirm booking'])->group(function () {
-        Route::post('/admin/booking/{id}/complete', [BookingCompletionController::class, 'adminMarkAsCompleted']);
-        Route::post('/admin/process-expired-reviews', [BookingCompletionController::class, 'processExpiredReviews']);
-    });
-    
     Route::post('/booking/{id}/review', [ReviewController::class, 'submitReview']);
     Route::get('/booking/{id}/review', [ReviewController::class, 'getReview']);
     Route::get('/booking/{id}/can-review', [ReviewController::class, 'canReview']);

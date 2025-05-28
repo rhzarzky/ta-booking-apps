@@ -11,6 +11,8 @@ class CardAppointment extends StatelessWidget {
   final VoidCallback linkCard;
   final VoidCallback? reviewButton;
   final VoidCallback? linkViewReview;
+  final VoidCallback? approveButton;
+  final String? isApproved;
   final String noteCard;
   final String statusCard;
   final String? onlineLocCard;
@@ -26,6 +28,8 @@ class CardAppointment extends StatelessWidget {
     required this.linkCard,
     this.reviewButton,
     this.linkViewReview,
+    this.approveButton,
+    this.isApproved,
     required this.noteCard,
     required this.statusCard,
     this.onlineLocCard,
@@ -111,10 +115,13 @@ class CardAppointment extends StatelessWidget {
                   Row(
                     children: [
                       _buildViewButton(),
-                      if (statusCard.toLowerCase() == 'approved' &&
-                          reviewButton != null) ...[
+                      if (statusCard.toLowerCase() == 'approved') ...[
                         SizedBox(width: 12),
-                        _buildReviewButton(),
+                        // Show approve button if not yet approved, otherwise show review button
+                        if (isApproved == null || isApproved != 'true')
+                          _buildButtonApprove()
+                        else
+                          _buildReviewButton(),
                       ],
                     ],
                   ),
@@ -422,9 +429,38 @@ class CardAppointment extends StatelessWidget {
         icon: Icon(
           Icons.stars_outlined,
           color: ColorPallete.primaryColor,
+          size: 24,
         ),
         style: TextButton.styleFrom(
           backgroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: ColorPallete.primaryColor),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButtonApprove() {
+    return Expanded(
+      child: TextButton.icon(
+        onPressed: approveButton,
+        label: Text('Finised ?',
+            style: GoogleFonts.ubuntu(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: ColorPallete.primaryColor,
+            )),
+        icon: Icon(
+          Icons.check_circle_outline_rounded,
+          color: ColorPallete.primaryColor,
+          size: 24,
+        ),
+        style: TextButton.styleFrom(
+          backgroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(color: ColorPallete.primaryColor),

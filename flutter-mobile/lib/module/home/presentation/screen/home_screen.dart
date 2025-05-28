@@ -7,6 +7,10 @@ import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/auth/repository/auth_repository.dart';
 import 'package:Appointly/module/meetings/presentation/screen/history_meeting.dart';
+import 'package:Appointly/module/home/presentation/bloc/home_bloc.dart';
+import 'package:Appointly/module/meetings/repository/historyBooking_repository.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
+import 'package:Appointly/module/meetings/repository/review_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -286,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => HistoryMeetings(
+                      builder: (context) => HistoryMeetingsWithProvider(
                         bookingId: widget.bookingId,
                       ),
                     ),

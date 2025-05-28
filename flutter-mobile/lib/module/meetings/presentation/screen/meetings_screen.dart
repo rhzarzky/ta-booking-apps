@@ -15,6 +15,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
+import 'package:Appointly/module/meetings/repository/review_repository.dart';
 // Repository is already imported above
 
 class MeetingsScreen extends StatefulWidget {
@@ -140,11 +142,8 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => BlocProvider.value(
-                      value: context.read<BookingBloc>(),
-                      child: HistoryMeetings(
-                        bookingId: widget.bookingId,
-                      ),
+                    builder: (context) => HistoryMeetingsWithProvider(
+                      bookingId: widget.bookingId,
                     ),
                   ),
                 );

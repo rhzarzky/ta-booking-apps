@@ -1,15 +1,22 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/model/booking_model.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
-import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_event.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_state.dart';
 import 'package:Appointly/module/meetings/presentation/screen/review_screen.dart';
+import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/meetings/presentation/widget/card_appointment.dart';
 import 'package:Appointly/module/meetings/presentation/widget/filter_bottomsheet.dart';
+import 'package:Appointly/module/meetings/repository/review_repository.dart';
+import 'package:Appointly/module/meetings/repository/historyBooking_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:Appointly/module/auth/repository/auth_repository.dart';
 
 class HistoryMeetings extends StatefulWidget {
   final int bookingId;
@@ -22,12 +29,69 @@ class HistoryMeetings extends StatefulWidget {
   State<HistoryMeetings> createState() => _HistoryMeetingsState();
 }
 
+class HistoryMeetingsWithProvider extends StatelessWidget {
+  final int bookingId;
+
+  const HistoryMeetingsWithProvider({
+    super.key,
+    required this.bookingId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return HistoryMeetings(bookingId: bookingId);
+  }
+}
+
 class _HistoryMeetingsState extends State<HistoryMeetings> {
+  // Set untuk melacak booking yang sudah di-approve oleh user
+  Set<int> finishedBookings = {};
+  // Set untuk melacak booking yang sudah di-review oleh user
+  Set<int> reviewedBookings = {};
+
   @override
   void initState() {
     super.initState();
+    // Load saved states
+    _loadSavedStates();
     // Fetch bookings when screen loads
     context.read<BookingBloc>().add(GetBookingEvent());
+  }
+
+  // Load saved states from SharedPreferences
+  Future<void> _loadSavedStates() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Load finished bookings
+    final finishedList = prefs.getStringList('finished_bookings') ?? [];
+    setState(() {
+      finishedBookings = finishedList.map((id) => int.parse(id)).toSet();
+    });
+
+    // Load reviewed bookings
+    final reviewedList = prefs.getStringList('reviewed_bookings') ?? [];
+    setState(() {
+      reviewedBookings = reviewedList.map((id) => int.parse(id)).toSet();
+    });
+
+    print('Loaded finished bookings: $finishedBookings');
+    print('Loaded reviewed bookings: $reviewedBookings');
+  }
+
+  // Save finished bookings to SharedPreferences
+  Future<void> _saveFinishedBookings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final finishedList = finishedBookings.map((id) => id.toString()).toList();
+    await prefs.setStringList('finished_bookings', finishedList);
+    print('Saved finished bookings: $finishedBookings');
+  }
+
+  // Save reviewed bookings to SharedPreferences
+  Future<void> _saveReviewedBookings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final reviewedList = reviewedBookings.map((id) => id.toString()).toList();
+    await prefs.setStringList('reviewed_bookings', reviewedList);
+    print('Saved reviewed bookings: $reviewedBookings');
   }
 
   @override
@@ -166,14 +230,23 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             },
             noteCard: booking.note ?? '',
             statusCard: booking.status,
-            reviewButton: booking.status.toLowerCase() == 'approved'
+            isApproved:
+                finishedBookings.contains(booking.idBooking) ? 'true' : 'false',
+            reviewButton: booking.status.toLowerCase() == 'approved' &&
+                    finishedBookings.contains(booking.idBooking)
                 ? () {
-                    _showReviewDialog(context, booking);
+                    _bottomSheetReview(context, booking);
                   }
                 : null,
             linkViewReview: booking.status.toLowerCase() == 'approved'
                 ? () {
                     _navigateToReviews(context, booking);
+                  }
+                : null,
+            approveButton: booking.status.toLowerCase() == 'approved' &&
+                    !finishedBookings.contains(booking.idBooking)
+                ? () {
+                    _showModalApprove(context, booking);
                   }
                 : null,
           ),
@@ -273,80 +346,150 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
     Navigator.pop(context);
   }
 
-  void _showReviewDialog(BuildContext context, Booking booking) {
-    showDialog(
+  void _bottomSheetReview(BuildContext context, Booking booking) {
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        double rating = 0.0;
-        String comment = '';
+        return ReviewBottomSheet(
+          booking: booking,
+          onReviewSubmitted: (rating) {
+            // Tambahkan booking ke set reviewed bookings
+            setState(() {
+              reviewedBookings.add(booking.idBooking);
+            });
+            // Save to SharedPreferences
+            _saveReviewedBookings();
+            print(
+                'Review submitted for booking ${booking.idBooking} with rating: $rating');
+          },
+        );
+      },
+    );
+  }
 
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(
-                'Review ${booking.service.title}',
-                style: GoogleFonts.ubuntu(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+  void _showModalApprove(BuildContext context, Booking booking) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return BlocListener<ReviewBloc, ReviewState>(
+          listener: (context, state) {
+            if (state is CompleteMeetingSuccess) {
+              // Tambahkan booking ke set finished bookings
+              setState(() {
+                finishedBookings.add(booking.idBooking);
+              });
+              // Save to SharedPreferences
+              _saveFinishedBookings();
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Meeting marked as finished!'),
+                  backgroundColor: ColorPallete.primaryColor,
                 ),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'How was your experience?',
-                    style: GoogleFonts.ubuntu(fontSize: 14),
-                  ),
-                  SizedBox(height: 16),
-                  // Rating stars
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      return IconButton(
-                        onPressed: () {
-                          setState(() {
-                            rating = index + 1.0;
-                          });
-                        },
-                        icon: Icon(
-                          index < rating ? Icons.star : Icons.star_border,
-                          color: ColorPallete.primaryColor,
-                          size: 30,
-                        ),
-                      );
-                    }),
-                  ),
-                  SizedBox(height: 16),
-                  TextField(
-                    onChanged: (value) => comment = value,
-                    decoration: InputDecoration(
-                      hintText: 'Write your review...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+              );
+            } else if (state is ReviewFailure) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: ${state.error}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          child: BlocBuilder<ReviewBloc, ReviewState>(
+            builder: (context, state) {
+              return Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(Radius.circular(16))),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Mark as Finished',
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: ColorPallete.darkBlack,
                       ),
                     ),
-                    maxLines: 3,
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Cancel'),
+                    SizedBox(height: 16),
+                    Text(
+                      'Mark this meeting as finished? You can then leave a review.',
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 14,
+                        color: ColorPallete.darkGreySilver,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: state is ReviewLoading
+                                ? null
+                                : () {
+                                    Navigator.pop(context);
+                                  },
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 14,
+                                color: ColorPallete.darkGreySilver,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: state is ReviewLoading
+                                ? null
+                                : () {
+                                    // Trigger complete meeting event
+                                    context.read<ReviewBloc>().add(
+                                          CompleteMeetingEvent(
+                                              bookingId: booking.idBooking),
+                                        );
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ColorPallete.primaryColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: state is ReviewLoading
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    'Mark Finished',
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
                 ),
-                ElevatedButton(
-                  onPressed: rating > 0
-                      ? () {
-                          // Submit review
-                          _submitReview(booking.idBooking, rating, comment);
-                          Navigator.pop(context);
-                        }
-                      : null,
-                  child: Text('Submit Review'),
-                ),
-              ],
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
@@ -361,18 +504,338 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
       ),
     );
   }
+}
 
-  void _submitReview(int bookingId, double rating, String comment) {
-    // Implementasi submit review ke API
-    // Bisa menggunakan bloc atau service
+class ReviewBottomSheet extends StatefulWidget {
+  final Booking booking;
+  final Function(int)? onReviewSubmitted;
+
+  const ReviewBottomSheet({
+    super.key,
+    required this.booking,
+    this.onReviewSubmitted,
+  });
+
+  @override
+  State<ReviewBottomSheet> createState() => _ReviewBottomSheetState();
+}
+
+class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
+  int selectedRating = 0;
+  final TextEditingController reviewController = TextEditingController();
+
+  @override
+  void dispose() {
+    reviewController.dispose();
+    super.dispose();
+  }
+
+  void _submitReview() async {
     print(
-        'Submitting review for booking $bookingId: $rating stars, comment: $comment');
+        '_submitReview called with rating: $selectedRating, comment: ${reviewController.text}');
 
-    // TODO: Implement API call to submit review
-    // context.read<ReviewBloc>().add(SubmitReviewEvent(
-    //   bookingId: bookingId,
-    //   rating: rating,
-    //   comment: comment,
-    // ));
+    try {
+      // Get user ID from AuthRepository instead of SharedPreferences directly
+      final AuthRepository authRepository = AuthRepository();
+      final user = await authRepository.getUserData();
+
+      print('User data from AuthRepository: $user');
+
+      if (user == null || user.id == 0) {
+        print('Error: User not found or invalid user ID');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: User not found. Please login again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      print('User ID: ${user.id}');
+      print('Triggering SubmitReviewEvent...');
+      // Trigger submit review event
+      context.read<ReviewBloc>().add(
+            SubmitReviewEvent(
+              bookingId: widget.booking.idBooking,
+              rating: selectedRating,
+              comment: reviewController.text,
+              userId: user.id,
+            ),
+          );
+      print('SubmitReviewEvent triggered successfully');
+    } catch (e) {
+      print('Error in _submitReview: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error submitting review: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<ReviewBloc, ReviewState>(
+      listener: (context, state) {
+        if (state is SubmitReviewSuccess) {
+          // Call the callback to update parent state
+          if (widget.onReviewSubmitted != null) {
+            widget.onReviewSubmitted!(selectedRating);
+          }
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Review submitted successfully!'),
+              backgroundColor: ColorPallete.primaryColor,
+            ),
+          );
+        } else if (state is ReviewFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${state.error}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: ColorPallete.redCinnabar,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'Write Your Review',
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: ColorPallete.darkBlack,
+                      ),
+                    ),
+                    BlocBuilder<ReviewBloc, ReviewState>(
+                      builder: (context, reviewState) {
+                        final isEnabled =
+                            selectedRating > 0 && reviewState is! ReviewLoading;
+                        print(
+                            'Button enabled: $isEnabled, selectedRating: $selectedRating, state: $reviewState');
+
+                        return ElevatedButton(
+                          onPressed: isEnabled
+                              ? () {
+                                  print(
+                                      'Submit button pressed with rating: $selectedRating');
+                                  _submitReview();
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isEnabled
+                                ? ColorPallete.primaryColor
+                                : Colors.grey,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: reviewState is ReviewLoading
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  'Submit',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              Divider(height: 1, color: Colors.grey[300]),
+
+              Padding(
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Service Info
+                    Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: SizedBox(
+                            width: 70,
+                            height: 70,
+                            child: (widget.booking.service.image != null &&
+                                    widget.booking.service.image!.isNotEmpty)
+                                ? widget.booking.service.image!
+                                        .startsWith('http')
+                                    ? Image.network(
+                                        widget.booking.service.image!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Image.asset(
+                                                    'assets/image/404page.png',
+                                                    fit: BoxFit.cover),
+                                      )
+                                    : Image.asset(widget.booking.service.image!,
+                                        fit: BoxFit.cover)
+                                : Image.asset(
+                                    'assets/image/404page.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.booking.service.title,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                widget.booking.service.description,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 30),
+
+                    // Rating Section
+                    Row(
+                      children: [
+                        Text(
+                          'Tap to Rate',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Spacer(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(5, (index) {
+                            return GestureDetector(
+                              onTap: () {
+                                print('Rating tapped: ${index + 1}');
+                                setState(() {
+                                  selectedRating = index + 1;
+                                });
+                                print(
+                                    'Selected rating updated to: $selectedRating');
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.star_rate_rounded,
+                                  size: 32,
+                                  color: index < selectedRating
+                                      ? ColorPallete.primaryColor
+                                      : Colors.grey[300],
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+
+                    SizedBox(height: 30),
+                    // Review Field
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Review',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Container(
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: TextField(
+                            controller: reviewController,
+                            maxLines: null,
+                            expands: true,
+                            textAlignVertical: TextAlignVertical.top,
+                            decoration: InputDecoration(
+                              hintText: 'Optional',
+                              hintStyle: TextStyle(color: Colors.grey[400]),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.all(16),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -13,6 +13,8 @@ import 'package:Appointly/module/onboarding/repository/onboarding_repository.dar
 import 'package:Appointly/module/notification/presentation/bloc/notification_bloc.dart';
 import 'package:Appointly/module/profile/presentation/bloc/profile_bloc.dart';
 import 'package:Appointly/module/profile/repository/profile_repository.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
+import 'package:Appointly/module/meetings/repository/review_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -145,6 +147,11 @@ class _MainAppState extends State<MainApp> {
         BlocProvider<MapBloc>(
           create: (context) => MapBloc(
             mapRepository: MapRepository(),
+          ),
+        ),
+        BlocProvider(
+          create: (context) => ReviewBloc(
+            reviewRepository: ReviewRepository(),
           ),
         ),
       ],
