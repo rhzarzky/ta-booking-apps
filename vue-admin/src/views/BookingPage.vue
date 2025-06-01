@@ -1,12 +1,14 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useBookingStore } from '@/stores/booking';
+import { useAuthStore } from '@/stores/auth';
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
 import SkeltonLoader from "@/components/loading-skelton/SkeltonLoader.vue";
 import PaginationPage from "@/components/pagination/PaginationPage.vue";
 
 const bookingStore = useBookingStore();
+const authStore = useAuthStore();
 const searchQuery = ref("");
 const selectedOption = ref("all");
 const currentPage = ref(1);
@@ -16,7 +18,11 @@ const bookingToConfirm = ref(null);
 const showConfirmationModal = ref(false);
 
 const fetchData = async () => {
-    await bookingStore.fetchBookings();
+    await bookingStore.fetchAssignedBooking();
+
+    if (authStore.hasPermission('show booking')) {
+        await bookingStore.fetchBookings();
+    }
 };
 
 onMounted(() => {
@@ -43,6 +49,7 @@ const totalPages = computed(() => {
 
 // Paginated results from filtered bookings
 const paginatedBookings = computed(() => {
+
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return filteredBookings.value.slice(start, end);
@@ -201,7 +208,7 @@ const handleConfirmation = async () => {
                                                     <p class="text-gray-600 mt-2">
                                                         Are you sure you want to {{ actionType === 'Approved' ?
                                                             'approve'
-                                                        : 'decline' }} this booking?
+                                                            : 'decline' }} this booking?
                                                     </p>
                                                     <div class="mt-4 flex justify-end gap-2">
                                                         <button @click="closeConfirmationModal"

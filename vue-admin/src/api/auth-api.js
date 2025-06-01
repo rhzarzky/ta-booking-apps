@@ -44,6 +44,7 @@ export const createUser = async (userData) => {
   }
 };
 
+// create role api
 export const createRole = async (roleData) => {
   try {
     const response = await api.post("/role", roleData);

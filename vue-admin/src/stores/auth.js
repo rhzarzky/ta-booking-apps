@@ -100,6 +100,11 @@ export const useAuthStore = defineStore("authStore", () => {
     }
   };
 
+  // Check if user has a specific permission
+  const hasPermission = (permissionName) => {
+    return currentUser.value?.permissions?.includes(permissionName);
+  };
+
   // Fetch current user
   const fetchCurrentUser = async () => {
     try {
@@ -333,6 +338,7 @@ export const useAuthStore = defineStore("authStore", () => {
     fetchCurrentUser,
     fetchUsersApi,
     fetchUserWithPermissions,
+    hasPermission,
     handleLogin,
     handleLogout,
     handleDeleteUser,

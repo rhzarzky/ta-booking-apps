@@ -89,8 +89,11 @@ class BookingController extends Controller
     {
         $assignedUser = Auth::user();
 
+        // Ambil booking dari service yang di-assign ke user ini
         $assignedBookings = Booking::with('user', 'service')
-            ->where('user_id',  $assignedUser->id)
+            ->whereHas('service', function ($query) use ($assignedUser) {
+                $query->where('user_id', $assignedUser->id);
+            })
             ->get()
             ->groupBy('status')
             ->map(function ($group) {
@@ -108,19 +111,20 @@ class BookingController extends Controller
                             'title' => $booking->service->title,
                             'description' => $booking->service->description,
                             'location'  => $booking->location,
+                            'option' => $booking->option,
+                            'date' => $booking->date,
+                            'time' => $booking->time,
+                            'note' => $booking->note,
+                            'status' => $booking->status,
                         ],
-                        'option' => $booking->option,
-                        'date' => $booking->date,
-                        'time' => $booking->time,
-                        'note' => $booking->note,
-                        'status' => $booking->status,
                     ];
                 });
             });
+
         return response()->json([
             'status' => 'success',
             'message' => 'Assigned booking retrieved successfully',
-            'assigned_bookings' => $assignedBookings,
+            'bookings' => $assignedBookings,
         ], 200);
     }
     public function showDetailBooking($id)

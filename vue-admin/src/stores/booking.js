@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
 import {
-  getBookingApi,
-  getBookingDetailApi,
-  confirmBookingApi,
+    getBookingApi,
+    getBookingDetailApi,
+    getAssignedBookingApi,
+    confirmBookingApi,
 } from "@/api/booking-api"; 
 
 export const useBookingStore = defineStore('booking', {
@@ -33,12 +34,35 @@ export const useBookingStore = defineStore('booking', {
               }
             } catch (err) {
                 console.error('Error fetching bookings:', err);
-              this.error = err.response.data. responseMessage || 'An unexpected error occurred';
-              this.showNotification(this.error, 'error');
+                this.error = err.response.data. responseMessage || 'An unexpected error occurred';
+                this.showNotification(this.error, 'error');
             } finally {
-              this.isLoading = false;
+                this.isLoading = false;
             }
-          },
+        },
+        
+        // Fetching assigned bookings for the current user
+        async fetchAssignedBooking() { 
+            this.isLoading = true;
+            this.error = null;
+            try {
+                const response = await getAssignedBookingApi();
+
+                if (response.data.status === 'success') {
+                    // Filter bookings that are assigned to the current user
+                    this.bookings = Object.values(response.data.bookings).flat();
+                }
+                else {
+                    throw new Error(response.data.message || 'Failed to fetch assigned bookings');
+                }
+            } catch (err) {
+                console.error('Error fetching assigned bookings:', err);
+                this.error = err.response.data.responseMessage || 'An unexpected error occurred';
+                this.showNotification(this.error, 'error');
+            } finally {
+                this.isLoading = false;
+            }
+        },
           
         // Fetching booking details by ID
         async fetchBookingDetail(id) {
