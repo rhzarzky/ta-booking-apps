@@ -20,16 +20,10 @@ onClickOutside(target, () => {
 
 const fetchCurrentUser = async () => {
   try {
-    await fetchCurrentUserApi(); // Hanya dapatkan infomation user yang login
+    await fetchCurrentUserApi(); 
   } catch (err) {
     console.error("failed to fetch current user", err);
   }
-};
-
-// dan pastikan di modal role access control
-const closeRoleAccessControl = () => {
-  isVisible.value = false; // Tutup modal
-  fetchCurrentUser(); // Refresh untuk memastikan sidebar menampilkan data user yang login
 };
 
 const userInfo = computed(() => {
@@ -76,7 +70,6 @@ const baseMenuItems = ref([
                 </svg>`,
         label: "Dashboard",
         route: "/dashboard",
-        // requiredPermission: "update issue",
       },
       {
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -87,7 +80,6 @@ const baseMenuItems = ref([
               `,
         label: "Service",
         route: "/service",
-        // requiredPermission: "update issue",
       },
       {
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -104,7 +96,7 @@ const baseMenuItems = ref([
                 `,
         label: "Booking",
         route: "/booking",
-        // requiredPermission: "update issue",
+        requiredPermission: "show booking",
       },
     ],
   },

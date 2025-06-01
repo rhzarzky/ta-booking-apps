@@ -95,41 +95,34 @@ const handleDeleteConfirmed = async () => {
 <template>
     <DefaultLayout class="bg-whiteBgPrimary-100">
         <div class="min-h-screen flex flex-col gap-4 rounded-2xl bg-white p-4 md:p-8">
-            <!-- Notifikasi -->
-            <AlertStatus :message="servicesStore.notification.message" :type="servicesStore.notification.type"
-                :is-visible="servicesStore.notification.show" @close="servicesStore.notification.show = false" />
+            <div class="w-full flex flex-wrap gap-3 items-center">
+                <!-- Notifikasi -->
+                <AlertStatus :message="servicesStore.notification.message" :type="servicesStore.notification.type"
+                    :is-visible="servicesStore.notification.show" @close="servicesStore.notification.show = false" />
 
-            <!-- Header Filter dan Search -->
-            <div
-                class="p-4 bg-white flex flex-col md:flex-row md:items-center md:justify-between md:flex-wrap gap-3 rounded-t-2xl">
                 <!-- Search -->
-                <div class="w-full md:w-1/3">
-                    <input v-model="searchQuery" type="text" placeholder="Search Service Title"
-                        class="w-full px-4 py-2 border md:border-2 border-wildsand-200 rounded-lg text-codgray-900 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 text-sm md:text-base ease-in-out" />
+                <input v-model="searchQuery" type="text" placeholder="Search Service Title"
+                    class="flex-1 min-w-0 px-4 py-2 border md:border-2 border-wildsand-200 rounded-lg text-codgray-900 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 text-sm md:text-base ease-in-out" />
+
+                <!-- Filter Option -->
+                <div class="w-full md:w-64">
+                    <select v-model="selectedOption"
+                        class="w-full px-4 py-2 border md:border-2 border-wildsand-200 rounded-lg text-codgray-900 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 ease-in-out text-sm md:text-base">
+                        <option value="all">All Options</option>
+                        <option value="Offline">Offline</option>
+                        <option value="Online">Online</option>
+                    </select>
                 </div>
 
-                <!-- Filter Option & Create Button -->
-                <div class="w-full md:w-auto flex flex-col md:flex-row items-center gap-3 md:gap-4 justify-end">
-                    <!-- Filter Option -->
-                    <div class="w-full md:w-64">
-                        <select v-model="selectedOption"
-                            class="w-full px-4 py-2 border md:border-2 border-wildsand-200 rounded-lg text-codgray-900 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 ease-in-out text-sm md:text-base">
-                            <option value="all">All Options</option>
-                            <option value="Offline">Offline</option>
-                            <option value="Online">Online</option>
-                        </select>
-                    </div>
-
-                    <!-- Create Service Button -->
-                    <RouterLink to="/create-service"
-                        class="flex gap-2 items-center justify-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25 hover:transition hover:ease-in-out">
-                        Create Service
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                stroke-width="1.5" d="M18 12h-6m0 0H6m6 0V6m0 6v6" />
-                        </svg>
-                    </RouterLink>
-                </div>
+                <!-- Create Service Button -->
+                <RouterLink to="/create-service"
+                    class="flex gap-2 items-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25 hover:transition hover:ease-in-out">
+                    Create Service
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                            stroke-width="1.5" d="M18 12h-6m0 0H6m6 0V6m0 6v6" />
+                    </svg>
+                </RouterLink>
             </div>
 
             <!-- Loading -->
@@ -203,7 +196,8 @@ const handleDeleteConfirmed = async () => {
                                         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                                         <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
                                             <div class="flex justify-between items-center mb-4">
-                                                <h2 class="text-lg font-semibold text-cobalt-900">Available Date</h2>
+                                                <h2 class="text-lg font-semibold text-cobalt-900">Available Date
+                                                </h2>
                                                 <button @click="closeDateModal"
                                                     class="text-gray-500 hover:text-red-500 text-lg">&times;</button>
                                             </div>
@@ -233,8 +227,10 @@ const handleDeleteConfirmed = async () => {
                                             <div v-if="showDeleteModal"
                                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                                                 <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
-                                                    <h2 class="text-lg font-semibold text-gray-800">Confirm Delete</h2>
-                                                    <p class="text-gray-600 mt-2">Are you sure you want to delete this
+                                                    <h2 class="text-lg font-semibold text-gray-800">Confirm Delete
+                                                    </h2>
+                                                    <p class="text-gray-600 mt-2">Are you sure you want to delete
+                                                        this
                                                         service?</p>
                                                     <div class="mt-4 flex justify-end gap-2">
                                                         <button @click="showDeleteModal = false"

@@ -44,6 +44,16 @@ export const createUser = async (userData) => {
   }
 };
 
+export const createRole = async (roleData) => {
+  try {
+    const response = await api.post("/role", roleData);
+    return response.data;
+  } catch (error) {
+    console.error("Create role error", error.response?.data || error.message);
+    throw error;
+  }
+}
+
 // logout api
 export const logout = async () => {
   try {
@@ -64,10 +74,7 @@ export const fetchUsers = async () => {
     console.error("Failed to fetch user data", error);
     if (error.response) {
       console.error("Response data:", error.response.data);
-      notification.value =
-        "Unable to fetch user data: " + error.response.data.message;
-    } else {
-      notification.value = "Unable to fetch user data.";
+      throw error;
     }
   }
 };

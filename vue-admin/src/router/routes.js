@@ -7,6 +7,7 @@ import CreateService from "@/views/CreateService.vue";
 import EditUser from "@/views/EditUser.vue";
 import ChangePasswordUser from "@/views/ChangePasswordUser.vue";
 import CreateUser from "@/views/CreateUser.vue";
+import CreateRole from "@/views/CreateRole.vue";
 import EditService from "@/views/EditService.vue";
 import BookingPage from "@/views/BookingPage.vue";
 
@@ -80,6 +81,17 @@ const routes = [{
         meta: {
             title: "Create User",
             breadcrumbs: "Create User",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/create-role",
+        name: "Create Role",
+        component: CreateRole,
+        meta: {
+            title: "Create Role",
+            breadcrumbs: "Create Role",
             excludeRole: ["user"], 
             requiresAuth: true,
         },

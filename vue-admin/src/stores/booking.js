@@ -26,13 +26,14 @@ export const useBookingStore = defineStore('booking', {
               const response = await getBookingApi();
           
               if (response.data.status === 'success') {
-                // Ambil semua bookings dari berbagai status dan gabungkan jadi satu array
+                // get all bookings and flatten the structure
                 this.bookings = Object.values(response.data.bookings).flat();
               } else {
                 throw new Error(response.data.message || 'Failed to fetch bookings');
               }
             } catch (err) {
-              this.error = err.message || 'An unexpected error occurred';
+                console.error('Error fetching bookings:', err);
+              this.error = err.response.data. responseMessage || 'An unexpected error occurred';
               this.showNotification(this.error, 'error');
             } finally {
               this.isLoading = false;
@@ -67,7 +68,7 @@ export const useBookingStore = defineStore('booking', {
                 const response = await confirmBookingApi(id, FormData);
 
                 if (response.data.status === 'success') {
-                    this.showNotification('Booking confirmed successfully', 'success');
+                    this.showNotification('Booking status confirmed successfully', 'success');
                     return response.data.booking; 
                 } else {
                     throw new Error(response.data.message || 'Failed to confirm booking');

@@ -159,6 +159,14 @@ watch(searchQuery, () => {
         <!-- Filter Search -->
         <SearchUser @search="searchQuery = $event" />
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
+          <RouterLink to="/create-role"
+            class="flex gap-2 items-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25 hover:transition hover:ease-in-out">
+            Create Role
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                d="M18 12h-6m0 0H6m6 0V6m0 6v6" />
+            </svg>
+          </RouterLink>
           <!-- Add User Button -->
           <RouterLink to="/create-user"
             class="flex gap-2 items-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25 hover:transition hover:ease-in-out">

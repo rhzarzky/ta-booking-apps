@@ -4,6 +4,7 @@ import { computed, ref } from "vue";
 import {
   login,
   createUser,
+  createRole,
   logout,
   deleteUserId,
   fetchUsers,
@@ -199,6 +200,24 @@ export const useAuthStore = defineStore("authStore", () => {
     }
   };
 
+  // handle create role
+  const handleCreateRole = async (roleData) => {
+    try {
+      const response = await createRole(roleData);
+      if (response.data && response.data.role) {
+        return response.data;
+      }
+    } catch (error) {
+      console.error("Create role failed:", error);
+      if (error.response && error.response.status === 422) {
+        errors.value = error.response.data.errors;
+      } else {
+        errors.value = { general: "Create role failed. Please try again" };
+      }
+      throw error;
+    }
+  }
+
   // handle get user by id
   const handleGetUserById = async (id) => {
     if (!id) {
@@ -318,6 +337,7 @@ export const useAuthStore = defineStore("authStore", () => {
     handleLogout,
     handleDeleteUser,
     handleCreateUser,
+    handleCreateRole,
     handleGetUserById,
     handleUpdateUser,
     handleUserProfile,
