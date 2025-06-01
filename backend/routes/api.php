@@ -20,42 +20,57 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::get('/users', [UserController::class, 'showAllUser']);
         Route::get('/users/{id}', [UserController::class, 'getUserById']);
     });
+    
     Route::middleware(['permission:create user'])->group(function () {
         Route::post('/users', [UserController::class, 'createUser']);
     });
+
     Route::middleware(['permission:edit user'])->group(function () {
         Route::put('/users/{id}', [UserController::class, 'editUserById']);
     });
+
     Route::middleware(['permission:delete user'])->group(function () {
         Route::delete('/users/{id}', [UserController::class, 'deleteUserById']);
     }); 
+
     Route::middleware(['permission:create role'])->group(function () {
         Route::post('/role', [RoleController::class, 'storeRole']);
     });
+
     Route::middleware(['permission:show role'])->group(function () {
         Route::get('/role', [RoleController::class, 'showRole']); 
     });
+
     Route::middleware(['permission:show permission'])->group(function () {
         Route::get('/permission', [RoleController::class, 'showPermission']);
     });
+
     Route::middleware(['permission:assign role'])->group(function () {
         Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
     });
+
     Route::middleware(['permission:assign permission'])->group(function () {
         Route::post('/users/{id}/assign-permission', [UserController::class, 'assignPermission']);
     });
+
     Route::middleware(['permission:create service'])->group(function () {
         Route::post('/service', [ServiceController::class, 'storeService']);
     });
+
     Route::middleware(['permission:edit service'])->group(function () {
         Route::put('/service/{id}', [ServiceController::class, 'editService']);
     });
+
     Route::middleware(['permission:delete service'])->group(function () {
         Route::delete('/service/{id}', [ServiceController::class, 'deleteService']);
     }); 
+
     Route::middleware(['permission:show booking'])->group(function () {
         Route::get('/booking', [BookingController::class, 'showAllBooking']);
     });
+    
+    Route::get('/booking/assigned', [BookingController::class, 'showAssignedBooking']);
+
     Route::middleware(['permission:confirm booking'])->group(function () {
         Route::post('/booking/{id}/confirm', [BookingController::class, 'confirm']);
     });

@@ -15,7 +15,7 @@ class BookingController extends Controller
     {
         $bookings = Booking::with('user', 'service')->get();
 
-        $grouped = $bookings->groupBy('status')->map(function ($group) {
+        $booking = $bookings->groupBy('status')->map(function ($group) {
             return $group->map(function ($booking) {
                 return [
                     'id_booking' => $booking->id,
@@ -43,7 +43,7 @@ class BookingController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Booking retrieved successfully',
-            'bookings' => $grouped,
+            'bookings' => $booking,
         ], 200);
     }
     public function showUserBooking()
@@ -83,6 +83,44 @@ class BookingController extends Controller
                 'email' => $user->email,
             ],
             'services' => $bookings,
+        ], 200);
+    }
+    public function showAssignedBooking()
+    {
+        $assignedUser = Auth::user();
+
+        $assignedBookings = Booking::with('user', 'service')
+            ->where('user_id',  $assignedUser->id)
+            ->get()
+            ->groupBy('status')
+            ->map(function ($group) {
+                return $group->map(function ($booking) {
+                    return [
+                        'id_booking' => $booking->id,
+                        'user' => [
+                            'id_user' => $booking->user->id,
+                            'email' => $booking->user->email,
+                            'name' => $booking->user->name,
+                        ],
+                        'service' => [
+                            'id_service' => $booking->service->id,
+                            'image' => $booking->service->image ? asset('storage/' . $booking->service->image) : null,
+                            'title' => $booking->service->title,
+                            'description' => $booking->service->description,
+                            'location'  => $booking->location,
+                        ],
+                        'option' => $booking->option,
+                        'date' => $booking->date,
+                        'time' => $booking->time,
+                        'note' => $booking->note,
+                        'status' => $booking->status,
+                    ];
+                });
+            });
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Assigned booking retrieved successfully',
+            'assigned_bookings' => $assignedBookings,
         ], 200);
     }
     public function showDetailBooking($id)
@@ -149,6 +187,18 @@ class BookingController extends Controller
             return response()->json([
                 'status' => 'error',
                 'message' => 'You have already booked this service at the selected date and time.',
+            ], 400);
+        }
+
+        $otherBooked = Booking::where('service_id', $service->id)
+        ->where('date', $validated['date'])
+        ->where('time', $validated['time'])
+        ->exists();
+
+        if ($otherBooked) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The service on this date and time has already been booked by someone else.',
             ], 400);
         }
 

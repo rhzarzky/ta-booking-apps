@@ -20,11 +20,11 @@ router.beforeEach((to, from, next) => {
   const userRole = authServices.getRole(); // e.g., 'admin', 'user', etc.
 
   if (requiresAuth && !isAuthenticated) {
-    next("/login-admin");
+    next("/");
     return;
   }
 
-  if (to.path === "/login-admin" && isAuthenticated) {
+  if (to.path === "/" && isAuthenticated) {
     if (userRole === "user") {
       next("/"); // redirect regular user to user home
     } else {

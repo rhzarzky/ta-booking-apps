@@ -11,8 +11,9 @@ import CreateRole from "@/views/CreateRole.vue";
 import EditService from "@/views/EditService.vue";
 import BookingPage from "@/views/BookingPage.vue";
 
-const routes = [{
-        path: "/login-admin",
+const routes = [
+    {
+        path: "/",
         name: "Login",
         component: LoginPage,
         meta: {
