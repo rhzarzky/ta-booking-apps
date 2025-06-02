@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import {
   getServiceApi,
   getServiceDetailApi,  
+  getAssignedServiceApi,
   createServiceApi,
   editServiceApi,
   deleteServiceApi,
@@ -58,6 +59,29 @@ export const useServicesStore = defineStore('services', {
       } finally {
         this.isLoading = false;
       }
+    },
+
+    // Fetching assigned services for the current user
+    async fetchAssignedService() { 
+      this.isLoading = true;
+      this.error = null;
+        try {
+            const response = await getAssignedServiceApi();
+
+            if (response.data.status === 'success') {
+                // Filter services that are assigned to the current user
+                this.services = Object.values(response.data.services).flat();
+            }
+            else {
+                throw new Error(response.data.message || 'Failed to fetch assigned services');
+            }
+        } catch (err) {
+            console.error('Error fetching assigned services:', err);
+            this.error = err.response.data.responseMessage || 'An unexpected error occurred';
+            this.showNotification(this.error, 'error');
+        } finally {
+            this.isLoading = false;
+        }
     },
 
     // Create a new service

@@ -1,12 +1,14 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useServicesStore } from "@/stores/service";
+import { useAuthStore } from "@/stores/auth";
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
 import SkeltonLoader from "@/components/loading-skelton/SkeltonLoader.vue";
 import PaginationPage from "@/components/pagination/PaginationPage.vue";
 
 const servicesStore = useServicesStore();
+const authStore = useAuthStore();
 const searchQuery = ref("");
 const selectedOption = ref("all");
 const currentPage = ref(1);
@@ -14,8 +16,16 @@ const itemsPerPage = 10;
 const showDeleteModal = ref(false);
 const serviceToDelete = ref(null);
 
+const fetchData = async () => {
+    await servicesStore.fetchAssignedService();
+
+    if (authStore.hasPermission('show all service')) {
+        await servicesStore.fetchServices();
+    }
+};
+
 onMounted(() => {
-    servicesStore.fetchServices();
+    fetchData();
 });
 
 // Filtered services based on search and selected option

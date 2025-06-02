@@ -6,6 +6,9 @@ export const getServiceApi = () => api.get("/service");
 // GET /service/:id
 export const getServiceDetailApi = (id) => api.get(`/service/${id}`);
 
+// GET /service/assigned
+export const getAssignedServiceApi = () => api.get("/service/assigned");
+
 // POST /service with payload
 export const createServiceApi = (FormData) => api.post("/service", FormData, {
   headers: {

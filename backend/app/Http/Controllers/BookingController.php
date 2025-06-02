@@ -245,7 +245,7 @@ class BookingController extends Controller
     public function confirm(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:Approved,Declined',
+            'status' => 'required|in:Approved,Declined,Completed',
         ]);
 
         $booking = Booking::with('service', 'user')->findOrFail($id);

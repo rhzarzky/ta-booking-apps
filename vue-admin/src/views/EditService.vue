@@ -91,7 +91,7 @@ const edit = async () => {
     const { success, validationErrors } = await servicesStore.editService(route.params.id, formData);
 
     if (success) {
-        servicesStore.showNotification("Service created successfully.", "success");
+        servicesStore.showNotification("Service updated successfully.", "success");
         router.push({ path: "/service" });
     } else {
         validation.value = validationErrors || {};

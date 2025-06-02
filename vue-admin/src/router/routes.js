@@ -122,7 +122,7 @@ const routes = [
     {
         path: "/booking",
         name: "Booking",
-        component: () => BookingPage,
+        component: BookingPage,
         meta: {
             title: "Booking",
             breadcrumbs: "Booking",

@@ -96,7 +96,6 @@ const baseMenuItems = ref([
                 `,
         label: "Booking",
         route: "/booking",
-        // requiredPermission: "show booking",
       },
     ],
   },

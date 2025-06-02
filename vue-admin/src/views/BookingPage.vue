@@ -20,7 +20,7 @@ const showConfirmationModal = ref(false);
 const fetchData = async () => {
     await bookingStore.fetchAssignedBooking();
 
-    if (authStore.hasPermission('show booking')) {
+    if (authStore.hasPermission('show all booking')) {
         await bookingStore.fetchBookings();
     }
 };

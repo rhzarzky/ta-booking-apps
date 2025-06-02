@@ -69,6 +69,42 @@ class ServiceController extends Controller
             ],
         ], 200);
     }      
+    public function showAssignedService()
+    {
+        $assignedUser = Auth::user();
+
+        // Ambil service yang di-assign ke user ini
+        $assignedService = Service::with('assigned')
+            ->where( function ($query) use ($assignedUser) {
+                $query->where('user_id', $assignedUser->id);
+            })
+            ->get()
+            ->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'user' => [
+                        'id' => $service->user_id,
+                        'name' => $service->assigned->name,
+                        'email' => $service->assigned->email,
+                    ],
+                    'image' => $service->image ? asset('storage/' . $service->image) : null,
+                    'title' => $service->title,
+                    'description' => $service->description,
+                    'location'  => $service->location,
+                    'option' => json_decode($service->option, true),
+                    'time' => $service->schedule ? json_decode($service->schedule->time, true) : null,
+                    'days' => $service->schedule ? json_decode($service->schedule->days, true) : null,
+                    'date' => $service->schedule ? json_decode($service->schedule->date, true) : null,
+                    'end_date' => $service->schedule ? $service->schedule->end_date : null,
+                ];
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Assigned booking retrieved successfully',
+            'services' => $assignedService,
+        ], 200);
+    }
     public function storeService(Request $request)
     {
         $validated = $request->validate([

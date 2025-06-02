@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->time('time'); 
             $table->string('note')->nullable();
             $table->string('location')->nullable();
-            $table->enum('status', ['Pending', 'Approved', 'Declined'])->default('Pending');
+            $table->enum('status', ['Pending', 'Approved', 'Declined', 'Completed'])->default('Pending');
             $table->timestamps();
         });
     }

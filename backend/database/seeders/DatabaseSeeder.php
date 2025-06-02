@@ -18,8 +18,8 @@ class DatabaseSeeder extends Seeder
     {
         $permissions = [
             'show user', 'create user', 'edit user', 'delete user', 'show permission', 'show role', 'create role',
-            'assign role', 'assign permission', 'create service', 'edit service', 'delete service',
-            'show booking', 'confirm booking'
+            'assign role', 'assign permission', 'show all service', 'create service', 'edit service', 'delete service',
+            'show all booking', 'confirm booking'
         ];
 
         foreach ($permissions as $permission) {

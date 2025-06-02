@@ -53,9 +53,15 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('/users/{id}/assign-permission', [UserController::class, 'assignPermission']);
     });
 
+    Route::middleware(['permission:show all service'])->group(function () {
+        Route::get('/service', [ServiceController::class, 'showAllService']);
+    });
+
     Route::middleware(['permission:create service'])->group(function () {
         Route::post('/service', [ServiceController::class, 'storeService']);
     });
+
+    Route::get('/service/assigned', [ServiceController::class, 'showAssignedService']);
 
     Route::middleware(['permission:edit service'])->group(function () {
         Route::put('/service/{id}', [ServiceController::class, 'editService']);
@@ -65,7 +71,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::delete('/service/{id}', [ServiceController::class, 'deleteService']);
     }); 
 
-    Route::middleware(['permission:show booking'])->group(function () {
+    Route::middleware(['permission:show all booking'])->group(function () {
         Route::get('/booking', [BookingController::class, 'showAllBooking']);
     });
     
@@ -75,7 +81,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
         Route::post('/booking/{id}/confirm', [BookingController::class, 'confirm']);
     });
     
-    Route::get('/service', [ServiceController::class, 'showAllService']);
+    
     Route::get('/service/{id}', [ServiceController::class, 'showService']);
 
     Route::post('/service/{id}/book', [BookingController::class, 'bookService']);
