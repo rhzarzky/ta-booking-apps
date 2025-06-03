@@ -26,9 +26,9 @@ router.beforeEach((to, from, next) => {
 
   if (to.path === "/" && isAuthenticated) {
     if (userRole === "user") {
-      next("/"); // redirect regular user to user home
+      next("/"); 
     } else {
-      next("/service"); // redirect admin/verifikator to admin
+      next("/service"); // redirect admin/verifikator to dashboard
     }
     return;
   }

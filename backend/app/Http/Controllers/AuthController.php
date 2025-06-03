@@ -60,6 +60,9 @@ class AuthController extends Controller
                 $user->givePermissionTo($permissions);
             }
 
+            // Assign default permission
+            $user->givePermissionTo('show all service');
+
             // Send verification email with signed link
             $user->notify(new VerifyEmailNotification());
 

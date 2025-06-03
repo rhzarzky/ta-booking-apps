@@ -167,17 +167,29 @@ export const useAuthStore = defineStore("authStore", () => {
     try {
       errors.value = {};
       const response = await login(credentials);
+
+      const userRole = response.user.role[0];
+      
+      if (userRole === "user") {
+        errors.value = {
+          general: "Users are not allowed to log in to the admin panel. Please contact the administrator.",
+        };
+        await logout();
+        throw new Error("Unauthorized role");
+      }
+
       user.value = response.user;
       authServices.setToken(response.token);
       authServices.setUserId(response.user.id);
-      authServices.setRole(response.user.role[0]);
+      authServices.setRole(userRole);
+
       return response;
     } catch (error) {
       if (error.response && error.response.status === 422) {
         errors.value = error.response.data.errors;
-      } else {
+      } else if (!errors.value.general) {
         errors.value = {
-          general: "Login failed. Please try again",
+          general: "Login failed. Please try again.",
         };
       }
       throw error;

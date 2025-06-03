@@ -118,7 +118,7 @@ class ServiceController extends Controller
             'days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
             'time' => 'required|array',
             'time.*' => 'required|date_format:H:i',
-            'end_date' => 'nullable|date|after:today',
+            'end_date' => 'nullable|date|after_or_equal:today',
         ]);
 
         if ($request->hasFile('image')) {

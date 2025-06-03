@@ -193,14 +193,14 @@ const store = async () => {
                     <label class="text-sm md:text-base text-wildsand-600 flex gap-1">Days
                         <span class="text-red-600">*</span>
                     </label>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-4 gap-2">
+                        <label><input type="checkbox" value="Sunday" v-model="post.days" /> Sunday</label>
                         <label><input type="checkbox" value="Monday" v-model="post.days" /> Monday</label>
                         <label><input type="checkbox" value="Tuesday" v-model="post.days" /> Tuesday</label>
                         <label><input type="checkbox" value="Wednesday" v-model="post.days" /> Wednesday</label>
                         <label><input type="checkbox" value="Thursday" v-model="post.days" /> Thursday</label>
                         <label><input type="checkbox" value="Friday" v-model="post.days" /> Friday</label>
                         <label><input type="checkbox" value="Saturday" v-model="post.days" /> Saturday</label>
-                        <label><input type="checkbox" value="Sunday" v-model="post.days" /> Sunday</label>
                     </div>
                     <div v-if="validation.days" class="mt-2 text-red-600">
                         {{ validation.days[0] }}
