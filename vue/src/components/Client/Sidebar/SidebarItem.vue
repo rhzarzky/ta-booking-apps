@@ -8,14 +8,14 @@ const props = defineProps({
   label: String,
   to: String,
   isOpen: Boolean,
-  activeClass: { // Add activeClass prop
+  activeClass: {
     type: String,
-    default: 'bg-purple-600 text-white' // Default to our purple active style
+    default: "bg-purple-600 text-white",
   },
-  hoverClass: { // Add hoverClass prop for more control if needed
+  hoverClass: {
     type: String,
-    default: 'hover:bg-purple-100 hover:text-purple-700' // Default to our light purple hover style
-  }
+    default: "hover:bg-purple-100 hover:text-purple-700",
+  },
 });
 
 const route = useRoute();

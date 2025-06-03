@@ -59,7 +59,7 @@ const handleLogin = async () => {
             <input
               type="email"
               v-model="email"
-              placeholder="Jhondoe@gmail.com"
+              placeholder="Enter your email"
               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               required
             />

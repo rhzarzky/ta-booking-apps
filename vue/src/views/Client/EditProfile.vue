@@ -1,5 +1,24 @@
 <template>
-  <div class="relative max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-xl mt-10">
+  <div class="relative max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-xl mt-10">
+    <!-- Tombol Icon Back -->
+    <div class="flex items-center mb-4">
+      <button
+        @click="handleBack"
+        class="flex items-center text-gray-600 hover:text-blue-600 font-medium"
+      >
+        <!-- Pakai Lucide atau emoji -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 mr-2"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Kembali
+      </button>
+    </div>
     <div class="flex items-center space-x-6 mb-8 border-b pb-6">
       <label for="profile-picture-input" class="cursor-pointer relative group">
         <img
@@ -22,15 +41,15 @@
         />
       </label>
       <div class="flex flex-col">
-        <p class="text-sm text-gray-500 mt-1">Klik gambar untuk mengubah foto profil</p>
+        <p class="text-sm text-gray-500 mt-1">Click the image to change profile picture</p>
       </div>
     </div>
-
+    
     <div>
-      <h3 class="text-2xl font-semibold text-gray-800 mb-6">Informasi Personal</h3>
+      <h3 class="text-2xl font-semibold text-gray-800 mb-6">Personal Information</h3>
       <form @submit.prevent="handleSubmit" class="space-y-6">
         <div>
-          <label for="name" class="block text-gray-700 text-sm font-semibold mb-2">Nama Lengkap</label>
+          <label for="name" class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
           <input
             id="name"
             v-model="form.name"
@@ -52,14 +71,14 @@
           />
         </div>
 
-        <div class="flex justify-between items-center pt-4">
+        <div class="flex justify-end items-center pt-4">
           <button
             type="submit"
             :disabled="isLoading"
             class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out"
           >
-            <span v-if="!isLoading">Simpan Perubahan</span>
-            <span v-else>Menyimpan...</span>
+            <span v-if="!isLoading">Save Changes</span>
+            <span v-else>Saving...</span>
           </button>
         </div>
       </form>
@@ -79,6 +98,7 @@
           ]"
         >
           <span>{{ n.message }}</span>
+          
           <button @click="removeNotification(n.id)" class="ml-4 text-white font-bold opacity-75 hover:opacity-100">
             <svg
               class="h-5 w-5"
@@ -184,7 +204,9 @@ const handleSubmit = async () => {
   }
 };
 
-// Fungsi untuk konfirmasi hapus profil
+function handleBack() {
+  window.history.back()
+}
 
 </script>
 

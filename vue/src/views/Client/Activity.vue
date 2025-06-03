@@ -63,6 +63,7 @@ const bookingCounts = computed(() => {
     Approved: 0,
     Pending: 0,
     Declined: 0,
+    Completed: 0,
   }
 
   bookings.value.forEach((booking) => {
@@ -100,10 +101,10 @@ const loading = computed(() => bookingStore.loading)
   <div class="bg-gray-100 min-h-screen p-4">
     <div class="max-w-4xl mx-auto">
       <div class="mb-6 bg-white rounded-lg shadow p-6">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Aktivitas Booking Anda</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Your Booking Activity</h1>
         <div class="flex flex-wrap gap-4 text-sm">
           <div class="flex-grow">
-            <label for="date-filter" class="sr-only">Filter Berdasarkan Tanggal</label>
+            <label for="date-filter" class="sr-only">Filter by Date</label>
             <input
               id="date-filter"
               type="date"
@@ -113,19 +114,19 @@ const loading = computed(() => bookingStore.loading)
           </div>
 
           <div class="flex-grow sm:flex-grow-0 sm:w-64">
-            <label for="search-input" class="sr-only">Cari Booking</label>
+            <label for="search-input" class="sr-only">Search Bookings</label>
             <input
               id="search-input"
               type="text"
               v-model="searchQuery"
-              placeholder="Cari berdasarkan judul, deskripsi, atau catatan..."
+              placeholder="Search by title, description, or notes..."
               class="border px-3 py-2 rounded-lg w-full focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
           <div class="flex flex-wrap gap-3 mt-4 sm:mt-0">
             <button
-              v-for="status in ['All', 'Pending', 'Approved', 'Declined']"
+              v-for="status in ['All', 'Pending', 'Approved', 'Declined', 'Completed']"
               :key="status"
               :class="[
                 'border px-4 py-2 rounded-lg font-medium transition-colors duration-200 ease-in-out',
@@ -147,11 +148,11 @@ const loading = computed(() => bookingStore.loading)
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          Memuat aktivitas booking...
+          Loading booking activity...
         </div>
         <div v-else-if="filteredBookings.length === 0" class="bg-white rounded-lg shadow p-6 text-center text-gray-600">
-          <p class="text-lg">Tidak ada aktivitas booking yang tersedia.</p>
-          <p class="text-sm mt-2">Coba sesuaikan filter Anda atau buat booking baru!</p>
+          <p class="text-lg">No booking activities available.</p>
+          <p class="text-sm mt-2">Try customizing your filters or create a new booking!</p>
         </div>
         <ActivityCard
           v-else

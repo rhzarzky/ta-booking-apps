@@ -1,5 +1,5 @@
 <template>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
     <div
       v-for="card in summaryCards"
       :key="card.status"
@@ -40,18 +40,27 @@ export default {
           status: 'Approved',
           label: 'Approved',
           count: this.stats.approved || 0,
-          style: 'background: linear-gradient(135deg, #7f00ff, #3c8ce7)',
+          style: 'background: linear-gradient(135deg, #7f00ff, #a78bfa)',
           trend: `+${this.stats.approved || 0} ▲`,
           trendColor: 'text-green-500',
         },
         {
+          status: 'Completed',
+          label: 'Completed',
+          count: this.stats.completed || 0,
+          style: 'background: linear-gradient(135deg, #3b82f6, #1e40af)', 
+          trend: `+${this.stats.completed || 0} ▲`,
+          trendColor: 'text-emerald-400',
+        },
+        {
           status: 'Declined',
-          label: 'Declined ',
+          label: 'Declined',
           count: this.stats.declined || 0,
           style: 'background: linear-gradient(135deg, #ef4444, #991b1b)',
           trend: `-${this.stats.declined || 0} ▼`,
           trendColor: 'text-red-500',
         },
+        
       ];
     },
   },

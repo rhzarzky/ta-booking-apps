@@ -44,6 +44,8 @@ const statusClass = computed(() => {
       return 'bg-lime-100 text-lime-700';
     case 'declined': // Gunakan 'declined' (lowercase) agar sesuai dengan backend/activity card sebelumnya
       return 'bg-red-100 text-red-700';
+    case 'completed': // Gunakan 'declined' (lowercase) agar sesuai dengan backend/activity card sebelumnya
+      return 'bg-blue-100 text-blue-700';
     default:
       return 'bg-gray-100 text-gray-700';
   }
@@ -114,7 +116,7 @@ const generateGoogleCalendarUrl = computed(() => {
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
         <div>
-          <h3 class="text-xl font-semibold text-gray-700 mb-3">Jadwal</h3>
+          <h3 class="text-xl font-semibold text-gray-700 mb-3">Schedule</h3>
           <div class="bg-blue-50 p-4 rounded-lg flex items-center shadow-sm">
             <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -124,7 +126,7 @@ const generateGoogleCalendarUrl = computed(() => {
         </div>
 
         <div>
-          <h3 class="text-xl font-semibold text-gray-700 mb-3">Pilihan</h3>
+          <h3 class="text-xl font-semibold text-gray-700 mb-3">Option</h3>
           <div class="bg-blue-50 p-4 rounded-lg flex items-center shadow-sm">
             <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -135,7 +137,7 @@ const generateGoogleCalendarUrl = computed(() => {
       </div>
 
       <div class="mb-10">
-        <h3 class="text-xl font-semibold text-gray-700 mb-3">Lokasi</h3>
+        <h3 class="text-xl font-semibold text-gray-700 mb-3">Location</h3>
         <div class="bg-blue-50 p-4 rounded-lg shadow-sm">
           <template v-if="isOnlineBooking">
             <a :href="booking.service.location" target="_blank" class="text-blue-600 hover:underline flex items-center break-all">
@@ -158,7 +160,7 @@ const generateGoogleCalendarUrl = computed(() => {
       </div>
 
       <div class="mb-10">
-        <h3 class="text-xl font-semibold text-gray-700 mb-3">Catatan</h3>
+        <h3 class="text-xl font-semibold text-gray-700 mb-3">Note</h3>
         <div class="bg-blue-50 p-4 rounded-lg shadow-sm">
           <p class="text-gray-800 italic">{{ booking.service.note || 'Tidak ada catatan tambahan.' }}</p>
         </div>
@@ -169,13 +171,13 @@ const generateGoogleCalendarUrl = computed(() => {
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          Tambahkan ke Google Calendar
+          Add to Google Calendar
         </a>
       </div>
     </div>
 
     <div v-else class="text-center text-gray-500 py-12">
-      <p class="text-lg">Sedang memuat detail booking...</p>
+      <p class="text-lg">Loading booking details...</p>
       <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto mt-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />

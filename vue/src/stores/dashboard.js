@@ -7,6 +7,7 @@ export const useDashboardStore = defineStore('dashboard', {
       pending: 0,
       approved: 0,
       declined: 0,
+      Completed: 0,
     },
     latestBookings: [],
     allBookings: [],
@@ -25,16 +26,18 @@ export const useDashboardStore = defineStore('dashboard', {
         const approved = services.Approved || []
         const pending = services.Pending || []
         const declined = services.Declined || []
+        const completed = services.Completed || []
 
         // Simpan jumlah status
         this.summary = {
           approved: approved.length,
           pending: pending.length,
           declined: declined.length,
+          completed: completed.length,
         }
 
         // Gabungkan semua bookings menjadi satu array
-        const allBookings = [...approved, ...pending, ...declined]
+        const allBookings = [...approved, ...pending, ...declined, ...completed]
 
         // Simpan ke allBookings
         this.allBookings = allBookings

@@ -1,6 +1,5 @@
 <script setup>
 import SidebarArea from "@/components/Client/Sidebar/SidebarArea.vue";
-// import HeaderArea from "@/components/header/HeaderArea.vue"; // Belum dibuat
 import HeaderArea from "@/components/Client/header/HeaderArea.vue";
 </script>
 

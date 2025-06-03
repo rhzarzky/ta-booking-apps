@@ -99,12 +99,8 @@ const formatDateShort = (dateStr) => {
   })
 }
 
-// Watch for changes in form.date and reset time if the previously selected time
-// is not available for the new date (though your current setup doesn't link times to dates,
-// this is good practice if you implement it later)
 watch(() => form.value.date, (newDate, oldDate) => {
-  // You might want to reset form.time here if time slots were date-specific
-  // For now, no action needed as time slots are service-wide.
+
 });
 
 
@@ -189,7 +185,7 @@ const submitBooking = async () => {
     <div v-else-if="!service" class="text-center text-gray-500 p-8">
       <p class="text-lg">Service not found.</p>
       <p class="text-sm mt-2">The service you are looking for might not exist or has been removed.</p>
-      <button @click="router.push('/client/meeting')" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      <button @click="router.push('/client/service')" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
         Browse Services
       </button>
     </div>
@@ -308,7 +304,7 @@ const submitBooking = async () => {
             <MapPin class="w-5 h-5 text-indigo-600 mt-1" />
             <div>
               <strong class="block text-gray-900">Location:</strong>
-              <a :href="service.location" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline break-all">{{ service.location }}</a>
+              <span class="text-indigo-600 break-all">{{ service.location }}</span>
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia';
 import { useDashboardStore } from '@/stores/dashboard';
 import SummaryCards from '@/components/Client/card/SummaryCards.vue';
 import AnalyticsChart from '@/components/Client/AnalyticsChart.vue';
+// import DashboardSkeleton from '@/components/Client/skeleton/DashboardSkeleton.vue';
 
 const dashboardStore = useDashboardStore();
 const { summary, latestBookings, loading, error } = storeToRefs(dashboardStore);
@@ -34,6 +35,7 @@ function statusClass(status) {
 
 
 <template>
+  
   <div class="p-4 space-y-6">
     <!-- Summary Cards -->
     <SummaryCards :stats="summary" />

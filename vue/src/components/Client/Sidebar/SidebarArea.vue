@@ -1,11 +1,10 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import SidebarItem from "./SidebarItem.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useSidebarStore } from "@/stores/sidebar";
 import AppointlyIcon from "@/assets/icons/appointly.svg";
-
 import {
   LayoutDashboard,
   ActivitySquare,
@@ -13,29 +12,39 @@ import {
   LogOut,
   Users,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-vue-next";
 
-
-
-
-// Stores
 const auth = useAuthStore();
 const sidebar = useSidebarStore();
 const router = useRouter();
 
+// Responsive detection
+const isMobile = ref(false);
+const updateIsMobile = () => {
+  isMobile.value = window.innerWidth < 768;
+};
+
+onMounted(() => {
+  updateIsMobile();
+  window.addEventListener("resize", updateIsMobile);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateIsMobile);
+});
+
 // Menu Items
 const items = [
   { name: "Dashboard", icon: LayoutDashboard, route: "/client/dashboard" },
-  { name: "Service", icon: Users, route: "/client/meeting" },
+  { name: "Service", icon: Users, route: "/client/service" },
   { name: "Activity", icon: ActivitySquare, route: "/client/activity" },
   { name: "Profile", icon: UserCircle2, route: "/client/profile" },
-  
 ];
 
 // Actions
 const handleLogout = () => {
-  sidebar.resetState(); // Reset sidebar state on logout
+  sidebar.resetState();
   auth.handleLogout();
   router.push("/login");
 };
@@ -46,23 +55,29 @@ const toggleSidebar = () => {
 </script>
 
 <template>
+  <!-- Overlay on mobile -->
   <div
     class="fixed inset-0 z-30 bg-black bg-opacity-50 md:hidden"
     v-if="sidebar.isSidebarOpen"
     @click="toggleSidebar"
   ></div>
 
+  <!-- Sidebar -->
   <aside
     :class="[
       'z-40 bg-white border-r border-gray-200 h-full flex flex-col transition-all duration-300 shadow-lg',
       sidebar.isSidebarOpen ? 'w-64' : 'w-20',
+      sidebar.isSidebarOpen || !isMobile ? 'block' : 'hidden',
       'fixed md:static'
     ]"
   >
+    <!-- Header -->
     <div class="flex items-center p-4 border-b border-gray-200 relative">
       <div v-if="sidebar.isSidebarOpen" class="flex items-center">
         <img :src="AppointlyIcon" alt="Appointly Icon" class="h-10 w-13 mr-5" />
       </div>
+
+      <!-- Toggle Sidebar (desktop only) -->
       <button
         @click="toggleSidebar"
         :class="[
@@ -75,7 +90,9 @@ const toggleSidebar = () => {
         <ChevronRight v-else class="h-5 w-5" />
       </button>
 
+      <!-- Toggle Sidebar (mobile only) -->
       <button
+        v-if="sidebar.isSidebarOpen || !isMobile"
         @click="toggleSidebar"
         class="ml-auto p-2 text-gray-500 hover:bg-gray-100 rounded-md md:hidden"
       >
@@ -86,12 +103,21 @@ const toggleSidebar = () => {
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
 
-    <nav class="flex-1 px-4 py-3 space-y-2">
+    <!-- Navigation -->
+    <nav
+      v-if="sidebar.isSidebarOpen || !isMobile"
+      class="flex-1 px-4 py-3 space-y-2"
+    >
       <SidebarItem
         v-for="item in items"
         :key="item.name"
@@ -105,7 +131,11 @@ const toggleSidebar = () => {
       />
     </nav>
 
-    <div class="p-4 border-t border-gray-200">
+    <!-- Logout -->
+    <div
+      v-if="sidebar.isSidebarOpen || !isMobile"
+      class="p-4 border-t border-gray-200"
+    >
       <button
         @click="handleLogout"
         class="flex items-center w-full px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"

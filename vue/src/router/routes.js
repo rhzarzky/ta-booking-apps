@@ -3,7 +3,7 @@ import LoginClient from '@/views/LoginClient.vue';
 import RegisterClient from '@/views/RegisterClient.vue';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Dashboard from '@/views/Client/Dashboard.vue';
-import Meeting from '@/views/Client/Service.vue';
+import Service from '@/views/Client/Service.vue';
 import Activity from '@/views/Client/Activity.vue';
 import Profile from '@/views/Client/Profile.vue';
 import EditProfile from '@/views/Client/EditProfile.vue';
@@ -117,9 +117,9 @@ const routes = [
         },
       },
       {
-        path: 'meeting',
-        name: 'client-meeting',
-        component: Meeting,
+        path: 'service',
+        name: 'client-service',
+        component: Service,
         meta: {
           title: 'Service',
           breadcrumbs: 'Service',
