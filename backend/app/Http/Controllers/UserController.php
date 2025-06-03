@@ -17,7 +17,10 @@ class UserController extends Controller
 {
     public function showAllUser()
     {
-        $users = User::with('roles')->get();
+        $currentUserId = Auth::id();
+        $users = User::with('roles')
+            ->where('id', '!=', $currentUserId)
+            ->get();
 
         return response()->json([
             'status' => 'success',
@@ -68,7 +71,7 @@ class UserController extends Controller
             'role' => 'nullable|string|max:50',
             'password' => 'sometimes|string|min:8|confirmed',
             'status' => 'sometimes|in:Active,Inactive',
-            'permissions' => 'nullable|array', // Menambahkan validasi untuk permissions
+            'permissions' => 'nullable|array', 
             'permissions.*' => 'string|exists:permissions,name',
         ]);
 
@@ -106,11 +109,11 @@ class UserController extends Controller
             }
 
             if ($request->has('role')) {
-                $user->syncRoles([$request->role]); // Hapus semua role sebelumnya, tambahkan role baru
+                $user->syncRoles([$request->role]); // Sync role (removes old roles and assigns the new one)
             }
             
             if ($request->has('permissions')) {
-                $user->syncPermissions($request->permissions); // Sinkronkan izin pengguna
+                $user->syncPermissions($request->permissions); 
             }
 
             $user->save();
@@ -147,10 +150,21 @@ class UserController extends Controller
         $user = User::find($id);
 
         if (!$user) {
-            return response()->json(['status' => 'error', 'message' => 'User not found'], 404);
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'User not found'
+            ], 404);
+        }
+        
+        // Prevent deletion of the authenticated user
+        if (auth()->check() && auth()->id() == $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'You cannot delete your own account.',
+            ], 403);
         }
 
-        if ($user->is_protected && $user->hasRole('admin')) {
+        if ($user->hasRole('admin')) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Admin cannot be deleted.',
@@ -159,7 +173,10 @@ class UserController extends Controller
 
         $user->delete();
 
-        return response()->json(['status' => 'success', 'message' => 'User deleted successfully'], 200);
+        return response()->json([
+            'status' => 'success', 
+            'message' => 'User deleted successfully'
+        ], 200);
     }
     public function assignRole(Request $request, $id)
     {

@@ -32,21 +32,20 @@ const fetchUserData = async (userId) => {
       throw new Error("User data is not available.");
     }
 
-    // Setel nama dan email dari pengguna
+    // Set post data with fetched user data
     post.name = userData.user.name;
     post.email = userData.user.email;
 
-    // Ambil role dari data pengguna yang ada
     const userRoleList = userData.user.role;
 
-    // Atur default role jika pengguna memiliki role
+    // Set user roles
     if (userRoleList.length > 0) {
       post.role = userRoleList.length === 1 ? userRoleList[0] : "";
     } else {
       post.role = "";
     }
 
-    // Atur status pengguna
+    // Set user status
     post.status = userData.user.status;
   } catch (error) {
     console.error("Failed to fetch user data", error);
@@ -56,7 +55,7 @@ const fetchUserData = async (userId) => {
 onMounted(() => {
   const userId = route.params.id; // Get user ID from route parameters
   if (userId) {
-    fetchUserData(userId); // Hanya panggil jika userId tidak undefined
+    fetchUserData(userId); 
   } else {
     authStore.showNotification("User ID is not provided.", "error");
   }

@@ -15,29 +15,51 @@ const formatTitle = (text) => {
 };
 
 const generateBreadcrumbs = () => {
-  const pathArray = route.path.split("/");
+  const pathArray = route.path.split("/").filter(Boolean);
   const breadcrumbsArray = [];
 
+  // Dashboard
   breadcrumbsArray.push({
     name: "Dashboard",
-    path: "/Dashboard",
+    path: "/dashboard",
   });
 
-  let currentPath = "";
-  pathArray.forEach((path, index) => {
-    if (path) {
-      currentPath += `/${path}`;
-
-      const matchedRoute = route.matched[index];
-      const name =
-        matchedRoute?.meta?.breadcrumbs || matchedRoute?.meta?.title || path;
-
+  // Path before last (jika ada)
+  if (pathArray.length > 2) {
+    const pathBeforeLast = "/" + pathArray.slice(0, -2).join("/");
+    if (pathBeforeLast !== "/") {
       breadcrumbsArray.push({
-        name: name,
-        path: currentPath,
+        name: formatTitle(pathArray[pathArray.length - 3]),
+        path: pathBeforeLast,
       });
     }
-  });
+  }
+
+  // Current page (sebelum id)
+  if (pathArray.length > 1) {
+    const currentPagePath = "/" + pathArray.slice(0, -1).join("/");
+    breadcrumbsArray.push({
+      name: formatTitle(pathArray[pathArray.length - 2]),
+      path: currentPagePath,
+    });
+  }
+
+  // Name dari id (jika ada param id)
+  const id = route.params.id;
+  if (id) {
+    // Ganti dengan cara ambil nama dari id sesuai kebutuhan Anda
+    // Misal, ambil dari meta, props, atau API. Di sini contoh sederhana:
+    breadcrumbsArray.push({
+      name: `Detail ${id}`,
+      path: route.path,
+    });
+  } else {
+    // Jika tidak ada id, tampilkan halaman terakhir
+    breadcrumbsArray.push({
+      name: formatTitle(pathArray[pathArray.length - 1]),
+      path: route.path,
+    });
+  }
 
   breadcrumbs.value = breadcrumbsArray;
 };

@@ -80,7 +80,7 @@ const handleDeleteConfirmed = async () => {
     authStore.showNotification("User deleted successfully.", "success");
   } catch (err) {
     console.error("Error deleting user:", err);
-    authStore.showNotification(err.response.data.responseMessage, "error");
+    authStore.showNotification(err.response.data.message, "error");
   } finally {
     showDeleteModal.value = false;
     userToDelete.value = null;
@@ -255,7 +255,7 @@ watch(searchQuery, () => {
                     </div>
                   </transition>
 
-                  <RouterLink title="Edit" :to="`/edit-profile/${user.id}`">
+                  <RouterLink title="Edit" :to="`/edit-user/${user.id}`">
                     <!-- Edit Icon -->
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path

@@ -5,6 +5,8 @@ import UserPage from "@/views/UserPage.vue";
 import UnknownPage from "@/views/error/UnknownPage.vue";
 import CreateService from "@/views/CreateService.vue";
 import EditUser from "@/views/EditUser.vue";
+import UserProfile from "@/views/UserProfile.vue";
+import EditProfile from "@/views/EditProfile.vue";
 import ChangePasswordUser from "@/views/ChangePasswordUser.vue";
 import CreateUser from "@/views/CreateUser.vue";
 import CreateRole from "@/views/CreateRole.vue";
@@ -98,12 +100,34 @@ const routes = [
         },
     },
     {
-        path: "/edit-profile/:id",
-        name: "Edit Profile",
-        component: EditUser,
+        path: "/user-profile",
+        name: "User Profile",
+        component: UserProfile,
+        meta: {
+            title: "User Profile",
+            breadcrumbs: "User Profile",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/edit-profile",
+        name: "Edit Profile",   
+        component: EditProfile,
         meta: {
             title: "Edit Profile",
             breadcrumbs: "Edit Profile",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/edit-user/:id",
+        name: "Edit User",  
+        component: EditUser,
+        meta: {
+            title: "Edit User",
+            breadcrumbs: "Edit User",
             excludeRole: ["user"], 
             requiresAuth: true,
         },
