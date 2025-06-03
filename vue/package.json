@@ -17,6 +17,7 @@
     "chartjs-plugin-datalabels": "^2.2.0",
     "flatpickr": "^4.6.13",
     "gsap": "^3.13.0",
+    "leaflet": "^1.9.4",
     "lucide-vue-next": "^0.508.0",
     "pinia": "^3.0.2",
     "primeicons": "^7.0.0",

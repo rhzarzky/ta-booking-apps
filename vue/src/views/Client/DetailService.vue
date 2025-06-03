@@ -209,6 +209,7 @@ const submitBooking = async () => {
                 value-type="date"
                 :clearable="false"
                 class="w-full"
+                :editable="false"
               >
                 <template #icon-calendar>
                   <CalendarDays class="w-5 h-5 text-gray-500" />
