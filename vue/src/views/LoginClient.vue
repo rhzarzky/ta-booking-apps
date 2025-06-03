@@ -112,18 +112,6 @@ const handleLogin = async () => {
             forgot password?
           </router-link>
         </div>
-        <!-- <div class="flex items-center my-2">
-          <hr class="flex-grow border-gray-300" />
-          <span class="px-4 text-gray-400">Or</span>
-          <hr class="flex-grow border-gray-300" />
-        </div> -->
-
-        <!-- <button
-          class="w-full flex items-center justify-center border py-3 rounded-lg font-semibold text-gray-700 hover:bg-gray-100"
-        >
-          <img src="@/assets/images/google.png" class="h-5 w-5 mr-2" />
-          Continue with Google
-        </button> -->
 
         <p class="text-center text-gray-600 mt-3">
           Don't have an account?

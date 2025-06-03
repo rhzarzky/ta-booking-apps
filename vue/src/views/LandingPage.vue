@@ -4,15 +4,14 @@
       <div class="container mx-auto flex justify-between items-center">
         <router-link to="/" class="flex items-center space-x-2">
           <img src="@/assets/images/Appointly.png" alt="Appointly Logo" class="h-10" />
-          <span class="text-xl font-bold text-gray-800">Appointly</span>
         </router-link>
 
         <ul class="hidden md:flex space-x-8 text-lg">
           <li><a href="#home" class="text-indigo-600 font-semibold hover:text-indigo-800 transition duration-200">Home</a></li>
           <li><a href="#about" class="hover:text-indigo-600 transition duration-200">About Us</a></li>
-          <li><a href="#services" class="hover:text-indigo-600 transition duration-200">Services</a></li>
+          <li><a href="#features" class="hover:text-indigo-600 transition duration-200">Features</a></li>
           <li><a href="#contact" class="hover:text-indigo-600 transition duration-200">Contact Us</a></li>
-          <li><a href="#blog" class="hover:text-indigo-600 transition duration-200">Blog</a></li>
+          <li><a href="#faq" class="hover:text-indigo-600 transition duration-200">FAQ</a></li>
         </ul>
 
         <router-link
@@ -37,9 +36,9 @@
           <ul class="flex flex-col space-y-4 text-gray-700 text-lg">
             <li><a href="#home" @click="isOpen = false" class="block text-indigo-600 font-semibold py-2 hover:bg-gray-50 rounded-md transition duration-200">Home</a></li>
             <li><a href="#about" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">About Us</a></li>
-            <li><a href="#services" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">Services</a></li>
+            <li><a href="#features" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">Features</a></li>
             <li><a href="#contact" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">Contact Us</a></li>
-            <li><a href="#blog" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">Blog</a></li>
+            <li><a href="#faq" @click="isOpen = false" class="block py-2 hover:bg-gray-50 rounded-md transition duration-200">FAQ</a></li>
           </ul>
 
           <router-link
@@ -56,10 +55,10 @@
       <div class="container mx-auto flex flex-col md:flex-row items-center justify-between px-6">
         <div class="md:w-1/2 text-center md:text-left animate-fade-in-up z-10">
           <h1 class="text-5xl lg:text-6xl font-extrabold leading-tight text-gray-900 drop-shadow-sm">
-            We create <span class="text-indigo-600">solutions</span> for your business
+            Effortless <span class="text-indigo-600">Appointments</span> for Your Business
           </h1>
           <p class="text-gray-600 mt-6 text-lg max-w-lg md:max-w-none mx-auto md:mx-0">
-            Tim kami selalu mengikuti tren dan teknologi terbaru untuk memastikan kampanye pemasaran Anda tetap terdepan.
+            Streamline your scheduling, reduce no-shows, and provide a seamless booking experience for your clients.
           </p>
           <div class="mt-10 flex justify-center md:justify-start space-x-4">
             <router-link
@@ -68,45 +67,48 @@
             >
               Get Started
             </router-link>
-            </div>
+            <a href="#features" class="px-8 py-4 rounded-full font-bold text-lg text-indigo-600 border border-indigo-600 hover:bg-indigo-50 transition duration-300 transform hover:-translate-y-1 hover:scale-105">
+              Learn More
+            </a>
+          </div>
         </div>
 
         <div class="md:w-1/2 flex justify-center mt-12 md:mt-0 relative animate-zoom-in">
-          <img src="@/assets/images/booking.jpg" alt="Hero Illustration" class="max-w-md w-full rounded-xl shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500 ease-in-out">
+          <img src="@/assets/images/booking.jpg" alt="Appointment Booking Illustration" class="max-w-md w-full rounded-xl shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-500 ease-in-out">
           <div class="absolute -bottom-8 -left-8 bg-blue-200 w-24 h-24 rounded-full opacity-70 animate-pulse hidden md:block"></div>
           <div class="absolute top-0 right-0 bg-yellow-200 w-16 h-16 rounded-full opacity-70 animate-bounce-slow hidden md:block"></div>
         </div>
       </div>
     </section>
 
-    <section id="services" class="py-20 bg-white">
+    <section id="features" class="py-20 bg-white">
       <div class="container mx-auto text-center px-6">
         <h2 class="text-4xl font-extrabold text-gray-900 mb-4 animate-fade-in-up">
-          We Provide The Best <span class="text-indigo-600">Services</span>
+          Key <span class="text-indigo-600">Features</span> for Seamless Scheduling
         </h2>
         <p class="text-gray-600 mt-2 text-lg max-w-2xl mx-auto mb-12 animate-fade-in-up delay-200">
-          Biarkan kami mengeluarkan potensi penuh bisnis Anda dengan strategi berbasis data yang teruji dan inovatif.
+          Our platform offers robust tools designed to simplify appointment management for businesses of all sizes.
         </p>
 
         <div
           class="max-w-screen-lg mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
         >
           <div
-            v-for="(service, index) in services"
+            v-for="(feature, index) in features"
             :key="index"
             class="relative bg-white p-8 pt-12 shadow-lg rounded-xl text-center border-t-4 transform transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer"
-            :class="service.color"
+            :class="feature.color"
           >
             <div
               class="absolute -top-6 left-1/2 -translate-x-1/2 w-16 h-16 flex justify-center items-center rounded-full shadow-lg"
-              :class="service.iconBg"
+              :class="feature.iconBg"
             >
-              <img :src="service.icon" :alt="service.title" class="w-8 h-8 filter invert" />
+              <img :src="feature.icon" :alt="feature.title" class="w-8 h-8 filter invert" />
             </div>
 
-            <h3 class="text-xl font-bold mt-6 text-gray-900">{{ service.title }}</h3>
+            <h3 class="text-xl font-bold mt-6 text-gray-900">{{ feature.title }}</h3>
             <p class="text-gray-600 mt-3 text-base">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+              {{ feature.description }}
             </p>
           </div>
         </div>
@@ -122,10 +124,10 @@
 
         <div class="text-center md:text-left animate-fade-in-right">
           <h2 class="text-4xl font-extrabold text-gray-900 mb-4">
-            Simple <span class="text-indigo-600">Solutions!</span>
+            How Appointly <span class="text-indigo-600">Works</span>
           </h2>
           <p class="text-gray-600 mt-2 text-lg mb-8">
-            Kami memahami bahwa setiap bisnis berbeda. Itulah mengapa kami meluangkan waktu untuk memahami kebutuhan unik Anda.
+            Our intuitive platform makes booking and managing appointments incredibly easy for both you and your clients.
           </p>
 
           <div class="space-y-6">
@@ -146,13 +148,13 @@
     <section class="bg-indigo-600 text-white py-16 px-6">
         <div class="container mx-auto flex flex-col md:flex-row items-center justify-between text-center md:text-left">
             <h2 class="text-4xl font-extrabold leading-tight mb-6 md:mb-0 max-w-2xl">
-                Siap untuk memulai? <br class="hidden md:block"> Jangan ragu, kami siap membantu!
+                Ready to Get Started? <br class="hidden md:block"> Book Your First Appointment Today!
             </h2>
             <router-link
-                to="/contact"
+                to="/register"
                 class="bg-white text-indigo-600 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-gray-100 transition duration-300 transform hover:-translate-y-1 hover:scale-105"
             >
-                Hubungi Kami
+                Sign Up Now
             </router-link>
         </div>
     </section>
@@ -164,7 +166,7 @@
             <router-link to="/" class="flex items-center space-x-3 mb-4">
               <img src="@/assets/images/Appointly.png" alt="Appointly" class="h-10" />
             </router-link>
-            <p class="text-gray-400 text-sm mb-4">Solusi Penjadwalan Cerdas untuk Bisnis Anda.</p>
+            <p class="text-gray-400 text-sm mb-4">Smart Scheduling Solutions for Your Business.</p>
             <div class="flex space-x-5 mt-3">
               <a href="#" class="text-blue-500 hover:text-blue-400 transition transform hover:-translate-y-1 text-2xl"><i class="fab fa-facebook-f"></i></a>
               <a href="#" class="text-pink-400 hover:text-pink-300 transition transform hover:-translate-y-1 text-2xl"><i class="fab fa-instagram"></i></a>
@@ -174,32 +176,32 @@
           </div>
 
           <div>
-            <h3 class="font-bold text-lg text-white mb-4">Perusahaan</h3>
+            <h3 class="font-bold text-lg text-white mb-4">Company</h3>
             <ul class="space-y-3 text-gray-400">
-              <li><a href="#about" class="hover:text-white transition duration-200">Tentang Kami</a></li>
-              <li><a href="#contact" class="hover:text-white transition duration-200">Kontak</a></li>
-              <li><a href="#" class="hover:text-white transition duration-200">Karir</a></li>
-              <li><a href="#" class="hover:text-white transition duration-200">Tim Kami</a></li>
+              <li><a href="#about" class="hover:text-white transition duration-200">About Us</a></li>
+              <li><a href="#contact" class="hover:text-white transition duration-200">Contact</a></li>
+              <li><a href="#" class="hover:text-white transition duration-200">Careers</a></li>
+              <li><a href="#" class="hover:text-white transition duration-200">Our Team</a></li>
             </ul>
           </div>
 
           <div>
-            <h3 class="font-bold text-lg text-white mb-4">Layanan</h3>
+            <h3 class="font-bold text-lg text-white mb-4">Features</h3>
             <ul class="space-y-3 text-gray-400">
-              <li><a href="#services" class="hover:text-white transition duration-200">SEO/SEM</a></li>
-              <li><a href="#services" class="hover:text-white transition duration-200">Pemasaran Digital</a></li>
-              <li><a href="#services" class="hover:text-white transition duration-200">Kampanye Viral</a></li>
-              <li><a href="#services" class="hover:text-white transition duration-200">Solusi Kustom</a></li>
+              <li><a href="#features" class="hover:text-white transition duration-200">Online Booking</a></li>
+              <li><a href="#features" class="hover:text-white transition duration-200">Client Management</a></li>
+              <li><a href="#features" class="hover:text-white transition duration-200">Automated Reminders</a></li>
+              <li><a href="#features" class="hover:text-white transition duration-200">Calendar Sync</a></li>
             </ul>
           </div>
 
           <div>
-            <h3 class="font-bold text-lg text-white mb-4">Sumber Daya</h3>
+            <h3 class="font-bold text-lg text-white mb-4">Resources</h3>
             <ul class="space-y-3 text-gray-400">
-              <li><a href="#" class="hover:text-white transition duration-200">Menjadi Desainer</a></li>
-              <li><a href="#blog" class="hover:text-white transition duration-200">Blog Kami</a></li>
-              <li><a href="#" class="hover:text-white transition duration-200">Panduan</a></li>
-              <li><a href="#" class="hover:text-white transition duration-200">Studi Kasus</a></li>
+              <li><a href="#" class="hover:text-white transition duration-200">Help Center</a></li>
+              <li><a href="#faq" class="hover:text-white transition duration-200">FAQ</a></li>
+              <li><a href="#" class="hover:text-white transition duration-200">Guides</a></li>
+              <li><a href="#" class="hover:text-white transition duration-200">Case Studies</a></li>
             </ul>
           </div>
         </div>
@@ -218,37 +220,41 @@ export default {
   data() {
     return {
       isOpen: false,
-      services: [
+      features: [ // Renamed from 'services' to 'features'
         {
-          title: 'SEO/SEM',
-          icon: '/icons/search-engine.svg', // Pastikan ikon ini ada dan benar path-nya
-          color: 'border-b-yellow-400', // Gunakan border-b untuk bawah
+          title: 'Online Booking',
+          icon: '/icons/online-booking.svg', // Ensure this icon exists and path is correct
+          description: 'Allow clients to book appointments 24/7 from any device.',
+          color: 'border-b-yellow-400',
           iconBg: 'bg-yellow-400',
         },
         {
-          title: 'Digital Marketing',
-          icon: '/icons/marketing-growth.svg', // Pastikan ikon ini ada dan benar path-nya
+          title: 'Automated Reminders',
+          icon: '/icons/bell.svg', // Ensure this icon exists and path is correct
+          description: 'Reduce no-shows with automated email and SMS reminders.',
           color: 'border-b-green-500',
           iconBg: 'bg-green-500',
         },
         {
-          title: 'Viral Campaign',
-          icon: '/icons/viral-share.svg', // Pastikan ikon ini ada dan benar path-nya
+          title: 'Client Management',
+          icon: '/icons/user-group.svg', // Ensure this icon exists and path is correct
+          description: 'Keep track of client history, preferences, and notes in one place.',
           color: 'border-b-purple-500',
           iconBg: 'bg-purple-500',
         },
         {
-          title: 'Custom Solutions', // Ubah Others jadi lebih spesifik
-          icon: '/icons/solution.svg', // Pastikan ikon ini ada dan benar path-nya
+          title: 'Calendar Sync',
+          icon: '/icons/calendar-sync.svg', // Ensure this icon exists and path is correct
+          description: 'Seamlessly sync with popular calendars like Google and Outlook.',
           color: 'border-b-red-500',
           iconBg: 'bg-red-500',
         },
       ],
       steps: [
-        { title: "Hubungi Kami", description: "Jangkau tim kami untuk mendiskusikan kebutuhan Anda." },
-        { title: "Konsultasi Gratis", description: "Dapatkan sesi konsultasi personal untuk menemukan solusi terbaik." },
-        { title: "Mulai Proyek", description: "Setelah perencanaan, kami segera memulai proyek Anda." },
-        { title: "Lihat Hasil", description: "Saksikan bagaimana solusi kami membawa pertumbuhan nyata bagi bisnis Anda." }
+        { title: "Sign Up Easily", description: "Create your account in minutes and set up your services." },
+        { title: "Customize Your Schedule", description: "Define your availability, breaks, and booking rules." },
+        { title: "Share Your Booking Link", description: "Let clients discover and book appointments with ease." },
+        { title: "Manage & Grow", description: "View appointments, send reminders, and track your business growth." }
       ],
     };
   },
@@ -261,10 +267,10 @@ export default {
 </script>
 
 <style scoped>
-/* Transisi Slide Down untuk Mobile Menu */
+/* Transition for Mobile Menu */
 .slide-down-enter-active, .slide-down-leave-active {
   transition: all 0.3s ease-out;
-  max-height: 500px; /* Nilai yang cukup besar untuk transisi */
+  max-height: 500px;
   opacity: 1;
 }
 .slide-down-enter-from, .slide-down-leave-to {
@@ -273,7 +279,7 @@ export default {
   transform: translateY(-20px);
 }
 
-/* Keyframes untuk Animasi */
+/* Keyframes for Animations */
 @keyframes fadeInFromBottom {
   from {
     opacity: 0;
@@ -344,10 +350,10 @@ export default {
   }
 }
 
-/* Aplikasi Animasi */
+/* Application of Animations */
 .animate-fade-in-up {
   animation: fadeInFromBottom 0.8s ease-out forwards;
-  opacity: 0; /* Pastikan elemen tersembunyi sebelum animasi */
+  opacity: 0;
 }
 
 .animate-zoom-in {
@@ -373,12 +379,12 @@ export default {
   animation: bounceSlow 4s infinite ease-in-out;
 }
 
-/* Delay Animasi */
+/* Animation Delays */
 .delay-200 { animation-delay: 0.2s; }
 .delay-400 { animation-delay: 0.4s; }
 .delay-600 { animation-delay: 0.6s; }
 
-/* Invert filter untuk ikon SVG agar warnanya jadi putih */
+/* Invert filter for SVG icons to make them white */
 .filter-invert {
     filter: invert(100%);
 }

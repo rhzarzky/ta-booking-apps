@@ -88,24 +88,21 @@ export default {
     const dashboardStore = useDashboardStore()
     const { allBookings } = storeToRefs(dashboardStore)
 
-    // Current year and month for default selection
     const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1; // getMonth() is 0-indexed
+    const currentMonth = new Date().getMonth() + 1;
 
     const selectedYear = ref(currentYear);
-    const selectedMonth = ref('all'); // Default to 'all' months
+    const selectedMonth = ref('all');
 
     const monthNames = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    // Helper to get number of days in a given month and year
     const getDaysInMonth = (year, month) => {
-        return new Date(year, month, 0).getDate();
+      return new Date(year, month, 0).getDate();
     };
 
-    // Helper to group items by a key
     const groupBy = (items, keyFn) => {
       return items.reduce((acc, item) => {
         const key = keyFn(item)
@@ -115,20 +112,17 @@ export default {
       }, {})
     }
 
-    // Generate list of years from available data + current year
     const availableYears = computed(() => {
       const years = new Set();
       allBookings.value.forEach(b => {
         const date = new Date(b.date);
         years.add(date.getFullYear());
       });
-      // Ensure current year is always an option
       years.add(currentYear);
-      return Array.from(years).sort((a, b) => b - a); // Sort descending
+      return Array.from(years).sort((a, b) => b - a);
     });
 
     const handleYearChange = () => {
-      // When year changes, reset month to 'all'
       selectedMonth.value = 'all';
     };
 
@@ -140,11 +134,10 @@ export default {
     const computedChartData = computed(() => {
       if (!allBookings.value.length) return { labels: [], datasets: [] };
 
-      // Filter bookings by selected year and month
       const filteredBookings = allBookings.value.filter(b => {
         const bookingDate = new Date(b.date);
         const bookingYear = bookingDate.getFullYear();
-        const bookingMonth = bookingDate.getMonth() + 1; // 1-indexed
+        const bookingMonth = bookingDate.getMonth() + 1;
 
         const isMatchingYear = bookingYear === selectedYear.value;
         const isMatchingMonth = selectedMonth.value === 'all' || bookingMonth === selectedMonth.value;
@@ -153,97 +146,136 @@ export default {
       });
 
       let labels = [];
-      let grouped = {};
+      let groupedByTimePeriod = {}; // Renamed for clarity on what's being grouped
 
       if (selectedMonth.value === 'all') {
-        // Show all 12 months for the selected year
-        labels = monthNames; // Use full month names as labels
-        grouped = groupBy(filteredBookings, (b) => {
-          const d = new Date(b.date);
-          return d.getMonth(); // Group by 0-indexed month for mapping to monthNames
-        });
+        labels = monthNames;
+        groupedByTimePeriod = groupBy(filteredBookings, (b) => new Date(b.date).getMonth());
 
-        // Ensure all 12 months are represented in the labels, even if no data
-        const fullMonthLabels = Array.from({ length: 12 }, (_, i) => monthNames[i]);
-        labels = fullMonthLabels;
+        // Data array will be 12 elements (for 12 months)
+        const getCountByStatus = (status) => {
+            return Array.from({ length: 12 }, (_, monthIndex) =>
+                (groupedByTimePeriod[monthIndex] || []).filter((b) => b.status.toLowerCase() === status).length
+            );
+        };
 
+        return {
+            labels,
+            datasets: [
+                {
+                    label: 'Approved',
+                    data: getCountByStatus('approved'),
+                    backgroundColor: (context) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                        gradient.addColorStop(0, '#4CAF50');
+                        gradient.addColorStop(1, '#81C784');
+                        return gradient;
+                    },
+                    borderRadius: 8,
+                    barThickness: 24,
+                    categoryPercentage: 0.7,
+                    barPercentage: 0.8,
+                },
+                {
+                    label: 'Declined',
+                    data: getCountByStatus('declined'),
+                    backgroundColor: (context) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                        gradient.addColorStop(0, '#F44336');
+                        gradient.addColorStop(1, '#EF9A9A');
+                        return gradient;
+                    },
+                    borderRadius: 8,
+                    barThickness: 24,
+                    categoryPercentage: 0.7,
+                    barPercentage: 0.8,
+                },
+                {
+                    label: 'Pending',
+                    data: getCountByStatus('pending'),
+                    backgroundColor: (context) => {
+                        const ctx = context.chart.ctx;
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                        gradient.addColorStop(0, '#FFC107');
+                        gradient.addColorStop(1, '#FFEB3B');
+                        return gradient;
+                    },
+                    borderRadius: 8,
+                    barThickness: 24,
+                    categoryPercentage: 0.7,
+                    barPercentage: 0.8,
+                },
+            ],
+        };
       } else {
-        // Show daily breakdown for the selected month and year
-        const daysInSelectedMonth = getDaysInMonth(selectedYear.value, selectedMonth.value);
-        labels = Array.from({ length: daysInSelectedMonth }, (_, i) => (i + 1).toString()); // Labels are '1', '2', ..., '31'
+        // Daily breakdown for the selected month and year
+        groupedByTimePeriod = groupBy(filteredBookings, (b) => new Date(b.date).getDate());
 
-        grouped = groupBy(filteredBookings, (b) => {
-          const d = new Date(b.date);
-          return d.getDate(); // Group by day of the month (1-indexed)
-        });
-      }
+        // Get unique days that actually have bookings
+        const uniqueDaysWithBookings = Object.keys(groupedByTimePeriod).map(Number).sort((a, b) => a - b);
+        labels = uniqueDaysWithBookings.map(day => day.toString());
 
-      const getCountByStatus = (status) => {
-        if (selectedMonth.value === 'all') {
-          // For 'All Months' view, iterate through all 12 months (0-11)
-          return Array.from({ length: 12 }, (_, monthIndex) =>
-            (grouped[monthIndex] || []).filter((b) => b.status.toLowerCase() === status).length
+        const getCountByStatus = (status) => {
+          return uniqueDaysWithBookings.map(day =>
+            (groupedByTimePeriod[day] || []).filter((b) => b.status.toLowerCase() === status).length
           );
-        } else {
-          // For a specific month (daily breakdown), iterate through days of the month
-          const daysInCurrentMonth = getDaysInMonth(selectedYear.value, selectedMonth.value);
-          return Array.from({ length: daysInCurrentMonth }, (_, dayIndex) =>
-            (grouped[dayIndex + 1] || []).filter((b) => b.status.toLowerCase() === status).length // dayIndex + 1 because day is 1-indexed
-          );
-        }
-      };
+        };
 
-      return {
-        labels,
-        datasets: [
-          {
-            label: 'Approved',
-            data: getCountByStatus('approved'),
-            backgroundColor: (context) => {
-              const ctx = context.chart.ctx
-              const gradient = ctx.createLinearGradient(0, 0, 0, 300)
-              gradient.addColorStop(0, '#4CAF50') // Brighter green
-              gradient.addColorStop(1, '#81C784') // Lighter green
-              return gradient
+        return {
+          labels,
+          datasets: [
+            {
+              label: 'Approved',
+              data: getCountByStatus('approved'),
+              backgroundColor: (context) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, '#4CAF50');
+                gradient.addColorStop(1, '#81C784');
+                return gradient;
+              },
+              borderRadius: 8,
+              barThickness: 24,
+              categoryPercentage: 0.7,
+              barPercentage: 0.8,
             },
-            borderRadius: 8,
-            barThickness: 24,
-            categoryPercentage: 0.7,
-            barPercentage: 0.8,
-          },
-          {
-            label: 'Declined',
-            data: getCountByStatus('declined'),
-            backgroundColor: (context) => {
-              const ctx = context.chart.ctx
-              const gradient = ctx.createLinearGradient(0, 0, 0, 300)
-              gradient.addColorStop(0, '#F44336') // Brighter red
-              gradient.addColorStop(1, '#EF9A9A') // Lighter red
-              return gradient
+            {
+              label: 'Declined',
+              data: getCountByStatus('declined'),
+              backgroundColor: (context) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, '#F44336');
+                gradient.addColorStop(1, '#EF9A9A');
+                return gradient;
+              },
+              borderRadius: 8,
+              barThickness: 24,
+              categoryPercentage: 0.7,
+              barPercentage: 0.8,
             },
-            borderRadius: 8,
-            barThickness: 24,
-            categoryPercentage: 0.7,
-            barPercentage: 0.8,
-          },
-          {
-            label: 'Pending',
-            data: getCountByStatus('pending'),
-            backgroundColor: (context) => {
-              const ctx = context.chart.ctx
-              const gradient = ctx.createLinearGradient(0, 0, 0, 300)
-              gradient.addColorStop(0, '#FFC107') // Brighter amber
-              gradient.addColorStop(1, '#FFEB3B') // Lighter amber
-              return gradient
+            {
+              label: 'Pending',
+              data: getCountByStatus('pending'),
+              backgroundColor: (context) => {
+                const ctx = context.chart.ctx;
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, '#FFC107');
+                gradient.addColorStop(1, '#FFEB3B');
+                return gradient;
+              },
+              borderRadius: 8,
+              barThickness: 24,
+              categoryPercentage: 0.7,
+              barPercentage: 0.8,
             },
-            borderRadius: 8,
-            barThickness: 24,
-            categoryPercentage: 0.7,
-            barPercentage: 0.8,
-          },
-        ],
+          ],
+        };
       }
     });
+
 
     const chartOptions = {
       responsive: true,
@@ -273,8 +305,8 @@ export default {
           },
           anchor: 'end',
           align: 'top',
-          offset: 4, // slight offset from the bar
-          formatter: (value) => (value > 0 ? value : ''), // Only show if value > 0
+          offset: 4,
+          formatter: (value) => (value > 0 ? value : ''),
         },
         tooltip: {
           backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -282,22 +314,47 @@ export default {
           bodyFont: { size: 12 },
           padding: 10,
           cornerRadius: 6,
+          // Custom tooltip to show full date for daily view
+          callbacks: {
+            title: function(context) {
+              const labelIndex = context[0].dataIndex;
+              const chartLabels = context[0].chart.data.labels;
+              const selectedMonthVal = selectedMonth.value;
+              if (selectedMonthVal !== 'all' && chartLabels[labelIndex]) {
+                  // Reconstruct date for daily view tooltip
+                  const day = chartLabels[labelIndex];
+                  const month = monthNames[selectedMonthVal - 1]; // Convert 1-indexed month to name
+                  const year = selectedYear.value;
+                  return `${month} ${day}, ${year}`;
+              }
+              return context[0].label; // Default title for monthly view
+            },
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) {
+                  label += ': ';
+              }
+              if (context.parsed.y !== null) {
+                  label += context.parsed.y;
+              }
+              return label;
+            }
+          }
         }
       },
       scales: {
         y: {
           beginAtZero: true,
           grid: {
-            color: '#E5E7EB', // gray-200
+            color: '#E5E7EB',
             drawBorder: false,
           },
           ticks: {
             stepSize: 1,
-            color: '#6B7280', // gray-500
+            color: '#6B7280',
             font: {
               size: 11,
             },
-            // Ensure integer ticks
             callback: function(value) {
               if (Number.isInteger(value)) {
                 return value;
@@ -310,21 +367,20 @@ export default {
             display: false,
           },
           ticks: {
-            color: '#6B7280', // gray-500
+            color: '#6B7280',
             font: {
               size: 11,
             },
+            maxRotation: 45, // Rotate labels if they overlap
+            minRotation: 0,
           },
         },
       },
     }
 
     onMounted(() => {
-        // No need to fetch data here, as useDashboardStore likely handles it globally
-        // or you would fetch it in the parent component that uses this AnalyticsChart.
-        // Assuming allBookings is already populated or will be.
+      // Data fetching assumed to be handled by useDashboardStore globally
     });
-
 
     return {
       selectedYear,
@@ -340,15 +396,3 @@ export default {
 }
 </script>
 
-<style scoped>
-/* Scoped styles for this component */
-.bg-white {
-  background-color: #ffffff;
-}
-.shadow-lg {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-.rounded-2xl {
-  border-radius: 1rem;
-}
-</style>

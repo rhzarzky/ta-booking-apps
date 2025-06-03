@@ -18,6 +18,8 @@ router.beforeEach((to, from, next) => {
   } else {
     next();
   }
+
+    document.title = `${to.meta.title} || Appointly`;
 });
 
 export default router;

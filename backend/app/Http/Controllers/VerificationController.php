@@ -31,7 +31,7 @@ class VerificationController extends Controller
         $user->email_verified_at = now();
         $user->save();
 
-        return redirect(env('APP_FRONTEND_URL') . '/login');
+        return redirect(env('APP_FRONTEND_URL') . '/email-verified');
     }
 
     public function sendOtp(Request $request)

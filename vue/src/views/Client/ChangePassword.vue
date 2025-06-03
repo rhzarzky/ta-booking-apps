@@ -1,78 +1,115 @@
 <template>
-  <div class="p-6 max-w-2xl mx-auto">
-    <h2 class="text-2xl font-bold mb-4 text-gray-800">Change Password</h2>
-
-    <form @submit.prevent="handleSubmit" class="space-y-5">
-
-      <!-- Current Password -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Current Password</label>
-        <div class="relative">
-          <input
-            :type="showCurrent ? 'text' : 'password'"
-            v-model="form.current_password"
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2"
-            :class="errors.current_password ? 'border-red-500 focus:ring-red-300' : 'border-gray-300 focus:ring-blue-300'"
-          />
-          <button type="button" @click="showCurrent = !showCurrent" class="absolute right-3 top-2.5 text-sm text-gray-500">
-            {{ showCurrent ? 'Hide' : 'Show' }}
-          </button>
-        </div>
-        <p v-if="errors.current_password" class="text-sm text-red-500 mt-1">
-          {{ errors.current_password }}
-        </p>
-      </div>
-
-      <!-- New Password -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700">New Password</label>
-        <div class="relative">
-          <input
-            :type="showNew ? 'text' : 'password'"
-            v-model="form.password"
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2"
-            :class="errors.password ? 'border-red-500 focus:ring-red-300' : 'border-gray-300 focus:ring-blue-300'"
-          />
-          <button type="button" @click="showNew = !showNew" class="absolute right-3 top-2.5 text-sm text-gray-500">
-            {{ showNew ? 'Hide' : 'Show' }}
-          </button>
-        </div>
-        <p v-if="errors.password" class="text-sm text-red-500 mt-1">
-          {{ errors.password }}
-        </p>
-      </div>
-
-      <!-- Confirm New Password -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Confirm New Password</label>
-        <div class="relative">
-          <input
-            :type="showConfirm ? 'text' : 'password'"
-            v-model="form.password_confirmation"
-            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2"
-            :class="errors.password_confirmation ? 'border-red-500 focus:ring-red-300' : 'border-gray-300 focus:ring-blue-300'"
-          />
-          <button type="button" @click="showConfirm = !showConfirm" class="absolute right-3 top-2.5 text-sm text-gray-500">
-            {{ showConfirm ? 'Hide' : 'Show' }}
-          </button>
-        </div>
-        <p v-if="errors.password_confirmation" class="text-sm text-red-500 mt-1">
-          {{ errors.password_confirmation }}
-        </p>
-      </div>
-
-      <!-- Submit -->
-      <div class="flex justify-end gap-4 pt-4">
-        <button type="button" @click="router.push('/client/profile')"
-          class="px-6 py-2 border rounded-md text-gray-700 hover:bg-gray-100">
-          Cancel
-        </button>
-        <button type="submit"
-          class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-          Update Password
+  <div class="p-6 max-w-2xl mx-auto relative">
+    <div class="fixed top-4 right-4 z-50 space-y-3">
+      <div
+        v-for="notification in notifications"
+        :key="notification.id"
+        :class="[
+          'p-4 rounded-lg shadow-md text-white flex items-center justify-between transition-all duration-300 transform',
+          {
+            'bg-green-500': notification.type === 'success',
+            'bg-red-500': notification.type === 'error',
+            'bg-yellow-500': notification.type === 'warning',
+          }
+        ]"
+      >
+        <span>{{ notification.message }}</span>
+        <button @click="removeNotification(notification.id)" class="ml-4 text-white hover:text-gray-100 focus:outline-none">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
-    </form>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-xl p-6 sm:p-10">
+      <h2 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-4">Change Password</h2>
+
+      <form @submit.prevent="handleSubmit" class="space-y-5">
+
+        <div>
+          <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+          <div class="relative">
+            <input
+              id="current_password"
+              :type="showCurrent ? 'text' : 'password'"
+              v-model="form.current_password"
+              class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 transition duration-150 ease-in-out"
+              :class="errors.current_password ? 'border-red-500 focus:ring-red-300' : 'border-gray-300 focus:ring-indigo-300'"
+            />
+            <button type="button" @click="showCurrent = !showCurrent" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              <svg v-if="showCurrent" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 1005 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.602-5.462a4.99 4.99 0 018.665 6.002m-4.223 2.477c.334.303.58.652.753 1.037.669 1.547-.488 3.195-2.036 3.864-.813.353-1.637.56-2.527.56C8.895 19 6.84 17.514 6 15.344" /></svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            </button>
+          </div>
+          <p v-if="errors.current_password" class="text-sm text-red-500 mt-1">
+            {{ errors.current_password }}
+          </p>
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+          <div class="relative flex items-center">
+            <input
+              id="password"
+              :type="showNew ? 'text' : 'password'"
+              v-model="form.password"
+              class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 transition duration-150 ease-in-out pr-12"
+              :class="errors.password ? 'border-red-500 focus:ring-red-300' : 'border-gray-300 focus:ring-indigo-300'"
+            />
+            <button type="button" @click="showNew = !showNew" class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              <svg v-if="showNew" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 1005 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.602-5.462a4.99 4.99 0 018.665 6.002m-4.223 2.477c.334.303.58.652.753 1.037.669 1.547-.488 3.195-2.036 3.864-.813.353-1.637.56-2.527.56C8.895 19 6.84 17.514 6 15.344" /></svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            </button>
+            <button type="button" @click="generatePassword" class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-300" title="Generate Strong Password">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2v5l-2 2h-4L9 14V9a2 2 0 012-2h4zm-5 7h4m-4-7V7m2 0V5a2 2 0 00-2-2H7a2 2 0 00-2 2v2m8 0V5a2 2 0 012-2h4a2 2 0 012 2v2m-3 7h-2m-2 0h-2m-2 0h-2m-2 0h-2m-2 0h-2M15 12H9m6 0h4m-4 0h-4m-4 0h-4m-4 0h-4"/></svg>
+            </button>
+          </div>
+          <p v-if="errors.password" class="text-sm text-red-500 mt-1">
+            {{ errors.password }}
+          </p>
+        </div>
+
+        <div>
+          <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+          <div class="relative">
+            <input
+              id="password_confirmation"
+              :type="showConfirm ? 'text' : 'password'"
+              v-model="form.password_confirmation"
+              class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 transition duration-150 ease-in-out"
+              :class="errors.password_confirmation ? 'border-red-500 focus:ring-red-300' : 'border-gray-300 focus:ring-indigo-300'"
+            />
+            <button type="button" @click="showConfirm = !showConfirm" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-300">
+              <svg v-if="showConfirm" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 1005 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.602-5.462a4.99 4.99 0 018.665 6.002m-4.223 2.477c.334.303.58.652.753 1.037.669 1.547-.488 3.195-2.036 3.864-.813.353-1.637.56-2.527.56C8.895 19 6.84 17.514 6 15.344" /></svg>
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            </button>
+          </div>
+          <p v-if="errors.password_confirmation" class="text-sm text-red-500 mt-1">
+            {{ errors.password_confirmation }}
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row justify-end gap-4 pt-4">
+          <button
+            type="button"
+            @click="router.push('/client/profile')"
+            class="w-full sm:w-auto px-6 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-400"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            :disabled="isSubmitting"
+            class="w-full sm:w-auto px-6 py-2 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center justify-center gap-2"
+          >
+            <svg v-if="isSubmitting" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ isSubmitting ? 'Updating...' : 'Update Password' }}
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -80,6 +117,23 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+
+// --- Notification System Setup ---
+const notifications = ref([]);
+let notificationId = 0;
+
+const showNotification = (type, message) => {
+  const id = notificationId++;
+  notifications.value.push({ id, type, message });
+  setTimeout(() => {
+    removeNotification(id);
+  }, 5000); // Notifications disappear after 5 seconds
+};
+
+const removeNotification = (id) => {
+  notifications.value = notifications.value.filter(n => n.id !== id);
+};
+// --- End Notification System Setup ---
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -93,6 +147,7 @@ const form = ref({
 const showCurrent = ref(false)
 const showNew = ref(false)
 const showConfirm = ref(false)
+const isSubmitting = ref(false)
 
 const errors = ref({
   current_password: '',
@@ -100,43 +155,98 @@ const errors = ref({
   password_confirmation: ''
 })
 
+// Function to generate a strong password
+const generatePassword = () => {
+  const length = 12; // You can adjust the desired length
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+  let newPassword = "";
+  for (let i = 0, n = charset.length; i < length; ++i) {
+    newPassword += charset.charAt(Math.floor(Math.random() * n));
+  }
+  form.value.password = newPassword;
+  form.value.password_confirmation = newPassword; // Auto-fill confirmation
+  errors.value.password = ''; // Clear any previous errors
+  errors.value.password_confirmation = '';
+  showNotification('success', 'New password generated!');
+};
+
+
 const handleSubmit = async () => {
   errors.value = {
     current_password: '',
     password: '',
     password_confirmation: ''
   }
+  isSubmitting.value = true;
+
+  let hasError = false;
 
   if (!form.value.current_password) {
-    errors.value.current_password = 'Current password is required.'
+    errors.value.current_password = 'Current password is required.';
+    hasError = true;
   }
 
-  if (form.value.password.length < 6) {
-    errors.value.password = 'Password must be at least 6 characters.'
+  if (form.value.password.length < 8) {
+    errors.value.password = 'New password must be at least 8 characters long.';
+    hasError = true;
   }
 
   if (form.value.password !== form.value.password_confirmation) {
-    errors.value.password_confirmation = 'Passwords do not match.'
-    return
+    errors.value.password_confirmation = 'New passwords do not match.';
+    hasError = true;
   }
 
-  const formData = new FormData()
-  formData.append('_method', 'PUT')
-  formData.append('current_password', form.value.current_password)
-  formData.append('password', form.value.password)
-  formData.append('password_confirmation', form.value.password_confirmation)
+  if (hasError) {
+    isSubmitting.value = false;
+    showNotification('warning', 'Please correct the highlighted errors.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('_method', 'PUT');
+  formData.append('current_password', form.value.current_password);
+  formData.append('password', form.value.password);
+  formData.append('password_confirmation', form.value.password_confirmation);
 
   try {
-    await auth.updateProfile(formData)
-    alert('Password updated successfully!')
-    router.push('/client/profile')
+    await auth.updateProfile(formData);
+    showNotification('success', 'Password updated successfully!');
+    form.value.current_password = '';
+    form.value.password = '';
+    form.value.password_confirmation = '';
+    setTimeout(() => {
+      router.push('/client/profile');
+    }, 1500);
   } catch (error) {
-    const msg = error?.response?.data?.message || ''
-    if (msg.includes('current password')) {
-      errors.value.current_password = 'Current password is incorrect.'
+    console.error('Password update failed:', error);
+    const apiErrors = error.response?.data?.errors;
+    const generalMessage = error.response?.data?.message || 'Failed to update password. Please try again.';
+
+    if (apiErrors) {
+      if (apiErrors.current_password) {
+        errors.value.current_password = apiErrors.current_password[0];
+      }
+      if (apiErrors.password) {
+        errors.value.password = apiErrors.password[0];
+      }
+      showNotification('error', 'Validation failed. Please check your inputs.');
+    } else if (generalMessage.includes('current password')) {
+      errors.value.current_password = 'Current password is incorrect.';
+      showNotification('error', 'Current password is incorrect.');
     } else {
-      alert('Failed to update password.')
+      showNotification('error', generalMessage);
     }
+  } finally {
+    isSubmitting.value = false;
   }
 }
 </script>
+
+<style scoped>
+/* Base styles for the notification component to ensure it's visible and positioned correctly */
+.fixed.top-4.right-4.z-50.space-y-3 > div {
+  min-width: 250px;
+  max-width: 350px;
+  z-index: 1000;
+}
+</style>

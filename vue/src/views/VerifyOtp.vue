@@ -37,6 +37,7 @@
   </div>
 </template>
 
+// src/views/VerifyOtp.vue
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
@@ -51,24 +52,25 @@ const auth = useAuthStore()
 const { handleVerifyOtp, handleResendOtp, errors, loading } = auth
 
 const router = useRouter()
-const email = sessionStorage.getItem('verif_email')
+const email = sessionStorage.getItem('verify-otp') // Ini akan mengambil nilai yang benar setelah perbaikan di ForgotPassword.vue
 
 const submitOtp = async () => {
   try {
-    await handleVerifyOtp(form.otp)
-    router.push('/reset-password') // Tanpa email di URL
+    console.log('Mencoba verifikasi OTP:', form.otp);
+    const response = await handleVerifyOtp(form.otp);
+    console.log('Respons verifikasi OTP:', response);
+    router.push('/reset-password');
   } catch (error) {
-    console.error(error)
+    console.error('Error saat verifikasi OTP:', error);
   }
 }
 
 const resendOtp = async () => {
   try {
-    await handleResendOtp(email)
-    alert('OTP telah dikirim ulang')
-    startCooldown()
+    await handleResendOtp(email);
+    alert('OTP telah dikirim ulang');
+    startCooldown();
   } catch (e) {
-    console.error(e)
   }
 }
 
@@ -81,10 +83,11 @@ const startCooldown = () => {
 }
 
 onMounted(() => {
+
   if (!email) {
-    router.push('/forgot-password') // Redirect jika email tidak ditemukan
+    router.push('/forgot-password'); // Redirect jika email tidak ditemukan
   } else {
-    startCooldown()
+    startCooldown();
   }
 })
 </script>

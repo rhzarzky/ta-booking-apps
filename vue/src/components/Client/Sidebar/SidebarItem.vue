@@ -8,6 +8,14 @@ const props = defineProps({
   label: String,
   to: String,
   isOpen: Boolean,
+  activeClass: { // Add activeClass prop
+    type: String,
+    default: 'bg-purple-600 text-white' // Default to our purple active style
+  },
+  hoverClass: { // Add hoverClass prop for more control if needed
+    type: String,
+    default: 'hover:bg-purple-100 hover:text-purple-700' // Default to our light purple hover style
+  }
 });
 
 const route = useRoute();
@@ -26,9 +34,9 @@ const handleClick = () => {
 <template>
   <button
     @click="handleClick"
-    class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full text-left"
+    class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors w-full text-left"
     :class="[
-      isActive ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100 hover:text-black'
+      isActive ? activeClass : `text-gray-700 ${hoverClass}`
     ]"
   >
     <component :is="icon" class="w-5 h-5" />

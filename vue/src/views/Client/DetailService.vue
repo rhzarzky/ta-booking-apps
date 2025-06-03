@@ -53,15 +53,15 @@ const form = ref({
 // Computed property for available dates formatted for DatePicker
 const availableDatesForCalendar = computed(() => {
   if (!service.value?.date) return [];
-  return service.value.date.map(d => new Date(d.date)); // Convert date strings to Date objects
+  // Perbaikan: Pastikan tanggal dari backend juga diinterpretasikan sebagai tanggal lokal saat membuat Date object
+  // Menambahkan 'T00:00:00' untuk memastikan objek Date dibuat di zona waktu lokal
+  return service.value.date.map(d => new Date(d.date + 'T00:00:00'));
 });
 
 // Function to disable dates in the calendar
 const disabledDates = computed(() => {
   return {
     customDates: (date) => {
-      // Disable dates that are not in the availableDatesForCalendar list
-      // Also disable past dates
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Normalize to midnight
       const currentDate = new Date(date);
@@ -77,9 +77,11 @@ const disabledDates = computed(() => {
 });
 
 
+// Perbaikan: Fungsi formatDate ini juga perlu diinterpretasikan sebagai tanggal lokal
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  // Tambahkan 'T00:00:00' untuk memastikan parsing sebagai tanggal lokal
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',
@@ -87,9 +89,11 @@ const formatDate = (dateStr) => {
   })
 }
 
+// Perbaikan: Fungsi formatDateShort ini juga perlu diinterpretasikan sebagai tanggal lokal
 const formatDateShort = (dateStr) => {
   if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  // Tambahkan 'T00:00:00' untuk memastikan parsing sebagai tanggal lokal
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
     month: 'short',
     day: '2-digit',
   })
@@ -109,10 +113,8 @@ onMounted(async () => {
     await store.fetchServiceById(route.params.id)
     service.value = store.service
     if (service.value && service.value.time && service.value.time.length > 0) {
-      form.value.time = service.value.time[0]; // Pre-select first available time
     }
     if (service.value && service.value.option && service.value.option.length > 0) {
-      form.value.option = service.value.option[0]; // Pre-select first available option
     }
   } catch (err) {
     console.error('Failed to load service:', err)
@@ -132,7 +134,14 @@ const submitBooking = async () => {
     isSubmitting.value = true;
     const payload = {
       time: form.value.time,
-      date: form.value.date.toISOString().split('T')[0], // Format Date object to 'YYYY-MM-DD'
+      // --- PERBAIKAN UTAMA DI SINI ---
+      // Ambil komponen tanggal, bulan, tahun secara LOKAL dari objek Date
+      date: [
+        form.value.date.getFullYear(),
+        (form.value.date.getMonth() + 1).toString().padStart(2, '0'), // Bulan dimulai dari 0
+        form.value.date.getDate().toString().padStart(2, '0')
+      ].join('-'), // Hasilnya akan menjadi 'YYYY-MM-DD' (lokal)
+      // --- AKHIR PERBAIKAN ---
       note: form.value.note,
       option: form.value.option,
     };
@@ -142,7 +151,6 @@ const submitBooking = async () => {
     router.push('/client/activity');
   } catch (err) {
     console.error(err);
-    // Check if the error message indicates a conflict
     const errorMessage = err.response?.data?.message || 'Unfortunately, this service is already booked at that time or an error occurred. Please select another date/time.';
     showNotification('error', errorMessage);
   } finally {
@@ -253,7 +261,7 @@ const submitBooking = async () => {
                 >
                   {{ opt }}
                 </button>
-                 <p v-if="!service.option || service.option.length === 0" class="text-gray-500 text-sm">No options available for this service.</p>
+                  <p v-if="!service.option || service.option.length === 0" class="text-gray-500 text-sm">No options available for this service.</p>
               </div>
             </div>
 
@@ -342,36 +350,37 @@ const submitBooking = async () => {
 </template>
 
 <style>
+/* CSS Anda yang ada di sini... */
 .mx-datepicker {
-  width: 100%; 
+  width: 100%;
 }
 
 .mx-input {
   display: block;
   width: 100%;
-  padding: 0.75rem 1rem; 
+  padding: 0.75rem 1rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  border: 1px solid #d1d5db; 
+  border: 1px solid #d1d5db;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); 
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .mx-input:focus {
-  border-color: #6366f1; 
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); 
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
   outline: none;
 }
 
 .mx-icon-calendar {
-  right: 12px; 
+  right: 12px;
 }
 
 
 .mx-calendar-content .cell.disabled {
-  background-color: #f3f4f6 !important; 
-  color: #9ca3af !important; 
+  background-color: #f3f4f6 !important;
+  color: #9ca3af !important;
   cursor: not-allowed !important;
 }
 

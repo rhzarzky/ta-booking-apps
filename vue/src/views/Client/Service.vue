@@ -60,7 +60,7 @@ const fetchData = async () => {
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString('id-ID', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',

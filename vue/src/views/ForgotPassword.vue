@@ -59,13 +59,16 @@ const { handleSendOtp, errors, loading } = auth
 
 const submitEmail = async () => {
   try {
-    const response = await handleSendOtp(email.value)
+    const response = await handleSendOtp(email.value);
+
     if (response?.status === 'success' || response?.message === 'OTP sent') {
-      sessionStorage.setItem('verify-otp', email.value)
-      router.push('/verify-otp')
+      sessionStorage.setItem('verify-otp', email.value);
+      router.push('/verify-otp');
+    } else {
+      console.log('Kondisi navigasi tidak terpenuhi. Respons:', response);
     }
   } catch (e) {
-    // Error ditangani oleh store
+    
   }
-}
+};
 </script>

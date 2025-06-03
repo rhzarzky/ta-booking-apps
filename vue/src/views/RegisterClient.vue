@@ -41,7 +41,7 @@ export default {
 
         if (response.status === 'success') {
           // Simpan email di sessionStorage, bukan di URL
-          sessionStorage.setItem('verif_email', this.email)
+          sessionStorage.setItem('verify-email', this.email)
           this.$router.push({ path: '/verify-email' })
         }
       } catch (error) {

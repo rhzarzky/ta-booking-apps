@@ -48,6 +48,5 @@ const { toggleSidebar } = useSidebarStore();
 
 <style scoped>
 @media (max-width: 640px) {
-  /* Kalau ingin atur ulang ukuran hamburger span, tambahkan class di tombol */
 }
 </style>

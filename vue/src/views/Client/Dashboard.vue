@@ -1,3 +1,38 @@
+<script setup>
+import { onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useDashboardStore } from '@/stores/dashboard';
+import SummaryCards from '@/components/Client/card/SummaryCards.vue';
+import AnalyticsChart from '@/components/Client/AnalyticsChart.vue';
+
+const dashboardStore = useDashboardStore();
+const { summary, latestBookings, loading, error } = storeToRefs(dashboardStore);
+
+onMounted(() => {
+  dashboardStore.fetchDashboardData();
+});
+
+function formatDate(dateStr) {
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(dateStr).toLocaleDateString('id-ID', options);
+}
+
+function statusClass(status) {
+  const base = 'px-2 py-1 rounded text-xs font-medium';
+  switch ((status || '').toLowerCase()) {
+    case 'pending':
+      return `${base} bg-lime-100 text-lime-700`;
+    case 'approved':
+      return `${base} bg-purple-100 text-purple-700`;
+    case 'declined':
+      return `${base} bg-red-100 text-red-700`;
+    default:
+      return `${base} bg-gray-100 text-gray-700`;
+  }
+}
+</script>
+
+
 <template>
   <div class="p-4 space-y-6">
     <!-- Summary Cards -->
@@ -47,36 +82,3 @@
   </div>
 </template>
 
-<script setup>
-import { onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
-import { useDashboardStore } from '@/stores/dashboard';
-import SummaryCards from '@/components/Client/card/SummaryCards.vue';
-import AnalyticsChart from '@/components/Client/AnalyticsChart.vue';
-
-const dashboardStore = useDashboardStore();
-const { summary, latestBookings, loading, error } = storeToRefs(dashboardStore);
-
-onMounted(() => {
-  dashboardStore.fetchDashboardData();
-});
-
-function formatDate(dateStr) {
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return new Date(dateStr).toLocaleDateString('id-ID', options);
-}
-
-function statusClass(status) {
-  const base = 'px-2 py-1 rounded text-xs font-medium';
-  switch ((status || '').toLowerCase()) {
-    case 'pending':
-      return `${base} bg-lime-100 text-lime-700`;
-    case 'approved':
-      return `${base} bg-purple-100 text-purple-700`;
-    case 'declined':
-      return `${base} bg-red-100 text-red-700`;
-    default:
-      return `${base} bg-gray-100 text-gray-700`;
-  }
-}
-</script>
