@@ -122,6 +122,7 @@ const handleConfirmation = async () => {
                                 <option value="Pending">Pending</option>
                                 <option value="Approved">Approved</option>
                                 <option value="Declined">Declined</option>
+                                <option value="Completed">Completed</option>
                             </select>
                         </div>
                     </div>

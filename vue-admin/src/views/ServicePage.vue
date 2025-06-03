@@ -15,6 +15,8 @@ const currentPage = ref(1);
 const itemsPerPage = 10;
 const showDeleteModal = ref(false);
 const serviceToDelete = ref(null);
+const isImageModalVisible = ref(false);
+const modalImageUrl = ref("");
 
 const fetchData = async () => {
     await servicesStore.fetchAssignedService();
@@ -44,11 +46,12 @@ const totalPages = computed(() => {
     return Math.ceil(filteredServices.value.length / itemsPerPage);
 });
 
-// Paginated results from filtered services
+// Paginated results from filtered services, sorted by service id descending
 const paginatedServices = computed(() => {
+    const sorted = [...filteredServices.value].sort((a, b) => a.id - b.id);
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    return filteredServices.value.slice(start, end);
+    return sorted.slice(start, end);
 });
 
 // Page navigation
@@ -100,6 +103,17 @@ const handleDeleteConfirmed = async () => {
         serviceToDelete.value = null;
     }
 };
+
+// Function to open image modal
+function openImageModal(imageUrl) {
+    modalImageUrl.value = imageUrl;
+    isImageModalVisible.value = true;
+}
+// Function to close image modal
+function closeImageModal() {
+    isImageModalVisible.value = false;
+    modalImageUrl.value = "";
+}
 </script>
 
 <template>
@@ -163,6 +177,7 @@ const handleDeleteConfirmed = async () => {
                     <table class="min-w-full text-sm text-left text-codgray-900 border-collapse">
                         <thead class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
                             <tr>
+                                <th class="px-6 py-3 text-left font-semibold">ID</th>
                                 <th class="px-6 py-3 text-left font-semibold">Title</th>
                                 <th class="px-6 py-3 text-left font-semibold">Image</th>
                                 <th class="px-6 py-3 text-left font-semibold">Description</th>
@@ -178,24 +193,23 @@ const handleDeleteConfirmed = async () => {
                         <tbody>
                             <tr v-for="service in paginatedServices" :key="service.id"
                                 class="border-b border-wildsand-200 hover:bg-wildsand-50 transition-colors duration-150">
+                                <td class="px-6 py-4 font-medium">{{ service.id }}</td>
                                 <td class="px-6 py-4 font-medium">{{ service.title }}</td>
                                 <td class="px-6 py-4 font-medium">
                                     <img v-if="service.image" :src="service.image" alt="Service Image"
-                                        class="w-10 h-10 rounded-full object-cover" />
+                                        class="w-10 h-10 rounded-full object-cover cursor-pointer"
+                                        @click="openImageModal(service.image)" />
                                     <span v-else class="text-gray-400 italic">No Image</span>
                                 </td>
                                 <td class="px-6 py-4 font-medium">{{ service.description }}</td>
                                 <td class="px-6 py-4 font-medium">{{ service.user.email }}</td>
                                 <td class="px-6 py-4 font-medium">{{ service.location }}</td>
                                 <td class="px-6 py-4 font-medium">{{ Array.isArray(service.option) ?
-                                    service.option.join(",") :
-                                    service.option }}</td>
+                                    service.option.join(",") : service.option }}</td>
                                 <td class="px-6 py-4 font-medium">{{ Array.isArray(service.days) ?
-                                    service.days.join(",") :
-                                    service.days }}</td>
+                                    service.days.join(",") : service.days }}</td>
                                 <td class="px-6 py-4 font-medium">{{ Array.isArray(service.time) ?
-                                    service.time.join(",") :
-                                    service.time }}</td>
+                                    service.time.join(",") : service.time }}</td>
                                 <td class="px-6 py-4 font-medium">
                                     <button class="text-cobalt-700 underline hover:text-cobalt-900"
                                         @click="openDateModal(service.date)">
@@ -270,6 +284,18 @@ const handleDeleteConfirmed = async () => {
                             </tr>
                         </tbody>
                     </table>
+
+                    <!-- Image Modal -->
+                    <div v-if="isImageModalVisible"
+                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                        <div
+                            class="relative bg-white rounded-xl shadow-xl p-4 max-w-lg w-full flex flex-col items-center">
+                            <button @click="closeImageModal"
+                                class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+                            <img :src="modalImageUrl" alt="Service Image"
+                                class="max-h-[70vh] w-auto rounded-lg object-contain" />
+                        </div>
+                    </div>
                 </div>
                 <!-- Pagination Controls -->
                 <PaginationPage :current-page="currentPage" :total-pages="totalPages" :has-next-page="hasNextPage"

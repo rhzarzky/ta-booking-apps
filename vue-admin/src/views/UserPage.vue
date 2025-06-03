@@ -54,7 +54,9 @@ const totalPages = computed(() => {
 const paginatedUsers = computed(() => {
   const start = (currentPage.value - 1) * usersPerPage;
   const end = start + usersPerPage;
-  return filteredUsers.value.slice(start, end).sort((a, b) => a.name.localeCompare(b.name));
+  return filteredUsers.value
+    .slice(start, end)
+    .sort((a, b) => a.id - b.id);
 });
 
 const handlePageChange = (page) => {

@@ -35,10 +35,10 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <main class="min-h-screen items-center justify-between">
-    <div class="relative items-center flex w-full">
-      <div class="w-full md:w-1/2 bg-white shadow-lg rounded-lg">
-        <div class="flex flex-col min-h-[100dvh] p-6 md:p-8 lg:p-12">
+  <main class="min-h-screen flex items-center justify-center">
+    <div class="relative flex w-full items-center justify-center">
+      <div class="w-full bg-white shadow-lg rounded-lg">
+        <div class="min-h-[100dvh] p-6 md:p-8 lg:p-12 flex items-center justify-center">
           <div class="max-w-md w-full md:mt-12 mx-auto">
             <div class="flex flex-col gap-1 mb-6">
               <h2 class="text-2xl font-semibold text-codgray-900">
