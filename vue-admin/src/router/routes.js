@@ -23,7 +23,7 @@ const routes = [
         },
     },
     {
-        path: "/admin",
+        path: "/dashboard",
         name: "Admin Dashboard",
         component: AdminDashboard,
         meta: {

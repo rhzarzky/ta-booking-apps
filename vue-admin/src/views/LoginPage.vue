@@ -27,7 +27,7 @@ const handleSubmit = async () => {
 
   try {
     await store.handleLogin(form);
-    router.push({ name: "Service" });
+    router.push({ name: "Admin Dashboard" });
   } catch (error) {
     console.error("Login failed:", error);
   }

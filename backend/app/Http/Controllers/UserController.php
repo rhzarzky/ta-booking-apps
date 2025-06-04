@@ -17,10 +17,7 @@ class UserController extends Controller
 {
     public function showAllUser()
     {
-        $currentUserId = Auth::id();
-        $users = User::with('roles')
-            ->where('id', '!=', $currentUserId)
-            ->get();
+        $users = User::with(['roles', 'permissions'])->get();
 
         return response()->json([
             'status' => 'success',

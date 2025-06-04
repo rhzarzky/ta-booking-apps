@@ -1,77 +1,127 @@
-<template>
-    <div>
-        <h1>Service Management</h1>
-        <div v-if="servicesStore.isLoading">Loading...</div>
-        <div v-if="servicesStore.error" class="error">{{ servicesStore.error }}</div>
-
-        <div v-for="service in servicesStore.services" :key="service.id" class="service-item">
-            <img :src="service.image" alt="Service Image" class="service-image" />
-            <h3>{{ service.title }}</h3>
-            <p>{{ service.description }}</p>
-            <p><strong>Location:</strong> {{ service.location }}</p>
-            <p><strong>Option:</strong> {{ service.option }}</p>
-            <p><strong>Time:</strong> {{ service.time }}</p>
-            <p><strong>Available Days:</strong> {{ service.days }}</p>
-            <p><strong>Date:</strong> {{ service.date }} - {{ service.end_date }}</p>
-        </div>
-
-        <div v-if="servicesStore.notification.show" :class="`notification ${servicesStore.notification.type}`">
-            {{ servicesStore.notification.message }}
-        </div>
-    </div>
-</template>
-
-<script>
+<script setup>
+import DefaultLayout from "@/layout/DefaultLayout.vue";
+import SkeltonLoader from "@/components/loading-skelton/SkeltonLoader.vue";
+import { onMounted, computed } from "vue";
+import { useBookingStore } from "@/stores/booking";
 import { useServicesStore } from "@/stores/service";
-import { onMounted } from "vue";
+import { useAuthStore } from "@/stores/auth";
 
-export default {
-    name: "AdminDashboard",
-    setup() {
-        const servicesStore = useServicesStore();
+const bookingStore = useBookingStore();
+const servicesStore = useServicesStore();
+const authStore = useAuthStore();
 
-        // Fetch the services when the component is mounted
-        onMounted(() => {
-            servicesStore.fetchServices();
-        });
+onMounted(async () => {
+    await bookingStore.fetchBookings();
+    await servicesStore.fetchServices();
+    await authStore.fetchUsersApi();
+});
 
-        return {
-            servicesStore,
-        };
-    },
-};
+// Summary
+const totalBookings = computed(() => bookingStore.bookings.length);
+const totalServices = computed(() => servicesStore.services.length);
+const totalUsers = computed(() => authStore.users?.length || 0);
+
+// Latest data (limit 5)
+const latestBookings = computed(() => bookingStore.bookings.slice(-5).reverse());
+const latestServices = computed(() => servicesStore.services.slice(-5).reverse());
+const latestUsers = computed(() => (authStore.users ? authStore.users.slice(-5).reverse() : []));
 </script>
+<template>
+    <DefaultLayout>
+        <div class="min-h-screen flex flex-col gap-6 bg-white p-4 md:p-8 rounded-2xl">
+            <h1 class="text-2xl font-bold mb-4">Admin Dashboard</h1>
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-cobalt-700 text-white rounded-xl p-6 flex flex-col items-center">
+                    <div class="text-3xl font-bold">{{ totalBookings }}</div>
+                    <div class="mt-2">Total Bookings</div>
+                </div>
+                <div class="bg-cobalt-900 text-white rounded-xl p-6 flex flex-col items-center">
+                    <div class="text-3xl font-bold">{{ totalServices }}</div>
+                    <div class="mt-2">Total Services</div>
+                </div>
+                <div class="bg-cobalt-800 text-white rounded-xl p-6 flex flex-col items-center">
+                    <div class="text-3xl font-bold">{{ totalUsers }}</div>
+                    <div class="mt-2">Total Users</div>
+                </div>
+            </div>
 
-<style scoped>
-.error {
-    color: red;
-}
+            <!-- Latest Bookings -->
+            <div>
+                <h2 class="text-xl font-semibold mb-2">Latest Bookings</h2>
+                <div v-if="bookingStore.isLoading">
+                    <SkeltonLoader type="table" size="small" :rows="3" :columns="5" />
+                </div>
+                <table v-else class="min-w-full text-sm text-left border-collapse mb-6">
+                    <thead class="bg-wildsand-100">
+                        <tr>
+                            <th class="px-4 py-2">Service</th>
+                            <th class="px-4 py-2">User</th>
+                            <th class="px-4 py-2">Status</th>
+                            <th class="px-4 py-2">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="booking in latestBookings" :key="booking.id" class="border-b">
+                            <td class="px-4 py-2">{{ booking.service?.title }}</td>
+                            <td class="px-4 py-2">{{ booking.user?.email }}</td>
+                            <td class="px-4 py-2">{{ booking.service?.status }}</td>
+                            <td class="px-4 py-2">{{ booking.service?.date }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-.service-item {
-    border: 1px solid #ccc;
-    padding: 16px;
-    margin-bottom: 16px;
-}
+            <!-- Latest Services -->
+            <div>
+                <h2 class="text-xl font-semibold mb-2">Latest Services</h2>
+                <div v-if="servicesStore.isLoading">
+                    <SkeltonLoader type="table" size="small" :rows="3" :columns="5" />
+                </div>
+                <table v-else class="min-w-full text-sm text-left border-collapse mb-6">
+                    <thead class="bg-wildsand-100">
+                        <tr>
+                            <th class="px-4 py-2">Title</th>
+                            <th class="px-4 py-2">Location</th>
+                            <th class="px-4 py-2">Option</th>
+                            <th class="px-4 py-2">Assigned</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="service in latestServices" :key="service.id" class="border-b">
+                            <td class="px-4 py-2">{{ service.title }}</td>
+                            <td class="px-4 py-2">{{ service.location }}</td>
+                            <td class="px-4 py-2">{{ Array.isArray(service.option) ? service.option.join(', ') :
+                                service.option }}</td>
+                            <td class="px-4 py-2">{{ service.user.email }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-.service-image {
-    max-width: 100px;
-    height: auto;
-}
-
-.notification {
-    margin-top: 20px;
-    padding: 10px;
-    border-radius: 5px;
-    text-align: center;
-}
-
-.notification.success {
-    background-color: green;
-    color: white;
-}
-
-.notification.error {
-    background-color: red;
-    color: white;
-}
-</style>
+            <!-- Latest Users -->
+            <div>
+                <h2 class="text-xl font-semibold mb-2">Latest Users</h2>
+                <div v-if="authStore.isLoading">
+                    <SkeltonLoader type="table" size="small" :rows="3" :columns="3" />
+                </div>
+                <table v-else class="min-w-full text-sm text-left border-collapse">
+                    <thead class="bg-wildsand-100">
+                        <tr>
+                            <th class="px-4 py-2">Name</th>
+                            <th class="px-4 py-2">Email</th>
+                            <th class="px-4 py-2">Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="user in latestUsers" :key="user.id" class="border-b">
+                            <td class="px-4 py-2">{{ user.name }}</td>
+                            <td class="px-4 py-2">{{ user.email }}</td>
+                            <td class="px-4 py-2">{{ user.role.join(', ') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </DefaultLayout>
+</template>
