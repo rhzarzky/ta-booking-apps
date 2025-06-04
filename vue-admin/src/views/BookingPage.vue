@@ -183,11 +183,11 @@ const handleConfirmation = async () => {
                                         <button title="Approved" class="text-green-600 hover:text-green-800"
                                             @click="handleAction(booking, 'Approved')">
                                             <!-- Approved Icon -->
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                                xmlns="http://www.w3.org/2000/svg">
-                                                <path
-                                                    d="M15 6L18 9M13 20H21M5 16L4 20L8 19L19.586 7.414C19.9609 7.03895 20.1716 6.53033 20.1716 6C20.1716 5.46967 19.9609 4.96106 19.586 4.586L19.414 4.414C19.0389 4.03906 18.5303 3.82843 18 3.82843C17.4697 3.82843 16.9611 4.03906 16.586 4.414L5 16Z"
-                                                    stroke="#1858DD" stroke-linecap="round" stroke-linejoin="round" />
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 24 24">
+                                                <path fill="none" stroke="#2fe100" stroke-linecap="round"
+                                                    stroke-linejoin="round" stroke-width="1.5"
+                                                    d="m6 13.626l1.606 1.722c.886.95 1.329 1.424 1.825 1.574c.436.131.9.096 1.315-.1c.473-.224.852-.761 1.612-1.836L18 7" />
                                             </svg>
                                         </button>
                                         <button title="Declined" class="text-green-600 hover:text-green-800"
@@ -208,8 +208,8 @@ const handleConfirmation = async () => {
                                                         actionType === 'Approved' ? 'Approval' : 'Rejection' }}</h2>
                                                     <p class="text-gray-600 mt-2">
                                                         Are you sure you want to {{ actionType === 'Approved' ?
-                                                            'approve'
-                                                            : 'decline' }} this booking?
+                                                        'approve'
+                                                        : 'decline' }} this booking?
                                                     </p>
                                                     <div class="mt-4 flex justify-end gap-2">
                                                         <button @click="closeConfirmationModal"
