@@ -85,14 +85,18 @@ const closeConfirmationModal = () => {
 const handleConfirmation = async () => {
     if (!bookingToConfirm.value || !actionType.value) return;
 
+    const validStatuses = ['Approved', 'Declined', 'Completed'];
+    const status = validStatuses.includes(actionType.value) ? actionType.value : 'Pending';
+
     const formData = new FormData();
-    formData.append('status', actionType.value === 'Approved' ? 'Approved' : 'Declined');
+    formData.append('status', status);
 
     await bookingStore.confirmBooking(bookingToConfirm.value.id_booking, formData);
     await fetchData();
 
     closeConfirmationModal();
 };
+
 </script>
 
 <template>
@@ -173,7 +177,8 @@ const handleConfirmation = async () => {
                                     <span :class="{
                                         'bg-yellow-100 text-yellow-800': booking.service.status === 'Pending',
                                         'bg-green-100 text-green-800': booking.service.status === 'Approved',
-                                        'bg-red-100 text-red-800': booking.service.status === 'Declined'
+                                        'bg-red-100 text-red-800': booking.service.status === 'Declined',
+                                        'bg-blue-100 text-blue-800': booking.service.status === 'Completed'
                                     }" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold">
                                         {{ booking.service.status }}
                                     </span>
@@ -185,9 +190,8 @@ const handleConfirmation = async () => {
                                             <!-- Approved Icon -->
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                 viewBox="0 0 24 24">
-                                                <path fill="none" stroke="#2fe100" stroke-linecap="round"
-                                                    stroke-linejoin="round" stroke-width="1.5"
-                                                    d="m6 13.626l1.606 1.722c.886.95 1.329 1.424 1.825 1.574c.436.131.9.096 1.315-.1c.473-.224.852-.761 1.612-1.836L18 7" />
+                                                <path fill="#109b06"
+                                                    d="M18.577 6.183a1 1 0 0 1 .24 1.394l-5.666 8.02c-.36.508-.665.94-.94 1.269c-.287.34-.61.658-1.038.86a2.83 2.83 0 0 1-2.03.153c-.456-.137-.82-.406-1.149-.702c-.315-.285-.672-.668-1.09-1.116l-1.635-1.753a1 1 0 1 1 1.462-1.364l1.606 1.722c.455.487.754.806.998 1.027c.24.216.344.259.385.271c.196.06.405.045.598-.046c.046-.022.149-.085.36-.338c.216-.257.473-.62.863-1.171l5.642-7.986a1 1 0 0 1 1.394-.24" />
                                             </svg>
                                         </button>
                                         <button title="Declined" class="text-green-600 hover:text-green-800"
@@ -195,36 +199,50 @@ const handleConfirmation = async () => {
                                             <!-- Declined Icon -->
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                 viewBox="0 0 24 24">
-                                                <path fill="none" stroke="currentColor" stroke-linecap="round"
-                                                    stroke-linejoin="round" stroke-width="1.5"
-                                                    d="M18 12h-6m0 0H6m6 0V6m0 6v6" />
+                                                <path fill="none" stroke="#d60000" stroke-linecap="round"
+                                                    stroke-linejoin="round" stroke-width="1.5" d="M19 5L5 19M5 5l14 14"
+                                                    color="#d60000" />
+                                            </svg>
+                                        </button>
+                                        <button title="Completed" class="text-green-600 hover:text-green-800"
+                                            @click="handleAction(booking, 'Completed')">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 1024 1024">
+                                                <path fill="#06549b"
+                                                    d="M688 312v-48c0-4.4-3.6-8-8-8H296c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h384c4.4 0 8-3.6 8-8m-392 88c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8zm376 116c-119.3 0-216 96.7-216 216s96.7 216 216 216s216-96.7 216-216s-96.7-216-216-216m107.5 323.5C750.8 868.2 712.6 884 672 884s-78.8-15.8-107.5-44.5S520 772.6 520 732s15.8-78.8 44.5-107.5S631.4 580 672 580s78.8 15.8 107.5 44.5S824 691.4 824 732s-15.8 78.8-44.5 107.5M761 656h-44.3c-2.6 0-5 1.2-6.5 3.3l-63.5 87.8l-23.1-31.9a7.92 7.92 0 0 0-6.5-3.3H573c-6.5 0-10.3 7.4-6.5 12.7l73.8 102.1c3.2 4.4 9.7 4.4 12.9 0l114.2-158c3.9-5.3.1-12.7-6.4-12.7M440 852H208V148h560v344c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8V108c0-17.7-14.3-32-32-32H168c-17.7 0-32 14.3-32 32v784c0 17.7 14.3 32 32 32h272c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8" />
                                             </svg>
                                         </button>
                                         <transition name="fade">
                                             <div v-if="showConfirmationModal"
                                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                                                <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg">
-                                                    <h2 class="text-lg font-semibold text-gray-800">Confirm {{
-                                                        actionType === 'Approved' ? 'Approval' : 'Rejection' }}</h2>
+                                                <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg"
+                                                    role="dialog" aria-modal="true">
+                                                    <h2 class="text-lg font-semibold text-gray-800">
+                                                        Confirm {{ actionType === 'Approved' ? 'Approval' : 'Rejection'
+                                                        }}
+                                                    </h2>
                                                     <p class="text-gray-600 mt-2">
                                                         Are you sure you want to {{ actionType === 'Approved' ?
-                                                        'approve'
-                                                        : 'decline' }} this booking?
+                                                            'approve' : 'decline' }} this booking?
                                                     </p>
                                                     <div class="mt-4 flex justify-end gap-2">
                                                         <button @click="closeConfirmationModal"
-                                                            class="px-4 py-2 text-sm bg-gray-200 rounded hover:bg-gray-300">
+                                                            class="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
                                                             Cancel
                                                         </button>
-                                                        <button @click="handleConfirmation"
-                                                            :class="actionType === 'Approved' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'"
-                                                            class="px-4 py-2 text-sm text-white rounded">
+                                                        <button @click="handleConfirmation" :class="[
+                                                            'px-4 py-2 text-sm text-white rounded',
+                                                            actionType === 'Approved'
+                                                                ? 'bg-green-600 hover:bg-green-700'
+                                                                : 'bg-red-600 hover:bg-red-700'
+                                                        ]">
                                                             Confirm
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </transition>
+
                                     </div>
                                 </td>
                             </tr>
