@@ -114,6 +114,34 @@ function closeImageModal() {
     isImageModalVisible.value = false;
     modalImageUrl.value = "";
 }
+
+// Function to show service description
+const modalDescription = ref("");
+const isDescriptionModalVisible = ref(false);
+
+function showDescription(description) {
+    modalDescription.value = description;
+    isDescriptionModalVisible.value = true;
+}
+
+function closeDescriptionModal() {
+    isDescriptionModalVisible.value = false;
+    modalDescription.value = "";
+}
+
+// Function to show location modal
+const modalLocation = ref("");
+const isLocationModalVisible = ref(false);
+
+function showLocation(location) {
+    modalLocation.value = location;
+    isLocationModalVisible.value = true;
+}
+
+function closeLocationModal() {
+    isLocationModalVisible.value = false;
+    modalLocation.value = "";
+}
 </script>
 
 <template>
@@ -177,40 +205,89 @@ function closeImageModal() {
                     <table class="min-w-full text-sm text-left text-codgray-900 border-collapse">
                         <thead class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
                             <tr>
-                                <th class="px-6 py-3 text-left font-semibold">ID</th>
-                                <th class="px-6 py-3 text-left font-semibold">Title</th>
-                                <th class="px-6 py-3 text-left font-semibold">Image</th>
-                                <th class="px-6 py-3 text-left font-semibold">Description</th>
-                                <th class="px-6 py-3 text-left font-semibold">Assigned</th>
-                                <th class="px-6 py-3 text-left font-semibold">Location</th>
-                                <th class="px-6 py-3 text-left font-semibold">Option</th>
-                                <th class="px-6 py-3 text-left font-semibold">Day</th>
-                                <th class="px-6 py-3 text-left font-semibold">Time</th>
-                                <th class="px-6 py-3 text-left font-semibold">Date</th>
-                                <th class="px-6 py-3 text-left font-semibold">Actions</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">ID</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Title</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Image</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap w-72">Description</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Assigned</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap w-56">Location</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Option</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Day</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Time</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Date</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="service in paginatedServices" :key="service.id"
-                                class="border-b border-wildsand-200 hover:bg-wildsand-50 transition-colors duration-150">
-                                <td class="px-6 py-4 font-medium">{{ service.id }}</td>
-                                <td class="px-6 py-4 font-medium">{{ service.title }}</td>
-                                <td class="px-6 py-4 font-medium">
+                                class="border-b border-wildsand-200 hover:bg-wildsand-50 transition-colors duration-150 align-top">
+                                <td class="px-4 py-4 font-medium whitespace-nowrap">{{ service.id }}</td>
+                                <td class="px-4 py-4 font-medium whitespace-nowrap">{{ service.title }}</td>
+                                <td class="px-4 py-4 font-medium whitespace-nowrap">
                                     <img v-if="service.image" :src="service.image" alt="Service Image"
                                         class="w-10 h-10 rounded-full object-cover cursor-pointer"
                                         @click="openImageModal(service.image)" />
                                     <span v-else class="text-gray-400 italic">No Image</span>
                                 </td>
-                                <td class="px-6 py-4 font-medium">{{ service.description }}</td>
-                                <td class="px-6 py-4 font-medium">{{ service.user.email }}</td>
-                                <td class="px-6 py-4 font-medium">{{ service.location }}</td>
-                                <td class="px-6 py-4 font-medium">{{ Array.isArray(service.option) ?
-                                    service.option.join(",") : service.option }}</td>
-                                <td class="px-6 py-4 font-medium">{{ Array.isArray(service.days) ?
-                                    service.days.join(",") : service.days }}</td>
-                                <td class="px-6 py-4 font-medium">{{ Array.isArray(service.time) ?
-                                    service.time.join(",") : service.time }}</td>
-                                <td class="px-6 py-4 font-medium">
+                                <td class="px-4 py-4 font-medium max-w-xs break-words whitespace-pre-line">
+                                    <div class="line-clamp-3" title="Click to show detail"
+                                        @click="showDescription(service.description)" style="cursor:pointer;">
+                                        {{ service.description }}
+                                    </div>
+                                </td>
+                                <!-- Description Modal -->
+                                <div v-if="isDescriptionModalVisible"
+                                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                                    <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full p-6">
+                                        <div class="flex justify-between items-start mb-4">
+                                            <h3 class="text-lg font-semibold text-codgray-900">Service Description</h3>
+                                            <button @click="closeDescriptionModal"
+                                                class="text-gray-500 hover:text-gray-800">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p class="text-codgray-700 whitespace-pre-line">{{ modalDescription }}</p>
+                                    </div>
+                                </div>
+                                <td class="px-4 py-4 font-medium whitespace-nowrap">{{ service.user.email }}</td>
+                                <td class="px-4 py-4 font-medium max-w-xs break-words whitespace-pre-line">
+                                    <div class="line-clamp-2" title="Click to show detail"
+                                        @click="showLocation(service.location)" style="cursor:pointer;">
+                                        {{ service.location }}
+                                    </div>
+                                </td>
+                                <!-- Location Modal -->
+                                <div v-if="isLocationModalVisible"
+                                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                                    <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full p-6">
+                                        <div class="flex justify-between items-start mb-4">
+                                            <h3 class="text-lg font-semibold text-codgray-900">Service Location</h3>
+                                            <button @click="closeLocationModal"
+                                                class="text-gray-500 hover:text-gray-800">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p class="text-codgray-700 whitespace-pre-line">{{ modalLocation }}</p>
+                                    </div>
+                                </div>
+                                <td class="px-4 py-4 font-medium whitespace-nowrap">
+                                    {{ Array.isArray(service.option) ? service.option.join(", ") : service.option }}
+                                </td>
+                                <td class="px-4 py-4 font-medium whitespace-nowrap">
+                                    {{ Array.isArray(service.days) ? service.days.join(", ") : service.days }}
+                                </td>
+                                <td class="px-4 py-4 font-medium whitespace-nowrap">
+                                    {{ Array.isArray(service.time) ? service.time.join(", ") : service.time }}
+                                </td>
+                                <td class="px-4 py-4 font-medium whitespace-nowrap">
                                     <button class="text-cobalt-700 underline hover:text-cobalt-900"
                                         @click="openDateModal(service.date)">
                                         Show
@@ -225,7 +302,6 @@ function closeImageModal() {
                                                 <button @click="closeDateModal"
                                                     class="text-gray-500 hover:text-red-500 text-lg">&times;</button>
                                             </div>
-
                                             <div class="grid grid-cols-4 gap-2">
                                                 <div v-for="date in selectedDates" :key="date"
                                                     class="border p-2 text-center rounded bg-cobalt-50 text-cobalt-900 text-sm">
@@ -235,7 +311,7 @@ function closeImageModal() {
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4">
+                                <td class="px-4 py-4 whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-6 h-full">
                                         <button @click="confirmDelete(service.id)" title="Delete" class="text-red-500">
                                             <!-- Delete Icon -->
@@ -269,7 +345,6 @@ function closeImageModal() {
                                                 </div>
                                             </div>
                                         </transition>
-
                                         <RouterLink title="Edit" :to="`/edit-service/${service.id}`">
                                             <!-- Edit Icon -->
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -284,7 +359,6 @@ function closeImageModal() {
                             </tr>
                         </tbody>
                     </table>
-
                     <!-- Image Modal -->
                     <div v-if="isImageModalVisible"
                         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
