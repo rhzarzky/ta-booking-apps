@@ -1,20 +1,185 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { bookingApi } from '@/api/booking-api'
+import mapboxgl from 'mapbox-gl'
+import 'mapbox-gl/dist/mapbox-gl.css' // Pastikan ini diimpor juga di script setup atau di bagian style global
+
+// Konfigurasi Mapbox Access Token Anda
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const route = useRoute()
 const booking = ref(null)
+const mapContainer = ref(null) // Ref untuk elemen DOM peta
+const map = ref(null) // Ref untuk instance peta Mapbox
+
+// Variabel baru untuk lokasi pengguna dan informasi navigasi
+const userLocation = ref(null) // [longitude, latitude] pengguna
+const distance = ref(null) // Jarak dalam kilometer
+const duration = ref(null) // Durasi dalam menit
+
+const userLocationMarker = ref(null); // Ref untuk marker lokasi pengguna
 
 // Fetch data saat komponen dimount
 onMounted(async () => {
   try {
     const response = await bookingApi.getBookingDetail(route.params.id)
     booking.value = response
+
+    // Panggil fungsi untuk mendapatkan lokasi pengguna
+    await getUserLocation();
+
+    // Setelah data booking tersedia dan jika bukan online booking, inisialisasi peta
+    if (booking.value && !isOnlineBooking.value) {
+      await nextTick(); // Pastikan DOM sudah dirender sebelum inisialisasi peta
+      initializeMap(booking.value.service.location);
+    }
   } catch (err) {
     console.error('Gagal mengambil detail booking:', err)
   }
 })
+
+// Fungsi untuk mendapatkan lokasi pengguna
+const getUserLocation = async () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        userLocation.value = [position.coords.longitude, position.coords.latitude];
+        console.log('Lokasi Pengguna:', userLocation.value);
+
+        // Jika peta sudah ada dan marker lokasi pengguna belum ada, tambahkan
+        if (map.value && !userLocationMarker.value) {
+          userLocationMarker.value = new mapboxgl.Marker({ color: '#FF5733' }) // Warna berbeda untuk user
+            .setLngLat(userLocation.value)
+            .setPopup(new mapboxgl.Popup().setHTML("<h4>Lokasi Anda Saat Ini</h4>")) // Popup
+            .addTo(map.value);
+        } else if (userLocationMarker.value) {
+          // Jika marker sudah ada, update posisinya
+          userLocationMarker.value.setLngLat(userLocation.value);
+        }
+
+        // Jika booking sudah ada dan bukan online, panggil fungsi navigasi
+        if (booking.value && !isOnlineBooking.value && userLocation.value && booking.value.service.location) {
+          getDirections();
+        }
+      },
+      (error) => {
+        console.error('Gagal mendapatkan lokasi pengguna:', error);
+        alert('Gagal mendapatkan lokasi Anda. Pastikan Anda mengizinkan akses lokasi.');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    );
+  } else {
+    console.warn('Geolocation tidak didukung oleh browser ini.');
+    alert('Browser Anda tidak mendukung fitur lokasi.');
+  }
+}
+
+// Fungsi untuk mendapatkan rute navigasi, jarak, dan durasi
+const getDirections = async () => {
+  if (!userLocation.value || !booking.value?.service.location) {
+    console.warn('Lokasi pengguna atau lokasi tujuan tidak tersedia untuk navigasi.');
+    return;
+  }
+
+  try {
+    // Geocoding lokasi tujuan untuk mendapatkan koordinat
+    const destinationResponse = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(booking.value.service.location)}.json?access_token=${mapboxgl.accessToken}`);
+    const destinationData = await destinationResponse.json();
+
+    if (destinationData.features && destinationData.features.length > 0) {
+      const destinationCoordinates = destinationData.features[0].center; // [longitude, latitude] tujuan
+
+      // Memanggil Mapbox Directions API
+      const directionsResponse = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${userLocation.value[0]},${userLocation.value[1]};${destinationCoordinates[0]},${destinationCoordinates[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`
+      );
+      const directionsData = await directionsResponse.json();
+
+      if (directionsData.routes && directionsData.routes.length > 0) {
+        const route = directionsData.routes[0];
+        distance.value = (route.distance / 1000).toFixed(2); // Konversi meter ke kilometer
+        duration.value = (route.duration / 60).toFixed(0); // Konversi detik ke menit
+
+        // Tambahkan rute ke peta
+        if (map.value) {
+          const geojson = {
+            type: 'Feature',
+            properties: {},
+            geometry: route.geometry
+          };
+
+          if (map.value.getSource('route')) {
+            map.value.getSource('route').setData(geojson);
+          } else {
+            map.value.addSource('route', {
+              type: 'geojson',
+              data: geojson
+            });
+
+            map.value.addLayer({
+              id: 'route',
+              type: 'line',
+              source: 'route',
+              layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+              },
+              paint: {
+                'line-color': '#3887be',
+                'line-width': 5,
+                'line-opacity': 0.75
+              }
+            });
+          }
+
+          // Sesuaikan tampilan peta agar mencakup kedua lokasi dan rute
+          const bounds = new mapboxgl.LngLatBounds();
+          bounds.extend(userLocation.value);
+          bounds.extend(destinationCoordinates);
+          map.value.fitBounds(bounds, { padding: 50 }); // Padding agar tidak terlalu mepet
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error saat mendapatkan rute navigasi:', error);
+  }
+}
+
+// Fungsi untuk membuka navigasi di aplikasi Mapbox
+const openNavigationInMapbox = async () => {
+  if (!userLocation.value || !booking.value?.service.location) {
+    alert('Lokasi Anda atau lokasi tujuan belum tersedia untuk navigasi.');
+    return;
+  }
+
+  try {
+    // Geocoding lokasi tujuan untuk mendapatkan koordinat yang akurat
+    const destinationResponse = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(booking.value.service.location)}.json?access_token=${mapboxgl.accessToken}`);
+    const destinationData = await destinationResponse.json();
+
+    if (destinationData.features && destinationData.features.length > 0) {
+      const destinationCoordinates = destinationData.features[0].center; // [longitude, latitude] tujuan
+
+      // Buat URL Mapbox Navigation
+      // Menggunakan koordinat tujuan untuk akurasi yang lebih baik
+      const navigationUrl = `https://maps.mapbox.com/directions/?origin=${userLocation.value[0]},${userLocation.value[1]}&destination=${destinationCoordinates[0]},${destinationCoordinates[1]}&geometries=geojson&steps=true&overview=full&continue_straight=true&language=id&mode=driving`;
+
+      // Buka URL di tab baru
+      window.open(navigationUrl, '_blank');
+    } else {
+      alert('Gagal menemukan koordinat untuk lokasi tujuan.');
+    }
+  } catch (error) {
+    console.error('Error saat menyiapkan navigasi:', error);
+    alert('Terjadi kesalahan saat menyiapkan navigasi.');
+  }
+};
+
 
 // Format tanggal menjadi
 const formattedDate = computed(() => {
@@ -89,6 +254,61 @@ const generateGoogleCalendarUrl = computed(() => {
 
   return `https://www.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&details=${eventDesc}&location=${eventLoc}&dates=${eventTime}`
 })
+
+// Fungsi untuk menginisialisasi peta
+const initializeMap = async (address) => {
+  if (!mapContainer.value) {
+    console.error('Map container not found');
+    return;
+  }
+
+  try {
+    const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxgl.accessToken}`);
+    const data = await response.json();
+
+    if (data.features && data.features.length > 0) {
+      const coordinates = data.features[0].center; // [longitude, latitude]
+
+      // Hancurkan peta yang ada jika ada (untuk mencegah inisialisasi ganda)
+      if (map.value) {
+        map.value.remove();
+        map.value = null;
+      }
+
+      map.value = new mapboxgl.Map({
+        container: mapContainer.value,
+        style: 'mapbox://styles/mapbox/streets-v11', // Anda bisa ganti gaya peta
+        center: coordinates,
+        zoom: 15
+      });
+
+      // Tambahkan marker pada lokasi tujuan
+      new mapboxgl.Marker()
+        .setLngLat(coordinates)
+        .setPopup(new mapboxgl.Popup().setHTML(`<h4>${booking.value.service.title}</h4><p>${booking.value.service.location}</p>`))
+        .addTo(map.value);
+
+      // Tambahkan kontrol navigasi
+      map.value.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      // Setelah peta diinisialisasi, jika lokasi user sudah ada, tambahkan marker user
+      if (userLocation.value) {
+        userLocationMarker.value = new mapboxgl.Marker({ color: '#FF5733' }) // Warna berbeda untuk user
+          .setLngLat(userLocation.value)
+          .setPopup(new mapboxgl.Popup().setHTML("<h4>Lokasi Anda Saat Ini</h4>")) // Popup
+          .addTo(map.value);
+
+        // Langsung panggil getDirections jika peta sudah siap dan lokasi user tersedia
+        getDirections();
+      }
+    } else {
+      console.warn('Lokasi tujuan tidak ditemukan untuk alamat:', address);
+      // Opsional: Tampilkan pesan ke pengguna bahwa lokasi tidak dapat ditampilkan
+    }
+  } catch (error) {
+    console.error('Error saat melakukan geocoding atau inisialisasi peta:', error);
+  }
+}
 </script>
 
 
@@ -148,13 +368,27 @@ const generateGoogleCalendarUrl = computed(() => {
             </a>
           </template>
           <template v-else>
-            <p class="text-gray-800 flex items-center">
+            <p class="text-gray-800 flex items-center mb-2">
               <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               {{ booking.service.location }}
             </p>
+
+            <div v-if="distance && duration" class="mt-4 p-3 bg-blue-100 rounded-md text-blue-800 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <p>Jarak: <strong>{{ distance }} km</strong></p>
+                <svg class="w-5 h-5 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <p>Estimasi Waktu: <strong>{{ duration }} menit</strong></p>
+            </div>
+
+            <button v-if="userLocation && booking.value?.service.location" @click="openNavigationInMapbox" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-full shadow-md flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.553-.894L9 4m7 16l-5.447-2.724A1 1 0 0110 16.382V5.618a1 1 0 011.553-.894L16 4m7 16l-5.447-2.724A1 1 0 0117 16.382V5.618a1 1 0 011.553-.894L23 4"></path></svg>
+              Buka Navigasi di Mapbox
+            </button>
+
+            <div v-if="!isOnlineBooking" ref="mapContainer" class="mapbox-map-container rounded-md mt-4"></div>
           </template>
         </div>
       </div>
@@ -185,3 +419,15 @@ const generateGoogleCalendarUrl = computed(() => {
     </div>
   </div>
 </template>
+
+<style>
+/* Penting: Impor stylesheet Mapbox */
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
+/* Atur tinggi dan margin untuk container peta */
+.mapbox-map-container {
+  height: 400px; /* Sesuaikan tinggi sesuai kebutuhan Anda */
+  width: 100%;
+  margin-top: 1rem; /* Tambahkan margin atas untuk jarak dari info jarak/waktu */
+}
+</style>

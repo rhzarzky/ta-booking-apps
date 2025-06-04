@@ -13,10 +13,10 @@ onMounted(() => {
   dashboardStore.fetchDashboardData();
 });
 
-function formatDate(dateStr) {
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return new Date(dateStr).toLocaleDateString('id-ID', options);
-}
+// function formatDate(dateStr) {
+//   const options = { year: 'numeric', month: 'long', day: 'numeric' };
+//   return new Date(dateStr).toLocaleDateString('id-ID', options);
+// }
 
 function statusClass(status) {
   const base = 'px-2 py-1 rounded text-xs font-medium';
@@ -27,6 +27,8 @@ function statusClass(status) {
       return `${base} bg-purple-100 text-purple-700`;
     case 'declined':
       return `${base} bg-red-100 text-red-700`;
+    case 'completed': 
+      return 'bg-blue-100 text-blue-700';
     default:
       return `${base} bg-gray-100 text-gray-700`;
   }
