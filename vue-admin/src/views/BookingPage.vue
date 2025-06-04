@@ -116,7 +116,7 @@ const handleConfirmation = async () => {
                             class="w-full px-4 py-2 border md:border-2 border-wildsand-200 rounded-lg text-codgray-900 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 text-sm md:text-base ease-in-out" />
                     </div>
 
-                    <!-- Filter Option & (Create Button bisa ditambahkan di sini) -->
+                    <!-- Filter Option -->
                     <div class="flex flex-wrap gap-3 justify-end md:justify-start items-center">
                         <!-- Filter Option -->
                         <div class="w-full md:w-64">
@@ -215,34 +215,40 @@ const handleConfirmation = async () => {
                                         <transition name="fade">
                                             <div v-if="showConfirmationModal"
                                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                                                <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg"
-                                                    role="dialog" aria-modal="true">
+                                                <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg" role="dialog" aria-modal="true">
                                                     <h2 class="text-lg font-semibold text-gray-800">
-                                                        Confirm {{ actionType === 'Approved' ? 'Approval' : 'Rejection'
-                                                        }}
+                                                        Confirm 
+                                                        <span v-if="actionType === 'Approved'">Approval</span>
+                                                        <span v-else-if="actionType === 'Declined'">Rejection</span>
+                                                        <span v-else-if="actionType === 'Completed'">Completion</span>
                                                     </h2>
                                                     <p class="text-gray-600 mt-2">
-                                                        Are you sure you want to {{ actionType === 'Approved' ?
-                                                            'approve' : 'decline' }} this booking?
+                                                        Are you sure you want to 
+                                                        <span v-if="actionType === 'Approved'">approve</span>
+                                                        <span v-else-if="actionType === 'Declined'">decline</span>
+                                                        <span v-else-if="actionType === 'Completed'">mark as completed</span>
+                                                        this booking?
                                                     </p>
                                                     <div class="mt-4 flex justify-end gap-2">
                                                         <button @click="closeConfirmationModal"
                                                             class="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
                                                             Cancel
                                                         </button>
-                                                        <button @click="handleConfirmation" :class="[
-                                                            'px-4 py-2 text-sm text-white rounded',
-                                                            actionType === 'Approved'
-                                                                ? 'bg-green-600 hover:bg-green-700'
-                                                                : 'bg-red-600 hover:bg-red-700'
-                                                        ]">
+                                                        <button @click="handleConfirmation"
+                                                            :class="[
+                                                                'px-4 py-2 text-sm text-white rounded',
+                                                                actionType === 'Approved'
+                                                                    ? 'bg-green-600 hover:bg-green-700'
+                                                                    : actionType === 'Declined'
+                                                                        ? 'bg-red-600 hover:bg-red-700'
+                                                                        : 'bg-blue-600 hover:bg-blue-700'
+                                                            ]">
                                                             Confirm
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </transition>
-
                                     </div>
                                 </td>
                             </tr>
