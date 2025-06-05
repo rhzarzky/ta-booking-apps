@@ -231,21 +231,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              Icons.search_off,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'No services found',
-                              style: GoogleFonts.sourceSans3(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            SizedBox(height: 8),
+                            EmptyStateService(),
                             Text(
                               'Try changing your search criteria',
                               style: GoogleFonts.sourceSans3(

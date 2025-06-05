@@ -48,6 +48,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           ),
         ),
         body: Container(
+          padding: EdgeInsets.all(16),
           child: ListView.builder(
             itemBuilder: (context, index) {
               return ItemReviews(
@@ -55,7 +56,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
                 title: 'Judul Layanan',
                 subtitle: 'Nama Layanan',
                 rating: 4.5,
-                review: 'Review',
+                review: 'yang pernah diajukan untuk memperoleh gelar akademik di suatu Perguruan Tinggi, dan sepanjang pengetahuan saya juga tidak terdapat karya atau pendapat yang pernah ditulis atau diterbitkan oleh ora',
                 date: '2023-01-01',
                 isInteractive: true,
                 onRatingChanged: (value) {
