@@ -11,7 +11,7 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
-Use Illuminate\Http\JsonResponse;
+use Illuminate\Http\JsonResponse;
 use App\Notifications\VerifyEmailNotification;
 
 use Exception;
@@ -20,15 +20,25 @@ class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
+        $messages = [
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+        ];
+
         $dataValidation = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{8,}$/'
+            ],
             'role' => 'nullable|string|exists:roles,name',
             'permissions' => 'nullable|array',
             'permissions.*' => 'string|exists:permissions,name',
             'status' => 'nullable|string|in:Active,Inactive',
-        ]);
+        ], $messages);
 
         if ($dataValidation->fails()) {
             return response()->json([
@@ -77,7 +87,6 @@ class AuthController extends Controller
                     'status' => $user->status,
                 ],
             ], 201);
-
         } catch (Exception $e) {
             Log::error('Registration Error: ' . $e->getMessage());
             return response()->json([
@@ -86,6 +95,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
@@ -131,22 +141,21 @@ class AuthController extends Controller
                 ],
                 'token' => $token,
             ], 200);
-
         } catch (JWTException $e) {
             return response()->json([
                 'status' => 'error',
                 'error' => 'Could not create token',
             ], 500);
         }
-    } 
-    
+    }
+
     public function logout(Request $request): JsonResponse
     {
         try {
             JWTAuth::invalidate(JWTAuth::getToken());
             return response()->json([
-               'status' => 'success',
-               'message' => 'Logged out successfully',
+                'status' => 'success',
+                'message' => 'Logged out successfully',
             ], 200);
         } catch (JWTException $e) {
             return response()->json([

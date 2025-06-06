@@ -7,7 +7,7 @@ export const useDashboardStore = defineStore('dashboard', {
       pending: 0,
       approved: 0,
       declined: 0,
-      Completed: 0,
+      completed: 0,
     },
     latestBookings: [],
     allBookings: [],
@@ -36,18 +36,12 @@ export const useDashboardStore = defineStore('dashboard', {
           completed: completed.length,
         }
 
-        // Gabungkan semua bookings menjadi satu array
+        // Gabungkan semua bookings
         const allBookings = [...approved, ...pending, ...declined, ...completed]
-
-        // Simpan ke allBookings
         this.allBookings = allBookings
 
-        // Sort by date and time
-        const sorted = allBookings.sort((a, b) => {
-          const dateA = new Date(`${a.date}T${a.time}`)
-          const dateB = new Date(`${b.date}T${b.time}`)
-          return dateA - dateB // urutkan dari terbaru ke terlama
-        })
+        // Urutkan dari ID terbesar ke terkecil
+        const sorted = allBookings.sort((a, b) => b.id_booking - a.id_booking)
 
         // Ambil 5 booking terbaru
         this.latestBookings = sorted.slice(0, 5).map((booking, index) => ({

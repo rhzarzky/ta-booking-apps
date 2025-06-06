@@ -266,13 +266,24 @@ class UserController extends Controller
             ], 401);
         }
 
+        $messages = [
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+        ];
+
         $validate = Validator::make($request->all(), [
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8|confirmed',
+            'password' => [
+                'sometimes',
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{8,}$/'
+            ],
             'current_password' => 'required_with:password|string',
-        ]);
+        ],$messages);
 
         if ($validate->fails()) {
             return response()->json([

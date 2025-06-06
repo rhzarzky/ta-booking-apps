@@ -16,33 +16,43 @@ const formatTitle = (text = '') =>
     .join(' ')
 
 /**
- * Generate breadcrumbs from matched routes
+ * Generate breadcrumbs in correct hierarchy
  */
 const generateBreadcrumbs = () => {
   const crumbs = []
 
-  // Add base breadcrumb if not on dashboard
-  if (route.path !== '/client/dashboard') {
-    crumbs.push({ name: 'Dashboard', path: '/client/dashboard' })
-  }
+  // Filter matched routes to ignore base paths
+  const matchedRoutes = route.matched.filter(m =>
+    m.path !== '' &&
+    m.path !== '/' &&
+    m.path !== '/client'
+  )
 
-  route.matched.forEach((matched) => {
-    let name = matched.meta?.breadcrumbs || matched.meta?.title || matched.name || ''
+  matchedRoutes.forEach((matched) => {
+    let name = matched.meta?.breadcrumbs || matched.meta?.title || matched.name
+    if (!name) return
+
     name = formatTitle(name)
 
     const fullPath = matched.path.includes(':') ? route.fullPath : matched.path
 
-    // Skip if it's dashboard again
-    if (fullPath !== '/client/dashboard') {
-      crumbs.push({ name, path: fullPath })
+    if (!crumbs.find(c => c.path === fullPath)) {
+      crumbs.push({
+        name,
+        path: fullPath.startsWith('/client') ? fullPath : `/client${fullPath}`
+      })
     }
   })
+
+  // Tambahkan Dashboard di awal (jika bukan halaman dashboard)
+  if (route.path !== '/client/dashboard') {
+    crumbs.unshift({ name: 'Dashboard', path: '/client/dashboard' })
+  }
 
   breadcrumbs.value = crumbs
 }
 
 onMounted(generateBreadcrumbs)
-
 watch(() => route.path, generateBreadcrumbs)
 </script>
 

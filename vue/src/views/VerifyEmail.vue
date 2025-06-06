@@ -8,14 +8,14 @@
                 d="M16 12H8m0 0l-4 4m4-4l4-4m8 8V8a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2z"/>
         </svg>
       </div>
-      <h1 class="text-2xl font-bold text-gray-800 mb-2">Cek Email Anda</h1>
+      <h1 class="text-2xl font-bold text-gray-800 mb-2">Check Your Email</h1>
       <p class="text-gray-600 mb-6">
-        Kami telah mengirimkan email verifikasi ke <span class="font-semibold text-indigo-600">{{ maskedEmail }}</span>.<br>
-        Silakan klik link verifikasi di email Anda untuk mengaktifkan akun.
+        We have sent a verification email to <span class="font-semibold text-indigo-600">{{ maskedEmail }}</span>.<br>
+        Please click the verification link in your email to activate your account.
       </p>
       <router-link to="/login"
                    class="inline-block mt-4 text-indigo-600 font-medium hover:underline transition">
-        Kembali ke Halaman Login
+        Back to Login Page
       </router-link>
     </div>
   </div>
@@ -32,7 +32,7 @@ export default {
   computed: {
     maskedEmail() {
       const email = this.email
-      if (!email || !email.includes('@')) return 'email Anda'
+      if (!email || !email.includes('@')) return 'Your email'
       const [user, domain] = email.split('@')
       const maskedUser = user.length > 2 ? user.slice(0, 2) + '*'.repeat(user.length - 2) : user[0] + '*'
       return `${maskedUser}@${domain}`

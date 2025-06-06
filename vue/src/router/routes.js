@@ -1,22 +1,23 @@
-import LandingPage from '@/views/LandingPage.vue';
-import LoginClient from '@/views/LoginClient.vue';
-import RegisterClient from '@/views/RegisterClient.vue';
-import DefaultLayout from '@/layouts/DefaultLayout.vue';
-import Dashboard from '@/views/Client/Dashboard.vue';
-import Service from '@/views/Client/Service.vue';
-import Activity from '@/views/Client/Activity.vue';
-import Profile from '@/views/Client/Profile.vue';
-import EditProfile from '@/views/Client/EditProfile.vue';
-import ChangePassword from '@/views/Client/ChangePassword.vue';
-import DetailService from '@/views/Client/DetailService.vue';
-import DetailBooking from '@/views/Client/DetailBooking.vue';
-import VerifyEmail from '@/views/VerifyEmail.vue';
-import EmailVerificationSuccess from '@/views/EmailVerificationSuccess.vue';
-import ForgotPassword from '@/views/ForgotPassword.vue';
-import VerifyOtp from '@/views/VerifyOtp.vue';
-import ResetPassword from '@/views/ResetPassword.vue';
-import SuccessReset from '@/views/SuccessReset.vue';
-import UnknownPage from '@/views/error/UnknownPage.vue';
+import LandingPage from '@/views/LandingPage.vue'
+import LoginClient from '@/views/LoginClient.vue'
+import RegisterClient from '@/views/RegisterClient.vue'
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import Dashboard from '@/views/Client/Dashboard.vue'
+import Service from '@/views/Client/Service.vue'
+import Activity from '@/views/Client/Activity.vue'
+import Profile from '@/views/Client/Profile.vue'
+import EditProfile from '@/views/Client/EditProfile.vue'
+import ChangePassword from '@/views/Client/ChangePassword.vue'
+import DetailService from '@/views/Client/DetailService.vue'
+import DetailBooking from '@/views/Client/DetailBooking.vue'
+import VerifyEmail from '@/views/VerifyEmail.vue'
+import EmailVerificationSuccess from '@/views/EmailVerificationSuccess.vue'
+import ForgotPassword from '@/views/ForgotPassword.vue'
+import VerifyOtp from '@/views/VerifyOtp.vue'
+import ResetPassword from '@/views/ResetPassword.vue'
+import SuccessReset from '@/views/SuccessReset.vue'
+import UnknownPage from '@/views/error/UnknownPage.vue'
+import BookmarkPage from '@/views/Client/BookmarkPage.vue'
 
 const routes = [
   {
@@ -24,7 +25,7 @@ const routes = [
     name: 'landing-page',
     component: LandingPage,
     meta: {
-      title: 'Landing Page'
+      title: 'Landing Page',
     },
   },
   {
@@ -59,7 +60,7 @@ const routes = [
       title: 'Email Terverifikasi',
     },
   },
-    {
+  {
     path: '/forgot-password',
     name: 'forgot-password',
     component: ForgotPassword,
@@ -93,15 +94,15 @@ const routes = [
   },
 
   {
-        path: "/:pathMatch(.*)*",
-        name: "404 Error",
-        component: UnknownPage,
-        meta: {
-            title: "404 Error",
-            breadcrumbs: "404 Error",
-            requiresAuth: false,
-        },
+    path: '/:pathMatch(.*)*',
+    name: '404 Error',
+    component: UnknownPage,
+    meta: {
+      title: '404 Error',
+      breadcrumbs: '404 Error',
+      requiresAuth: false,
     },
+  },
   {
     path: '/client',
     component: DefaultLayout,
@@ -177,11 +178,20 @@ const routes = [
         component: DetailService,
         meta: {
           title: 'Service Details',
-          breadcrumbs: 'Detail Service',
+          breadcrumbs:  'Detail Service',
+        },
+      },
+      {
+        path: 'bookmarks', 
+        name: 'client-bookmarks',
+        component: BookmarkPage,
+        meta: {
+          title: 'My Bookmarks',
+          breadcrumbs: 'Bookmarks',
         },
       },
     ],
   },
-];
+]
 
-export default routes;
+export default routes

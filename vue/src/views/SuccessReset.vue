@@ -14,16 +14,16 @@
         </svg>
       </div>
 
-      <h2 class="text-2xl font-bold text-gray-800 mb-2">Password Berhasil Diubah!</h2>
+      <h2 class="text-2xl font-bold text-gray-800 mb-2">Password Changed Successfully!</h2>
       <p class="text-gray-600 mb-6">
-        Silakan login kembali dengan password baru Anda.
+        Please login again with your new password.
       </p>
       
       <router-link
         to="/login"
         class="inline-flex items-center justify-center px-5 py-2 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
       >
-        Login Sekarang
+        Login Now
       </router-link>
     </div>
   </div>

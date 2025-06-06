@@ -4,6 +4,7 @@
       <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Reset Password</h2>
 
       <form @submit.prevent="submit" class="space-y-5">
+        <!-- Password Baru -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
           <div class="relative">
@@ -21,6 +22,7 @@
           <p v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password[0] }}</p>
         </div>
 
+        <!-- Konfirmasi Password -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password</label>
           <div class="relative">
@@ -38,8 +40,10 @@
           <p v-if="errors.password_confirmation" class="text-red-500 text-sm mt-1">{{ errors.password_confirmation[0] }}</p>
         </div>
 
+        <!-- Error Umum -->
         <p v-if="errors.general" class="text-red-500 text-sm">{{ errors.general }}</p>
 
+        <!-- Tombol Submit -->
         <button
           type="submit"
           class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center"
@@ -85,8 +89,36 @@ const toggleConfirm = () => (showConfirm.value = !showConfirm.value)
 
 const auth = useAuthStore()
 
+// Validasi frontend
+const validateForm = () => {
+  const newErrors = {}
+
+  if (!form.value.password) {
+    newErrors.password = ['Password tidak boleh kosong']
+  } else {
+    if (form.value.password.length < 8) {
+      newErrors.password = ['Password minimal 8 karakter']
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^])/.test(form.value.password)) {
+      newErrors.password = ['Password harus mengandung huruf besar, huruf kecil, angka, dan karakter spesial']
+    }
+  }
+
+  if (!form.value.password_confirmation) {
+    newErrors.password_confirmation = ['Konfirmasi password tidak boleh kosong']
+  } else if (form.value.password !== form.value.password_confirmation) {
+    newErrors.password_confirmation = ['Konfirmasi password tidak cocok']
+  }
+
+  errors.value = newErrors
+  return Object.keys(newErrors).length === 0
+}
+
+// Submit form
 const submit = async () => {
   errors.value = {}
+
+  if (!validateForm()) return
+
   loading.value = true
   try {
     await auth.handleResetPassword({ ...form.value })

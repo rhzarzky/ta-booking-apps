@@ -11,21 +11,112 @@ export default {
       confirmPassword: '',
       showPassword: false,
       showConfirmPassword: false,
-      errorMessage: '',
+      errorMessage: '', // Untuk pesan error umum (termasuk dari backend)
+      localErrors: { // Untuk pesan error validasi client-side spesifik per field
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+      },
       isLoading: false,
+      formSubmitted: false, // Flag untuk menandakan form sudah pernah disubmit
     }
   },
+  computed: {
+    // Computed properties untuk validasi password (digunakan untuk logika, bukan tampilan real-time langsung)
+    passwordLengthValid() {
+      return this.password.length >= 8
+    },
+    passwordHasUppercase() {
+      return /[A-Z]/.test(this.password)
+    },
+    passwordHasLowercase() {
+      return /[a-z]/.test(this.password)
+    },
+    passwordHasNumber() {
+      return /\d/.test(this.password)
+    },
+    passwordHasSpecialChar() {
+      // Regex yang sama dengan backend Laravel Anda
+      return /[@$!%*#?&^]/.test(this.password)
+    },
+    passwordsMatch() {
+      return this.password === this.confirmPassword && this.confirmPassword !== ''
+    },
+    // Menentukan apakah semua kriteria password sudah terpenuhi
+    allPasswordCriteriaMet() {
+      return (
+        this.passwordLengthValid &&
+        this.passwordHasUppercase &&
+        this.passwordHasLowercase &&
+        this.passwordHasNumber &&
+        this.passwordHasSpecialChar
+      )
+    },
+  },
   methods: {
-    async handleRegister() {
-      this.errorMessage = ''
-      if (this.password.length < 8) {
-        this.errorMessage = 'Password must be at least 8 characters long.'
-        return
+    validateForm() {
+      // Reset semua error lokal
+      this.localErrors = {
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+      }
+      this.errorMessage = '' // Hapus pesan error umum sebelumnya
+
+      let isValid = true
+
+      // Validasi Nama
+      if (!this.name) {
+        this.localErrors.name = 'Full Name is required.'
+        isValid = false
+      } else if (this.name.length > 255) {
+        this.localErrors.name = 'Full Name cannot exceed 255 characters.'
+        isValid = false
       }
 
-      if (this.password !== this.confirmPassword) {
-        this.errorMessage = 'Passwords do not match.'
-        return
+      // Validasi Email
+      if (!this.email) {
+        this.localErrors.email = 'Email is required.'
+        isValid = false
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email)) {
+        this.localErrors.email = 'Please enter a valid email address.'
+        isValid = false
+      } else if (this.email.length > 255) {
+        this.localErrors.email = 'Email cannot exceed 255 characters.'
+        isValid = false
+      }
+
+      // Validasi Password
+      if (!this.password) {
+        this.localErrors.password = 'Password is required.'
+        isValid = false
+      } else if (!this.allPasswordCriteriaMet) {
+        // Pesan ini akan muncul di bawah input password
+        this.localErrors.password = 'Password does not meet all requirements. See checklist below.'
+        isValid = false
+      }
+
+      // Validasi Konfirmasi Password
+      if (!this.confirmPassword) {
+        this.localErrors.confirmPassword = 'Confirm Password is required.'
+        isValid = false
+      } else if (this.password !== this.confirmPassword) {
+        this.localErrors.confirmPassword = 'Passwords do not match.'
+        isValid = false
+      }
+
+      return isValid
+    },
+
+    async handleRegister() {
+      this.formSubmitted = true // Set flag bahwa form sudah pernah disubmit
+      this.errorMessage = '' // Hapus pesan error umum sebelumnya
+
+      // Lakukan validasi lokal saat tombol diklik
+      if (!this.validateForm()) {
+        return // Hentikan proses jika validasi gagal
       }
 
       const userData = {
@@ -40,17 +131,33 @@ export default {
         const response = await register(userData)
 
         if (response.status === 'success') {
-          // Simpan email di sessionStorage, bukan di URL
           sessionStorage.setItem('verify-email', this.email)
           this.$router.push({ path: '/verify-email' })
         }
       } catch (error) {
-        if (error.response?.data?.errors?.email) {
-          this.errorMessage = error.response.data.errors.email[0]
+        // Penanganan error dari backend (seperti 422 Unprocessable Content)
+        if (error.response?.data?.errors) {
+            let backendErrors = error.response.data.errors;
+            // Bersihkan error lokal sebelumnya sebelum menampilkan error backend
+            this.localErrors = { name: '', email: '', password: '', confirmPassword: '' };
+            this.errorMessage = 'Please fix the following errors:'; // Pesan umum untuk pengguna
+
+            for (const key in backendErrors) {
+                if (backendErrors.hasOwnProperty(key)) {
+                    // Petakan kunci error backend ke kunci localErrors frontend
+                    if (this.localErrors.hasOwnProperty(key)) {
+                        this.localErrors[key] = backendErrors[key][0]; // Ambil pesan error pertama
+                    } else {
+                        // Untuk error backend umum yang tidak terikat pada field tertentu,
+                        // tambahkan ke errorMessage umum
+                        this.errorMessage += `\n- ${backendErrors[key][0]}`;
+                    }
+                }
+            }
         } else if (error.response?.data?.message) {
-          this.errorMessage = error.response.data.message
+            this.errorMessage = error.response.data.message
         } else {
-          this.errorMessage = 'Something went wrong. Please try again.'
+            this.errorMessage = 'Something went wrong. Please try again.'
         }
       } finally {
         this.isLoading = false
@@ -73,6 +180,11 @@ export default {
   to {
     transform: rotate(360deg);
   }
+}
+.error-message {
+  color: red;
+  font-size: 0.875rem; /* text-sm */
+  margin-top: 0.25rem; /* mt-1 */
 }
 </style>
 
@@ -98,7 +210,8 @@ export default {
               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               placeholder="John Doe"
               required
-            />
+              @input="formSubmitted = false" />
+            <p v-if="formSubmitted && localErrors.name" class="error-message">{{ localErrors.name }}</p>
           </div>
           <div>
             <label class="block text-gray-700 font-medium">Email</label>
@@ -108,7 +221,8 @@ export default {
               class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
               placeholder="johndoe@gmail.com"
               required
-            />
+              @input="formSubmitted = false" />
+            <p v-if="formSubmitted && localErrors.email" class="error-message">{{ localErrors.email }}</p>
           </div>
           <div>
             <label class="block text-gray-700 font-medium">Password</label>
@@ -119,7 +233,7 @@ export default {
                 class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
                 placeholder="Min. 8 Characters"
                 required
-              />
+                @input="formSubmitted = false" />
               <svg
                 @click="showPassword = !showPassword"
                 xmlns="http://www.w3.org/2000/svg"
@@ -139,6 +253,35 @@ export default {
                 />
               </svg>
             </div>
+            <p v-if="formSubmitted && localErrors.password" class="error-message">{{ localErrors.password }}</p>
+
+            <ul v-if="formSubmitted && !allPasswordCriteriaMet" class="text-sm text-gray-600 mt-2 space-y-1">
+              <li :class="{ 'text-green-600': passwordLengthValid, 'text-red-500': !passwordLengthValid }">
+                <span v-if="passwordLengthValid">&#10003;</span>
+                <span v-else>&#10007;</span>
+                Minimum 8 characters
+              </li>
+              <li :class="{ 'text-green-600': passwordHasUppercase, 'text-red-500': !passwordHasUppercase }">
+                <span v-if="passwordHasUppercase">&#10003;</span>
+                <span v-else>&#10007;</span>
+                At least one uppercase letter (A-Z)
+              </li>
+              <li :class="{ 'text-green-600': passwordHasLowercase, 'text-red-500': !passwordHasLowercase }">
+                <span v-if="passwordHasLowercase">&#10003;</span>
+                <span v-else>&#10007;</span>
+                At least one lowercase letter (a-z)
+              </li>
+              <li :class="{ 'text-green-600': passwordHasNumber, 'text-red-500': !passwordHasNumber }">
+                <span v-if="passwordHasNumber">&#10003;</span>
+                <span v-else>&#10007;</span>
+                At least one number (0-9)
+              </li>
+              <li :class="{ 'text-green-600': passwordHasSpecialChar, 'text-red-500': !passwordHasSpecialChar }">
+                <span v-if="passwordHasSpecialChar">&#10003;</span>
+                <span v-else>&#10007;</span>
+                At least one special character (@$!%*#?&^)
+              </li>
+            </ul>
           </div>
           <div>
             <label class="block text-gray-700 font-medium">Confirm Password</label>
@@ -149,7 +292,7 @@ export default {
                 class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
                 placeholder="Confirm your password"
                 required
-              />
+                @input="formSubmitted = false" />
               <svg
                 @click="showConfirmPassword = !showConfirmPassword"
                 xmlns="http://www.w3.org/2000/svg"
@@ -169,6 +312,15 @@ export default {
                 />
               </svg>
             </div>
+            <p
+              :class="{ 'text-green-600': passwordsMatch, 'text-red-500': !passwordsMatch }"
+              class="text-sm mt-1"
+              v-if="formSubmitted && password.length > 0 && confirmPassword.length > 0 && !passwordsMatch"
+            >
+              <span v-if="passwordsMatch">&#10003;</span>
+              <span v-else>&#10007;</span>
+              Passwords do not match.
+            </p>
           </div>
 
           <button
@@ -180,19 +332,6 @@ export default {
             {{ isLoading ? 'Registering...' : 'Get Started' }}
           </button>
         </form>
-
-        <!-- <div class="flex items-center my-6">
-          <hr class="flex-grow border-gray-300" />
-          <span class="px-4 text-gray-400">Or</span>
-          <hr class="flex-grow border-gray-300" />
-        </div>
-
-        <button
-          class="w-full flex items-center justify-center border py-3 rounded-lg font-semibold text-gray-700 hover:bg-gray-100"
-        >
-          <img src="@/assets/images/google.png" class="h-5 w-5 mr-2" />
-          Continue with Google
-        </button> -->
 
         <p class="text-center text-gray-600 mt-2">
           Already have an account?
@@ -216,4 +355,3 @@ export default {
     </div>
   </div>
 </template>
-

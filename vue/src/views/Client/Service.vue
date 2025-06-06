@@ -39,6 +39,18 @@
           <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
         </div>
       </div>
+
+      <button
+        @click="goToMyBookmarks"
+        class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg
+               flex items-center justify-center transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+        aria-label="Go to My Bookmarks"
+      >
+        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        My Bookmarks
+      </button>
     </div>
 
     <div v-if="paginatedData.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -72,13 +84,17 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router'; // Import useRouter
 import { serviceApi } from '@/api/service-api';
 import MeetingCard from '@/components/Client/card/ServiceCard.vue';
 import PaginationPage from '@/components/Client/Pagination/PaginationPage.vue';
-import fallbackImage from '@/assets/images/booking.jpg'; // Pastikan path ini benar
+import fallbackImage from '@/assets/images/booking.jpg';
+
+// --- Vue Router ---
+const router = useRouter(); // Inisialisasi router
 
 // --- State Management ---
-const services = ref([]); 
+const services = ref([]);
 const currentPage = ref(1);
 const servicesPerPage = 6;
 
@@ -191,6 +207,11 @@ const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
   }
+};
+
+// --- Bookmark Navigation Action ---
+const goToMyBookmarks = () => {
+  router.push({ name: 'client-bookmarks' });
 };
 
 // --- Lifecycle Hook ---

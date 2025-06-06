@@ -33,11 +33,7 @@ watch(searchQuery, () => {
 const bookings = computed(() => {
   return Object.values(bookingStore.bookingsByStatus)
     .flat()
-    .sort((a, b) => {
-      const dateTimeA = new Date(`${a.date}T${a.time}`);
-      const dateTimeB = new Date(`${b.date}T${b.time}`);
-      return dateTimeA - dateTimeB; 
-    });
+    .sort((a, b) => b.id_booking - a.id_booking); // Mengurutkan dari ID terbesar ke terkecil
 });
 
 // Filter data berdasarkan status, tanggal, dan search
