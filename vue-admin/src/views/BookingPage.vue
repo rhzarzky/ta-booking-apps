@@ -49,7 +49,7 @@ const totalPages = computed(() => {
 
 // Paginated results from filtered bookings
 const paginatedBookings = computed(() => {
-    const sorted = [...filteredBookings.value].sort((a, b) => b.id - a.id);
+    const sorted = [...filteredBookings.value].sort((a, b) => b.id_booking - a.id_booking);
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return sorted.slice(start, end);
@@ -152,6 +152,7 @@ const handleConfirmation = async () => {
                     <table class="min-w-full text-sm text-left text-codgray-900 border-collapse">
                         <thead class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
                             <tr>
+                                <th class="px-6 py-3 text-left font-semibold">No.</th>
                                 <th class="px-6 py-3 text-left font-semibold">Service Title</th>
                                 <th class="px-6 py-3 text-left font-semibold">Option</th>
                                 <th class="px-6 py-3 text-left font-semibold">Date</th>
@@ -166,6 +167,9 @@ const handleConfirmation = async () => {
                         <tbody>
                             <tr v-for="booking in paginatedBookings" :key="booking.id"
                                 class="border-b border-wildsand-200 hover:bg-wildsand-50 transition-colors duration-150">
+                                <td class="px-6 py-4 font-medium whitespace-nowrap">
+                                    {{ (currentPage - 1) * itemsPerPage + (paginatedBookings.indexOf(booking) + 1) }}
+                                </td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.title }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.option }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.date }}</td>
@@ -215,18 +219,20 @@ const handleConfirmation = async () => {
                                         <transition name="fade">
                                             <div v-if="showConfirmationModal"
                                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                                                <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg" role="dialog" aria-modal="true">
+                                                <div class="bg-white p-6 rounded-lg w-full max-w-md shadow-lg"
+                                                    role="dialog" aria-modal="true">
                                                     <h2 class="text-lg font-semibold text-gray-800">
-                                                        Confirm 
+                                                        Confirm
                                                         <span v-if="actionType === 'Approved'">Approval</span>
                                                         <span v-else-if="actionType === 'Declined'">Rejection</span>
                                                         <span v-else-if="actionType === 'Completed'">Completion</span>
                                                     </h2>
                                                     <p class="text-gray-600 mt-2">
-                                                        Are you sure you want to 
+                                                        Are you sure you want to
                                                         <span v-if="actionType === 'Approved'">approve</span>
                                                         <span v-else-if="actionType === 'Declined'">decline</span>
-                                                        <span v-else-if="actionType === 'Completed'">mark as completed</span>
+                                                        <span v-else-if="actionType === 'Completed'">mark as
+                                                            completed</span>
                                                         this booking?
                                                     </p>
                                                     <div class="mt-4 flex justify-end gap-2">
@@ -234,8 +240,7 @@ const handleConfirmation = async () => {
                                                             class="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
                                                             Cancel
                                                         </button>
-                                                        <button @click="handleConfirmation"
-                                                            :class="[
+                                                        <button @click="handleConfirmation" :class="[
                                                                 'px-4 py-2 text-sm text-white rounded',
                                                                 actionType === 'Approved'
                                                                     ? 'bg-green-600 hover:bg-green-700'

@@ -48,7 +48,7 @@ const totalPages = computed(() => {
 
 // Paginated results from filtered services, sorted by service id descending
 const paginatedServices = computed(() => {
-    const sorted = [...filteredServices.value].sort((a, b) => b.id - a.id);
+    const sorted = [...filteredServices.value].sort((a, b) => a.id - b.id);
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return sorted.slice(start, end);
@@ -103,6 +103,20 @@ const handleDeleteConfirmed = async () => {
         serviceToDelete.value = null;
     }
 };
+
+// Function to show service title in modal
+const modalTitle = ref("");
+const isTitleModalVisible = ref(false);
+
+function showTitle(title) {
+    modalTitle.value = title;
+    isTitleModalVisible.value = true;
+}
+
+function closeTitleModal() {
+    isTitleModalVisible.value = false;
+    modalTitle.value = "";
+}
 
 // Function to open image modal
 function openImageModal(imageUrl) {
@@ -206,7 +220,7 @@ function closeLocationModal() {
                         <thead class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
                             <tr>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap">No.</th>
-                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Title</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap w-56">Title</th>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap">Image</th>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap w-72">Description</th>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap">Assigned</th>
@@ -221,8 +235,32 @@ function closeLocationModal() {
                         <tbody>
                             <tr v-for="service in paginatedServices" :key="service.id"
                                 class="border-b border-wildsand-200 hover:bg-wildsand-50 transition-colors duration-150 align-top">
-                                <td class="px-4 py-4 font-medium whitespace-nowrap">{{ service.id }}</td>
-                                <td class="px-4 py-4 font-medium whitespace-nowrap">{{ service.title }}</td>
+                                <td class="px-4 py-4 font-medium whitespace-nowrap">
+                                    {{ (currentPage - 1) * itemsPerPage + (paginatedServices.indexOf(service) + 1) }}
+                                </td>
+                                <td class="px-4 py-4 font-medium max-w-xs break-words whitespace-pre-line">
+                                    <div class="line-clamp-3" title="Click to show detail"
+                                        @click="showTitle(service.title)" style="cursor:pointer;">
+                                        {{ service.title }}
+                                    </div>
+                                </td>
+                                <!-- Title Modal -->
+                                <div v-if="isTitleModalVisible"
+                                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                                    <div class="bg-white rounded-xl shadow-lg max-w-2xl w-full p-6">
+                                        <div class="flex justify-between items-start mb-4">
+                                            <h3 class="text-lg font-semibold text-codgray-900">Service Title</h3>
+                                            <button @click="closeTitleModal" class="text-gray-500 hover:text-gray-800">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none"
+                                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p class="text-codgray-700 whitespace-pre-line">{{ modalTitle }}</p>
+                                    </div>
+                                </div>
                                 <td class="px-4 py-4 font-medium whitespace-nowrap">
                                     <img v-if="service.image" :src="service.image" alt="Service Image"
                                         class="w-10 h-10 rounded-full object-cover cursor-pointer"
@@ -285,7 +323,7 @@ function closeLocationModal() {
                                     {{ Array.isArray(service.days) ? service.days.join(", ") : service.days }}
                                 </td>
                                 <td class="px-4 py-4 font-medium whitespace-nowrap">
-                                    {{ Array.isArray(service.time) ? service.time.join(", ") : service.time }}
+                                    {{ Array.isArray(service.time) ?service.time.join(", ") : service.time }}
                                 </td>
                                 <td class="px-4 py-4 font-medium whitespace-nowrap">
                                     <button class="text-cobalt-700 underline hover:text-cobalt-900"
