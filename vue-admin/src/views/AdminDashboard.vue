@@ -10,11 +10,34 @@ const bookingStore = useBookingStore();
 const servicesStore = useServicesStore();
 const authStore = useAuthStore();
 
-onMounted(async () => {
-    await bookingStore.fetchBookings();
-    await servicesStore.fetchServices();
-    await authStore.fetchUsersApi();
+const fetchDataBooking = async () => {
+    await bookingStore.fetchAssignedBooking();
+
+    if (authStore.hasPermission('show all booking')) {
+        await bookingStore.fetchBookings();
+    }
+};
+
+const fetchDataService = async () => {
+    await servicesStore.fetchAssignedService();
+
+    if (authStore.hasPermission('show all service')) {
+        await servicesStore.fetchServices();
+    }
+};
+
+const FetchDataUser = async () => {
+    if (authStore.hasPermission('show user')) {
+        await authStore.fetchUsersApi();
+    }
+};
+
+onMounted(() => {
+    fetchDataBooking();
+    fetchDataService();
+    FetchDataUser();
 });
+
 
 // Summary
 const totalBookings = computed(() => bookingStore.bookings.length);
@@ -102,25 +125,33 @@ const latestUsers = computed(() => (authStore.users ? authStore.users.slice(-5).
             <!-- Latest Users -->
             <div>
                 <h2 class="text-xl font-semibold mb-2">Latest Users</h2>
-                <div v-if="authStore.isLoading">
-                    <SkeltonLoader type="table" size="small" :rows="3" :columns="3" />
+                <div v-if="!authStore.hasPermission('show user')" class="py-8 text-center text-gray-500" role="status">
+                    <span>You have no authorized to show user list</span>
                 </div>
-                <table v-else class="min-w-full text-sm text-left border-collapse">
-                    <thead class="bg-wildsand-100">
-                        <tr>
-                            <th class="px-4 py-2">Name</th>
-                            <th class="px-4 py-2">Email</th>
-                            <th class="px-4 py-2">Role</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="user in latestUsers" :key="user.id" class="border-b">
-                            <td class="px-4 py-2">{{ user.name }}</td>
-                            <td class="px-4 py-2">{{ user.email }}</td>
-                            <td class="px-4 py-2">{{ user.role.join(', ') }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <template v-else>
+                    <div v-if="authStore.isLoading">
+                        <SkeltonLoader type="table" size="small" :rows="3" :columns="3" />
+                    </div>
+                    <table v-else class="min-w-full text-sm text-left border-collapse">
+                        <thead class="bg-wildsand-100">
+                            <tr>
+                                <th class="px-4 py-2">Name</th>
+                                <th class="px-4 py-2">Email</th>
+                                <th class="px-4 py-2">Role</th>
+                            </tr>
+                        </thead>
+                        <div v-if="authStore.users?.length === 0" class="py-8 text-center text-gray-500" role="status">
+                            <span>You have no Authorized</span>
+                        </div>
+                        <tbody>
+                            <tr v-for="user in latestUsers" :key="user.id" class="border-b">
+                                <td class="px-4 py-2">{{ user.name }}</td>
+                                <td class="px-4 py-2">{{ user.email }}</td>
+                                <td class="px-4 py-2">{{ user.role.join(', ') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </template>
             </div>
         </div>
     </DefaultLayout>

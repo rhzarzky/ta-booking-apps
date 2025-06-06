@@ -48,7 +48,7 @@ const totalPages = computed(() => {
 
 // Paginated results from filtered services, sorted by service id descending
 const paginatedServices = computed(() => {
-    const sorted = [...filteredServices.value].sort((a, b) => a.id - b.id);
+    const sorted = [...filteredServices.value].sort((a, b) => b.id - a.id);
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return sorted.slice(start, end);
@@ -205,7 +205,7 @@ function closeLocationModal() {
                     <table class="min-w-full text-sm text-left text-codgray-900 border-collapse">
                         <thead class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
                             <tr>
-                                <th class="px-4 py-3 font-semibold whitespace-nowrap">ID</th>
+                                <th class="px-4 py-3 font-semibold whitespace-nowrap">No.</th>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap">Title</th>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap">Image</th>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap w-72">Description</th>

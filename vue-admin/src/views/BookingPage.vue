@@ -49,10 +49,10 @@ const totalPages = computed(() => {
 
 // Paginated results from filtered bookings
 const paginatedBookings = computed(() => {
-
+    const sorted = [...filteredBookings.value].sort((a, b) => b.id - a.id);
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
-    return filteredBookings.value.slice(start, end);
+    return sorted.slice(start, end);
 });
 
 // Page navigation

@@ -4,6 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_event.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_state.dart';
 import 'package:Appointly/core/common/main_tab_screen.dart';
 import 'package:Appointly/module/meetings/model/booking_detail_model.dart'
     as detail;
@@ -68,6 +71,11 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
       context
           .read<BookingBloc>()
           .add(BookAppointmentByIdEvent(idBooking: widget.bookingId));
+
+      // Also fetch review for this booking
+      context
+          .read<ReviewBloc>()
+          .add(GetReviewEvent(bookingId: widget.bookingId));
     });
   }
 
@@ -291,6 +299,8 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           SizedBox(height: 16),
           // Add null safety check for note
           _buildNoteSection(booking.note ?? ''),
+          SizedBox(height: 16),
+          _buildReviewSection(booking),
           SizedBox(height: 16),
           if (booking.option == 'Online') ...[
             Column(
@@ -635,6 +645,235 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
               color: ColorPallete.darkBlack,
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReviewSection(detail.BookingDetail booking) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Review',
+          style: GoogleFonts.ubuntu(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: ColorPallete.darkBlack,
+          ),
+        ),
+        SizedBox(height: 8),
+        BlocBuilder<ReviewBloc, ReviewState>(
+          builder: (context, state) {
+            if (state is ReviewLoading) {
+              return Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: ColorPallete.concrete50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: ColorPallete.primaryColor,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Loading review...',
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 14,
+                        color: ColorPallete.darkGreySilver,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            } else if (state is GetReviewSuccess) {
+              _logger.d(state.review.toString());
+              final review = state.review;
+              return Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: ColorPallete.concrete50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Rating stars
+                    Row(
+                      children: [
+                        Row(
+                          children: List.generate(5, (index) {
+                            return Icon(
+                              Icons.star,
+                              size: 20,
+                              color: index < (review.rating ?? 0)
+                                  ? ColorPallete.secondColor
+                                  : ColorPallete.greySilverChalice,
+                            );
+                          }),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          '${review.rating ?? 0}/5',
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: ColorPallete.darkBlack,
+                          ),
+                        ),
+                        Spacer(),
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: review.status?.color ??
+                                ColorPallete.primaryColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            review.status?.displayName ?? 'Submitted',
+                            style: GoogleFonts.ubuntu(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Review comment
+                    if (review.comment != null &&
+                        review.comment!.isNotEmpty) ...[
+                      SizedBox(height: 12),
+                      Text(
+                        'Your Review:',
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: ColorPallete.darkBlack,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        review.comment!,
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 14,
+                          color: ColorPallete.darkGreySilver,
+                        ),
+                      ),
+                    ],
+                    // Review date
+                    if (review.createdAt != null) ...[
+                      SizedBox(height: 8),
+                      Text(
+                        'Reviewed on ${review.createdAt!.toString().split(' ')[0]}',
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 12,
+                          color: ColorPallete.darkGreySilver,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            } else if (state is ReviewFailure) {
+              return Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: ColorPallete.concrete50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: ColorPallete.redCinnabar,
+                      size: 24,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Failed to load review',
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: ColorPallete.darkBlack,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      state.error,
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 12,
+                        color: ColorPallete.darkGreySilver,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        context
+                            .read<ReviewBloc>()
+                            .add(GetReviewEvent(bookingId: widget.bookingId));
+                      },
+                      child: Text(
+                        'Retry',
+                        style: TextStyle(
+                          color: ColorPallete.primaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // Default state - no review yet
+            return Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: ColorPallete.concrete50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.rate_review_outlined,
+                    color: ColorPallete.greySilverChalice,
+                    size: 32,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'No review yet',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: ColorPallete.darkBlack,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Review will appear here after you submit one',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 12,
+                      color: ColorPallete.darkGreySilver,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );

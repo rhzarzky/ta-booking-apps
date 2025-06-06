@@ -16,6 +16,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_event.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_state.dart';
 import 'package:Appointly/module/meetings/repository/review_repository.dart';
 // Repository is already imported above
 
@@ -39,6 +41,15 @@ class _MeetingsScreenState extends State<MeetingsScreen>
   String _searchQuery = '';
   List<dynamic> _filteredResults = [];
   final _savedServiceRepository = SavedServiceRepository();
+
+  // Map untuk menyimpan service reviews berdasarkan serviceId
+  Map<int, Map<String, dynamic>> _serviceReviews = {};
+
+  // Set untuk melacak serviceId yang sedang di-fetch untuk mencegah duplikasi
+  Set<int> _fetchingServices = {};
+
+  // ServiceId yang sedang di-fetch (untuk melacak response)
+  int? _currentFetchingServiceId;
 
   @override
   void initState() {
@@ -85,6 +96,18 @@ class _MeetingsScreenState extends State<MeetingsScreen>
   Future<void> _refreshData() async {
     context.read<ServiceBloc>().add(GetServiceEvent());
     return Future.value();
+  }
+
+  void _fetchServiceReviews(int serviceId) {
+    // Hanya fetch jika belum ada data dan tidak sedang di-fetch
+    if (!_serviceReviews.containsKey(serviceId) &&
+        !_fetchingServices.contains(serviceId)) {
+      _fetchingServices.add(serviceId);
+      _currentFetchingServiceId = serviceId;
+      context
+          .read<ReviewBloc>()
+          .add(GetServiceReviewsEvent(serviceId: serviceId));
+    }
   }
 
   void _onSearch(String query, List<dynamic> filteredResults) {
@@ -171,133 +194,166 @@ class _MeetingsScreenState extends State<MeetingsScreen>
             ),
             SizedBox(height: _isSearchBarVisible ? 24 : 0),
             Expanded(
-              child: BlocBuilder<ServiceBloc, ServiceState>(
-                builder: (context, state) {
-                  if (state is ServiceLoading) {
-                    return Skeletonizer(
-                      effect: ShimmerEffect(
-                        baseColor: Colors.grey[200]!,
-                        highlightColor: Colors.grey[100]!,
-                        duration: Duration(seconds: 2),
-                      ),
-                      enabled: true,
-                      child: ListView.builder(
-                          itemCount: 7,
+              child: MultiBlocListener(
+                listeners: [
+                  BlocListener<ReviewBloc, ReviewState>(
+                    listener: (context, state) {
+                      if (state is GetServiceReviewsSuccess) {
+                        // Update service reviews map dengan data baru
+                        if (_currentFetchingServiceId != null) {
+                          setState(() {
+                            _serviceReviews[_currentFetchingServiceId!] = {
+                              'averageRating':
+                                  state.serviceReviews.averageRating,
+                              'totalReviews': state.serviceReviews.totalReviews,
+                            };
+                            _fetchingServices.remove(_currentFetchingServiceId);
+                            _currentFetchingServiceId = null;
+                          });
+                        }
+                      } else if (state is ReviewFailure) {
+                        // Handle error case
+                        if (_currentFetchingServiceId != null) {
+                          setState(() {
+                            _fetchingServices.remove(_currentFetchingServiceId);
+                            _currentFetchingServiceId = null;
+                          });
+                        }
+                      }
+                    },
+                  ),
+                ],
+                child: BlocBuilder<ServiceBloc, ServiceState>(
+                  builder: (context, state) {
+                    if (state is ServiceLoading) {
+                      return Skeletonizer(
+                        effect: ShimmerEffect(
+                          baseColor: Colors.grey[200]!,
+                          highlightColor: Colors.grey[100]!,
+                          duration: Duration(seconds: 2),
+                        ),
+                        enabled: true,
+                        child: ListView.builder(
+                            itemCount: 7,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: EdgeInsets.only(bottom: 8.0),
+                                child: CardService(
+                                  headService: 'Loading Service',
+                                  descService: 'Service description loading...',
+                                  imageService: '',
+                                  timeService: ['Monday'],
+                                  locationService: '',
+                                  provideService: ['Online'],
+                                  onTap: () {},
+                                  onSave: () {},
+                                  rating: 0,
+                                  review: 0,
+                                ),
+                              );
+                            }),
+                      );
+                    } else if (state is ServiceFailure) {
+                      return Center(child: Text('Error: ${state.failure}'));
+                    } else if (state is ServiceLoaded) {
+                      // Use the filtered results from the search widget if available
+                      final filteredServices = _searchQuery.isEmpty
+                          ? state.services
+                          : _filteredResults.isNotEmpty
+                              ? _filteredResults
+                              : state.services.where((service) {
+                                  final searchLower =
+                                      _searchQuery.toLowerCase();
+                                  return service.title
+                                          .toLowerCase()
+                                          .contains(searchLower) ||
+                                      service.description
+                                          .toLowerCase()
+                                          .contains(searchLower) ||
+                                      service.location
+                                          .toLowerCase()
+                                          .contains(searchLower) ||
+                                      service.days.any((day) => day
+                                          .toLowerCase()
+                                          .contains(searchLower)) ||
+                                      service.option.any((option) => option
+                                          .toLowerCase()
+                                          .contains(searchLower));
+                                }).toList();
+
+                      if (filteredServices.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              EmptyStateService(),
+                              Text(
+                                'Try changing your search criteria',
+                                style: GoogleFonts.sourceSans3(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return RefreshIndicator(
+                        onRefresh: _refreshData,
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          itemCount: filteredServices.length,
                           itemBuilder: (context, index) {
+                            final service = filteredServices[index];
+
+                            // Fetch service reviews jika belum ada
+                            _fetchServiceReviews(service.id);
+
+                            // Dapatkan review data untuk service ini
+                            final reviewData = _serviceReviews[service.id];
+                            final averageRating =
+                                reviewData?['averageRating']?.toDouble() ?? 0.0;
+                            final totalReviews =
+                                reviewData?['totalReviews'] ?? 0;
+
                             return Padding(
-                              padding: EdgeInsets.only(bottom: 8.0),
+                              padding: const EdgeInsets.only(bottom: 12.0),
                               child: CardService(
-                                headService: 'Loading Service',
-                                descService: 'Service description loading...',
-                                imageService: '',
-                                timeService: ['Monday'],
-                                locationService: '',
-                                provideService: ['Online'],
-                                onTap: () {},
-                                onSave: () {},
+                                headService: service.title,
+                                descService: service.description,
+                                imageService: service.image,
+                                timeService: service.days,
+                                locationService: service.location,
+                                provideService: service.option,
+                                onTap: () {
+                                  context
+                                      .read<ServiceBloc>()
+                                      .add(GetServiceIdEvent(id: service.id));
+
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            DetailMeetingScreenProvider(
+                                          bookingId: widget.bookingId,
+                                          serviceId: service.id,
+                                          userId: widget.userId,
+                                        ),
+                                      ));
+                                },
+                                onSave: () => _onSaveService(service),
+                                rating: averageRating.round(),
+                                review: totalReviews,
                               ),
                             );
-                          }),
-                    );
-                  } else if (state is ServiceFailure) {
-                    return Center(child: Text('Error: ${state.failure}'));
-                  } else if (state is ServiceLoaded) {
-                    // Use the filtered results from the search widget if available
-                    final filteredServices = _searchQuery.isEmpty
-                        ? state.services
-                        : _filteredResults.isNotEmpty
-                            ? _filteredResults
-                            : state.services.where((service) {
-                                final searchLower = _searchQuery.toLowerCase();
-                                return service.title
-                                        .toLowerCase()
-                                        .contains(searchLower) ||
-                                    service.description
-                                        .toLowerCase()
-                                        .contains(searchLower) ||
-                                    service.location
-                                        .toLowerCase()
-                                        .contains(searchLower) ||
-                                    service.days.any((day) => day
-                                        .toLowerCase()
-                                        .contains(searchLower)) ||
-                                    service.option.any((option) => option
-                                        .toLowerCase()
-                                        .contains(searchLower));
-                              }).toList();
-
-                    if (filteredServices.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.search_off,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'No services found',
-                              style: GoogleFonts.sourceSans3(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Try changing your search criteria',
-                              style: GoogleFonts.sourceSans3(
-                                fontSize: 14,
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                          ],
+                          },
                         ),
                       );
                     }
-
-                    return RefreshIndicator(
-                      onRefresh: _refreshData,
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        itemCount: filteredServices.length,
-                        itemBuilder: (context, index) {
-                          final service = filteredServices[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0),
-                            child: CardService(
-                              headService: service.title,
-                              descService: service.description,
-                              imageService: service.image,
-                              timeService: service.days,
-                              locationService: service.location,
-                              provideService: service.option,
-                              onTap: () {
-                                context
-                                    .read<ServiceBloc>()
-                                    .add(GetServiceIdEvent(id: service.id));
-
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => DetailMeetingScreen(
-                                        bookingId: widget.bookingId,
-                                        serviceId: service.id,
-                                        userId: widget.userId,
-                                      ),
-                                    ));
-                              },
-                              onSave: () => _onSaveService(service),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  }
-                  return Center(child: EmptyStateService());
-                },
+                    return Center(child: EmptyStateService());
+                  },
+                ),
               ),
             ),
           ],

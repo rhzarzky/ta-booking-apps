@@ -828,7 +828,6 @@ class _VisualMapState extends State<VisualMap> {
     );
   }
 
-  // Sebelumnya ada implementasi _addRoutePins yang kompleks di sini  // Sekarang sudah diganti dengan _addMidpointMarker yang lebih sederhana
 
   // Menambahkan marker untuk titik tengah rute
   Future<void> _addMidpointMarker(mapbox.Point midPoint) async {
@@ -847,11 +846,11 @@ class _VisualMapState extends State<VisualMap> {
 
       mapbox.PointAnnotationOptions options = mapbox.PointAnnotationOptions(
           geometry: midPoint,
-          iconSize: 0.8, // Ukuran lebih kecil dari marker utama
+          iconSize: 0.8, 
           iconOffset: [0, 0],
           textField:
-              "😎", // Menggunakan emoji sebagai marker untuk titik tengah
-          textColor: 0xFF00CCAA, // Warna hijau-biru untuk titik tengah
+              "😎", 
+          textColor: 0xFF00CCAA, 
           textSize: 12.0,
           iconImage: "😁");
 

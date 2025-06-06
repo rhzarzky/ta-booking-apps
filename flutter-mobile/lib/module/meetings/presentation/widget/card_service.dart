@@ -14,6 +14,8 @@ class CardService extends StatelessWidget {
   final List<String> provideService;
   final VoidCallback onTap;
   final VoidCallback onSave;
+  final int rating;
+  final int review;
 
   const CardService({
     super.key,
@@ -25,6 +27,8 @@ class CardService extends StatelessWidget {
     required this.provideService,
     required this.onTap,
     required this.onSave,
+    required this.rating,
+    required this.review,
   });
 
   @override
@@ -244,7 +248,7 @@ class CardService extends StatelessWidget {
                       ),
                     if (provideService.contains('Offline') &&
                         provideService.contains('Online'))
-                      SizedBox(width: 8),
+                      
                     if (provideService.contains('Online'))
                       Container(
                         decoration: BoxDecoration(
@@ -292,6 +296,164 @@ class CardService extends StatelessWidget {
                           ),
                         ),
                       ),
+                    SizedBox(width: 8),
+                    // Rating Section with Stars
+                    Tooltip(
+                      message: rating > 0
+                          ? 'Rating: $rating/5 stars'
+                          : 'No rating yet',
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 200),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          gradient: rating > 0
+                              ? LinearGradient(
+                                  colors: [
+                                    Colors.amber.shade50,
+                                    Colors.amber.shade100,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                              : LinearGradient(
+                                  colors: [
+                                    Colors.grey.shade100,
+                                    Colors.grey.shade50,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: rating > 0
+                                ? Colors.amber.shade300
+                                : Colors.grey.shade300,
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (rating > 0 ? Colors.amber : Colors.grey)
+                                  .withOpacity(0.15),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ...List.generate(5, (index) {
+                              return Padding(
+                                padding:
+                                    EdgeInsets.only(right: index < 4 ? 1 : 0),
+                                child: Icon(
+                                  index < rating
+                                      ? Icons.star
+                                      : Icons.star_border,
+                                  size: 12,
+                                  color: index < rating
+                                      ? Colors.amber.shade600
+                                      : Colors.grey.shade400,
+                                ),
+                              );
+                            }),
+                            SizedBox(width: 4),
+                            Text(
+                              rating > 0 ? rating.toString() : '0',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: rating > 0
+                                    ? Colors.amber.shade800
+                                    : Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 6),
+                    // Reviews Count Section
+                    Tooltip(
+                      message: review > 0
+                          ? '$review review${review > 1 ? 's' : ''}'
+                          : 'No reviews yet',
+                      child: AnimatedContainer(
+                        duration: Duration(milliseconds: 200),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          gradient: review > 0
+                              ? LinearGradient(
+                                  colors: [
+                                    ColorPallete.primaryColor.withOpacity(0.1),
+                                    ColorPallete.primaryColor.withOpacity(0.15),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                )
+                              : LinearGradient(
+                                  colors: [
+                                    Colors.grey.shade100,
+                                    Colors.grey.shade50,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: review > 0
+                                ? ColorPallete.primaryColor.withOpacity(0.4)
+                                : Colors.grey.shade300,
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (review > 0
+                                      ? ColorPallete.primaryColor
+                                      : Colors.grey)
+                                  .withOpacity(0.15),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: (review > 0
+                                        ? ColorPallete.primaryColor
+                                        : Colors.grey)
+                                    .withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                Icons.chat_bubble_outline,
+                                size: 10,
+                                color: review > 0
+                                    ? ColorPallete.primaryColor
+                                    : Colors.grey.shade600,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              review > 0 ? '$review' : '0',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: review > 0
+                                    ? ColorPallete.primaryColor
+                                    : Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 )
               ],

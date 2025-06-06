@@ -275,7 +275,8 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => DetailMeetingScreen(
+                                builder: (context) =>
+                                    DetailMeetingScreenProvider(
                                   bookingId: widget.bookingId,
                                   serviceId: service.id,
                                   userId: widget.userId,
@@ -408,7 +409,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            DetailMeetingScreen(
+                                            DetailMeetingScreenProvider(
                                           bookingId: widget.bookingId,
                                           serviceId: service.id,
                                           userId: widget.userId,

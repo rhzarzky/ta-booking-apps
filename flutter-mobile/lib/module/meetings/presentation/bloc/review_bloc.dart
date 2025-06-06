@@ -14,6 +14,8 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
     on<CompleteMeetingEvent>(_onCompleteMeeting);
     on<SubmitReviewEvent>(_onSubmitReview);
     on<GetReviewEvent>(_onGetReview);
+    on<GetAllReviewEvent>(_getAllReview);
+    on<GetServiceReviewsEvent>(_getServiceReviews);
   }
 
   Future<void> _onCompleteMeeting(
@@ -70,6 +72,41 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
       _logger.i('Review fetched successfully for booking ${event.bookingId}');
     } catch (e) {
       _logger.e('Error fetching review: $e');
+      emit(ReviewFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _getAllReview(
+    GetAllReviewEvent event,
+    Emitter<ReviewState> emit,
+  ) async {
+    try {
+      emit(ReviewLoading());
+
+      final result = await _reviewRepository.getAllReview();
+
+      emit(GetAllReviewSuccess(reviews: result));
+      _logger.i('All reviews fetched successfully');
+    } catch (e) {
+      _logger.e('Error fetching all reviews: $e');
+      emit(ReviewFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _getServiceReviews(
+    GetServiceReviewsEvent event,
+    Emitter<ReviewState> emit,
+  ) async {
+    try {
+      emit(ReviewLoading());
+
+      final result = await _reviewRepository.getServiceReviews(event.serviceId);
+
+      emit(GetServiceReviewsSuccess(serviceReviews: result));
+      _logger.i(
+          'Service reviews fetched successfully for service ${event.serviceId}');
+    } catch (e) {
+      _logger.e('Error fetching service reviews: $e');
       emit(ReviewFailure(error: e.toString()));
     }
   }
