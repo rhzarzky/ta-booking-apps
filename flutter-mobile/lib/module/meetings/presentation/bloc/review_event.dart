@@ -41,3 +41,16 @@ class GetReviewEvent extends ReviewEvent {
   @override
   List<Object?> get props => [bookingId];
 }
+
+class GetAllReviewEvent extends ReviewEvent {
+  const GetAllReviewEvent();
+}
+
+class GetServiceReviewsEvent extends ReviewEvent {
+  final int serviceId;
+
+  const GetServiceReviewsEvent({required this.serviceId});
+
+  @override
+  List<Object?> get props => [serviceId];
+}

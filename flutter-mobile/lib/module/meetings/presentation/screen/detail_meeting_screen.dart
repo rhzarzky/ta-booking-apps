@@ -6,7 +6,11 @@ import 'package:Appointly/module/meetings/presentation/widget/empty_state_servic
 import 'package:Appointly/module/meetings/presentation/widget/expanded_text.dart';
 import 'package:Appointly/module/meetings/presentation/widget/success_state.dart';
 import 'package:Appointly/module/meetings/presentation/widget/calendar_sync_dialog.dart';
+import 'package:Appointly/module/meetings/repository/review_repository.dart';
 import 'package:Appointly/module/meetings/repository/service_repository.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_event.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_state.dart';
 import 'package:Appointly/core/service/permission_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +22,32 @@ import 'package:intl/intl.dart';
 import 'package:Appointly/module/notification/utils/notification_helper.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:Appointly/module/notification/presentation/bloc/notification_bloc.dart';
+
+// Wrapper widget to provide ReviewBloc
+class DetailMeetingScreenProvider extends StatelessWidget {
+  final int serviceId;
+  final int bookingId;
+  final String userId;
+
+  const DetailMeetingScreenProvider({
+    super.key,
+    required this.serviceId,
+    required this.userId,
+    required this.bookingId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => ReviewBloc(reviewRepository: ReviewRepository()),
+      child: DetailMeetingScreen(
+        serviceId: serviceId,
+        userId: userId,
+        bookingId: bookingId,
+      ),
+    );
+  }
+}
 
 class DetailMeetingScreen extends StatefulWidget {
   final int serviceId;
@@ -39,6 +69,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
   String selectedOption = 'Offline';
   final TextEditingController _noteController = TextEditingController();
   final ServiceRepository _serviceRepository = ServiceRepository();
+  final ReviewRepository _reviewRepository = ReviewRepository();
 
   DateTime? selectedDate;
   int _selectedTimeIndex = 0;
@@ -343,6 +374,10 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
     super.initState();
     // Load service data when screen opens
     context.read<ServiceBloc>().add(GetServiceIdEvent(id: widget.serviceId));
+    // Load service reviews
+    context
+        .read<ReviewBloc>()
+        .add(GetServiceReviewsEvent(serviceId: widget.serviceId));
   }
 
   @override
@@ -350,114 +385,124 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
     return Scaffold(
       appBar: _buildAppBar(),
       backgroundColor: Colors.white,
-      body: ListView(
+      body: Stack(
         children: [
-          Stack(
+          // Main scrollable content
+          ListView(
+            padding:
+                EdgeInsets.only(bottom: 100), // Add padding for sticky button
             children: [
-              BlocBuilder<ServiceBloc, ServiceState>(
-                builder: (context, state) {
-                  if (state is ServiceLoading) {
-                    return Skeletonizer(
-                      enabled: true,
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            // Skeleton for background image
-                            Container(
-                              height: 300,
-                              color: Colors.grey[200],
-                            ),
-                            // Skeleton for content
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Title section skeleton
-                                  Column(
+              Stack(
+                children: [
+                  BlocBuilder<ServiceBloc, ServiceState>(
+                    builder: (context, state) {
+                      if (state is ServiceLoading) {
+                        return Skeletonizer(
+                          enabled: true,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                // Skeleton for background image
+                                Container(
+                                  height: 300,
+                                  color: Colors.grey[200],
+                                ),
+                                // Skeleton for content
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 16),
+                                  child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        width: double.infinity,
-                                        height: 24,
-                                        color: Colors.white,
+                                      // Title section skeleton
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            width: double.infinity,
+                                            height: 24,
+                                            color: Colors.white,
+                                          ),
+                                          SizedBox(height: 8),
+                                          Container(
+                                            width: double.infinity,
+                                            height: 16,
+                                            color: Colors.white,
+                                          ),
+                                        ],
                                       ),
-                                      SizedBox(height: 8),
+                                      SizedBox(height: 24),
+                                      // Schedule section skeleton
+                                      _buildSkeletonScheduleSection(),
+                                      SizedBox(height: 16),
+                                      // Location section skeleton
+                                      _buildSkeletonLocationSection(),
+                                      SizedBox(height: 16),
+                                      // Note section skeleton
+                                      _buildSkeletonNoteSection(),
+                                      SizedBox(height: 16),
+                                      // Button skeleton
                                       Container(
                                         width: double.infinity,
-                                        height: 16,
-                                        color: Colors.white,
+                                        height: 50,
+                                        color: Colors.grey[200],
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 24),
-                                  // Schedule section skeleton
-                                  _buildSkeletonScheduleSection(),
-                                  SizedBox(height: 16),
-                                  // Location section skeleton
-                                  _buildSkeletonLocationSection(),
-                                  SizedBox(height: 16),
-                                  // Note section skeleton
-                                  _buildSkeletonNoteSection(),
-                                  SizedBox(height: 16),
-                                  // Button skeleton
-                                  Container(
-                                    width: double.infinity,
-                                    height: 50,
-                                    color: Colors.grey[200],
-                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      } else if (state is ServiceFailure) {
+                        return Center(
+                          child: Text(
+                            'Error: ${state.failure}',
+                          ),
+                        );
+                      } else if (state is ServiceLoaded) {
+                        if (state.services.isEmpty) {
+                          return Center(
+                            child: Text('Service tidak ditemukan'),
+                          );
+                        }
+                        try {
+                          // Cari service dengan ID yang sesuai
+                          final service = state.services.firstWhere(
+                            (service) => service.id == widget.serviceId,
+                            orElse: () => state.services.first,
+                          );
+
+                          return RefreshIndicator(
+                            onRefresh: _refreshData,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  _buildBackgroundImage(service),
+                                  _buildContentWithoutButton(service),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  } else if (state is ServiceFailure) {
-                    return Center(
-                      child: Text(
-                        'Error: ${state.failure}',
-                      ),
-                    );
-                  } else if (state is ServiceLoaded) {
-                    if (state.services.isEmpty) {
-                      return Center(
-                        child: Text('Service tidak ditemukan'),
-                      );
-                    }
-                    try {
-                      // Cari service dengan ID yang sesuai
-                      final service = state.services.firstWhere(
-                        (service) => service.id == widget.serviceId,
-                        orElse: () => state.services.first,
-                      );
-
-                      return RefreshIndicator(
-                        onRefresh: _refreshData,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              _buildBackgroundImage(service),
-                              _buildContent(service),
-                            ],
-                          ),
-                        ),
-                      );
-                    } catch (e) {
-                      return Center(
-                        child: Text('Terjadi kesalahan saat memuat service'),
-                      );
-                    }
-                  }
-                  return const Center(child: EmptyStateService());
-                },
+                          );
+                        } catch (e) {
+                          return Center(
+                            child:
+                                Text('Terjadi kesalahan saat memuat service'),
+                          );
+                        }
+                      }
+                      return const Center(child: EmptyStateService());
+                    },
+                  ),
+                  _buildBackButton(),
+                ],
               ),
-              _buildBackButton(),
             ],
           ),
-          // _buildContent(),
+          // Sticky button at bottom
+          _buildStickyButton(),
         ],
       ),
     );
@@ -558,11 +603,36 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
             SizedBox(height: 16),
             _buildNoteSection(service),
             SizedBox(height: 16),
+            _buildReviewSection(),
+            SizedBox(height: 16),
             _buildGoogleCalendarSection(),
             SizedBox(height: 16),
             _buildButtonSend()
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildContentWithoutButton(Service service) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildTitleSection(service),
+          SizedBox(height: 24),
+          _buildScheduleSection(),
+          SizedBox(height: 16),
+          _buildLocationSection(service),
+          SizedBox(height: 16),
+          _buildNoteSection(service),
+          SizedBox(height: 16),
+          _buildReviewSection(),
+          SizedBox(height: 16),
+          _buildGoogleCalendarSection(),
+          SizedBox(height: 20), // Extra space before sticky button
+        ],
       ),
     );
   }
@@ -1011,6 +1081,449 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildReviewSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Reviews & Ratings',
+          style: GoogleFonts.ubuntu(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: ColorPallete.darkBlack,
+          ),
+        ),
+        SizedBox(height: 12),
+        BlocBuilder<ReviewBloc, ReviewState>(
+          builder: (context, state) {
+            if (state is ReviewLoading) {
+              return Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: ColorPallete.concrete50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: ColorPallete.primaryColor,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Loading reviews...',
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 14,
+                        color: ColorPallete.darkGreySilver,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            } else if (state is GetServiceReviewsSuccess) {
+              final serviceReviews = state.serviceReviews;
+
+              return Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: ColorPallete.concrete50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Rating Summary Section
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          // Average Rating Display
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.amber.shade50,
+                                  Colors.amber.shade100,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.amber.shade300,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.star,
+                                      color: Colors.amber.shade600,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      serviceReviews.averageRating
+                                          .toStringAsFixed(1),
+                                      style: GoogleFonts.ubuntu(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.amber.shade800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'out of 5',
+                                  style: GoogleFonts.ubuntu(
+                                    fontSize: 11,
+                                    color: Colors.amber.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          // Total Reviews
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${serviceReviews.totalReviews} Reviews',
+                                  style: GoogleFonts.ubuntu(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: ColorPallete.darkBlack,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  serviceReviews.totalReviews > 0
+                                      ? 'Based on customer experiences'
+                                      : 'Be the first to review!',
+                                  style: GoogleFonts.ubuntu(
+                                    fontSize: 12,
+                                    color: ColorPallete.darkGreySilver,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Reviews List
+                    if (serviceReviews.reviews.isNotEmpty) ...[
+                      Container(
+                        width: double.infinity,
+                        constraints: BoxConstraints(
+                          maxHeight: 400, // Limit height for scrolling
+                        ),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          physics: ClampingScrollPhysics(),
+                          itemCount: serviceReviews.reviews.length,
+                          separatorBuilder: (context, index) => Divider(
+                            color: ColorPallete.concrete50,
+                            height: 1,
+                          ),
+                          itemBuilder: (context, index) {
+                            final review = serviceReviews.reviews[index];
+                            return Container(
+                              padding: EdgeInsets.all(16),
+                              color: Colors.white,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      // User Avatar
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: ColorPallete.primaryColor
+                                              .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: ColorPallete.primaryColor
+                                                .withOpacity(0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            'U', // TODO: Get from user data
+                                            style: GoogleFonts.ubuntu(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: ColorPallete.primaryColor,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  'User', // TODO: Get from user data
+                                                  style: GoogleFonts.ubuntu(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color:
+                                                        ColorPallete.darkBlack,
+                                                  ),
+                                                ),
+                                                SizedBox(width: 8),
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.amber.shade50,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    border: Border.all(
+                                                      color:
+                                                          Colors.amber.shade200,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.star,
+                                                        size: 12,
+                                                        color: Colors
+                                                            .amber.shade600,
+                                                      ),
+                                                      SizedBox(width: 2),
+                                                      Text(
+                                                        '${review.rating ?? 0}',
+                                                        style:
+                                                            GoogleFonts.ubuntu(
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: Colors
+                                                              .amber.shade700,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 2),
+                                            if (review.createdAt != null)
+                                              Text(
+                                                _formatDate(review.createdAt!),
+                                                style: GoogleFonts.ubuntu(
+                                                  fontSize: 11,
+                                                  color: ColorPallete
+                                                      .darkGreySilver,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (review.comment != null &&
+                                      review.comment!.isNotEmpty) ...[
+                                    SizedBox(height: 12),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: ColorPallete.concrete50
+                                            .withOpacity(0.5),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        review.comment!,
+                                        style: GoogleFonts.ubuntu(
+                                          fontSize: 13,
+                                          color: ColorPallete.darkBlack,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ] else ...[
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(12),
+                            bottomRight: Radius.circular(12),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.rate_review_outlined,
+                              size: 48,
+                              color: ColorPallete.darkGreySilver,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'No reviews yet',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: ColorPallete.darkGreySilver,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Be the first to review this service!',
+                              style: GoogleFonts.ubuntu(
+                                fontSize: 12,
+                                color: ColorPallete.darkGreySilver,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            } else if (state is ReviewFailure) {
+              return Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.red.shade200,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: Colors.red.shade600,
+                      size: 20,
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Failed to load reviews: ${state.error}',
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 14,
+                          color: Colors.red.shade700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              return Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: ColorPallete.concrete50,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Reviews not available',
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 14,
+                    color: ColorPallete.darkGreySilver,
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inDays < 30) {
+      final weeks = (difference.inDays / 7).floor();
+      return weeks == 1 ? '1 week ago' : '$weeks weeks ago';
+    } else {
+      return DateFormat('MMM d, yyyy').format(date);
+    }
+  }
+
+  Widget _buildStickyButton() {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 8,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: _buildButtonSend(),
+        ),
       ),
     );
   }

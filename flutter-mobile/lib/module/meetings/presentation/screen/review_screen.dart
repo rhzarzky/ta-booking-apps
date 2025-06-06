@@ -1,6 +1,10 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_event.dart';
+import 'package:Appointly/module/meetings/presentation/bloc/review_state.dart';
 import 'package:Appointly/module/meetings/presentation/widget/item_reviews.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ReviewsScreen extends StatefulWidget {
@@ -11,6 +15,13 @@ class ReviewsScreen extends StatefulWidget {
 }
 
 class _ReviewsScreenState extends State<ReviewsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Trigger get all reviews saat screen dimuat
+    context.read<ReviewBloc>().add(GetAllReviewEvent());
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -49,20 +60,55 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
         ),
         body: Container(
           padding: EdgeInsets.all(16),
-          child: ListView.builder(
-            itemBuilder: (context, index) {
-              return ItemReviews(
-                imageUrl: 'https://via.placeholder.com/150',
-                title: 'Judul Layanan',
-                subtitle: 'Nama Layanan',
-                rating: 4.5,
-                review: 'yang pernah diajukan untuk memperoleh gelar akademik di suatu Perguruan Tinggi, dan sepanjang pengetahuan saya juga tidak terdapat karya atau pendapat yang pernah ditulis atau diterbitkan oleh ora',
-                date: '2023-01-01',
-                isInteractive: true,
-                onRatingChanged: (value) {
-                  print(value);
-                },
-              );
+          child: BlocBuilder<ReviewBloc, ReviewState>(
+            builder: (context, state) {
+              print('Current ReviewBloc state: ${state.runtimeType}');
+              if (state is ReviewLoading) {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              } else if (state is GetAllReviewSuccess) {
+                print('Reviews count: ${state.reviews.length}');
+                if (state.reviews.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'Belum ada review',
+                      style: GoogleFonts.sourceSans3(
+                        fontSize: 16,
+                        color: ColorPallete.greySilverChalice,
+                      ),
+                    ),
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<ReviewBloc>().add(GetAllReviewEvent());
+                  },
+                  child: ListView.builder(
+                    itemCount: state.reviews.length,
+                    itemBuilder: (context, index) {
+                      final review = state.reviews[index];
+                      return ItemReviews(
+                        imageUrl: 'https://via.placeholder.com/150',
+                        title: 'Booking #${review.bookingId}',
+                        subtitle: 'User ID: ${review.userId}',
+                        rating: review.rating?.toDouble() ?? 0.0,
+                        date: review.createdAt?.toString().split(' ')[0] ?? '',
+                        review: review.comment ?? '',
+                        isInteractive: false,
+                        onRatingChanged: (value) {
+                          // Untuk viewing mode, tidak perlu aksi
+                        },
+                      );
+                    },
+                  ),
+                );
+              } else if (state is ReviewFailure) {
+                return Center(
+                  child: Text(state.error),
+                );
+              }
+              return SizedBox.shrink();
             },
           ),
         ),

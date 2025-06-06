@@ -139,7 +139,8 @@ class _DetailBookmarkState extends State<DetailBookmark> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => DetailMeetingScreen(
+                                    builder: (context) =>
+                                        DetailMeetingScreenProvider(
                                       bookingId:
                                           0, // Since this is from bookmarks, no booking yet
                                       serviceId: service.id,

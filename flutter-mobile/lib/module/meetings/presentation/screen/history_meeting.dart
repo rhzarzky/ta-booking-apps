@@ -56,6 +56,8 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
     _loadSavedStates();
     // Fetch bookings when screen loads
     context.read<BookingBloc>().add(GetBookingEvent());
+    // Fetch reviews for the reviewed tab
+    context.read<ReviewBloc>().add(GetAllReviewEvent());
   }
 
   // Load saved states from SharedPreferences
@@ -188,6 +190,10 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
           title = 'No Declined Meetings';
           message = 'Good news! You don\'t have any declined meetings.';
           break;
+        case 'Reviwed':
+          title = 'No Reviewed Meetings';
+          message = 'Good news! You don\'t have any reviewed meetings.';
+          break;
         default:
           title = 'No Meetings Found';
           message = 'No meetings found in this category.';
@@ -238,11 +244,6 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
                     _bottomSheetReview(context, booking);
                   }
                 : null,
-            linkViewReview: booking.status.toLowerCase() == 'approved'
-                ? () {
-                    _navigateToReviews(context, booking);
-                  }
-                : null,
             approveButton: booking.status.toLowerCase() == 'approved' &&
                     !finishedBookings.contains(booking.idBooking)
                 ? () {
@@ -261,7 +262,7 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
     required List<Booking> declined,
   }) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Column(
         children: [
           _buildTabBarHeader(),
@@ -271,6 +272,7 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
                 _buildAppointmentList(approved, 'Approved'),
                 _buildAppointmentList(pending, 'Under Review'),
                 _buildAppointmentList(declined, 'Declined'),
+                _buildReviewedTab(),
               ],
             ),
           ),
@@ -299,6 +301,7 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
           Tab(text: 'Approved'),
           Tab(text: 'Under Review'),
           Tab(text: 'Declined'),
+          Tab(text: 'Reviewed'),
         ],
       ),
     );
@@ -495,12 +498,195 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
     );
   }
 
-  void _navigateToReviews(BuildContext context, Booking booking) {
-    // Navigate to reviews screen for this service
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ReviewsScreen(),
+  Widget _buildReviewedTab() {
+    return BlocBuilder<ReviewBloc, ReviewState>(
+      builder: (context, state) {
+        if (state is ReviewLoading) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (state is GetAllReviewSuccess) {
+          if (state.reviews.isEmpty) {
+            return _emptyBooking(
+              title: 'No Reviews Yet',
+              message:
+                  'You haven\'t submitted any reviews yet. Complete some meetings to start reviewing!',
+            );
+          }
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<ReviewBloc>().add(GetAllReviewEvent());
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16.0),
+              itemCount: state.reviews.length,
+              itemBuilder: (context, index) {
+                final review = state.reviews[index];
+                return _buildReviewCard(review);
+              },
+            ),
+          );
+        } else if (state is ReviewFailure) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: ColorPallete.redCinnabar,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Failed to load reviews',
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: ColorPallete.darkBlack,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  state.error,
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 14,
+                    color: ColorPallete.darkGreySilver,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<ReviewBloc>().add(GetAllReviewEvent());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ColorPallete.primaryColor,
+                  ),
+                  child: Text(
+                    'Retry',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return _emptyBooking(
+          title: 'No Reviews',
+          message: 'Your reviews will appear here.',
+        );
+      },
+    );
+  }
+
+  Widget _buildReviewCard(dynamic review) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12.0),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header dengan rating dan tanggal
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.star,
+                      color: ColorPallete.secondColor,
+                      size: 20,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      '${review.rating ?? 0}',
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: ColorPallete.darkBlack,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  review.createdAt?.toString().split(' ')[0] ?? '',
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 12,
+                    color: ColorPallete.darkGreySilver,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
+            // Booking info
+            Container(
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: ColorPallete.backgroundBody,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.event,
+                    color: ColorPallete.primaryColor,
+                    size: 20,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Booking #${review.bookingId}',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: ColorPallete.darkBlack,
+                    ),
+                  ),
+                  Spacer(),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: review.status?.color ?? ColorPallete.primaryColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      review.status?.displayName ?? 'Submitted',
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Comment jika ada
+            if (review.comment != null && review.comment!.isNotEmpty) ...[
+              SizedBox(height: 12),
+              Text(
+                'Review:',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: ColorPallete.darkBlack,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                review.comment!,
+                style: GoogleFonts.ubuntu(
+                  fontSize: 14,
+                  color: ColorPallete.darkGreySilver,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

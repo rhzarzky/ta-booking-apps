@@ -1,4 +1,5 @@
 import 'package:Appointly/module/meetings/model/reviews_model.dart';
+import 'package:Appointly/module/meetings/model/service_reviews_model.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class ReviewState extends Equatable {
@@ -46,4 +47,22 @@ class ReviewFailure extends ReviewState {
 
   @override
   List<Object?> get props => [error];
+}
+
+class GetAllReviewSuccess extends ReviewState {
+  final List<ReviewsModel> reviews;
+
+  const GetAllReviewSuccess({required this.reviews});
+
+  @override
+  List<Object?> get props => [reviews];
+}
+
+class GetServiceReviewsSuccess extends ReviewState {
+  final ServiceReviewsModel serviceReviews;
+
+  const GetServiceReviewsSuccess({required this.serviceReviews});
+
+  @override
+  List<Object?> get props => [serviceReviews];
 }
