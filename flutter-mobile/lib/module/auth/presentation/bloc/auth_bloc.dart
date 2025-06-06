@@ -76,5 +76,46 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthUnauthenticated());
       },
     );
+
+    on<ForgotPassword>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        await _authRepository.forgotPassword(event.email);
+        emit(AuthForgotPasswordSuccess());
+      } catch (e) {
+        emit(AuthForgotPasswordFailure(e.toString()));
+      }
+    });
+
+    on<VerifyOTP>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        await _authRepository.verifyOTP(event.otp);
+        emit(AuthVerifyOTPSuccess());
+      } catch (e) {
+        emit(AuthVerifyOTPFailure(e.toString()));
+      }
+    });
+
+    on<ResetPassword>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        await _authRepository.resetPassword(
+            event.password, event.confirmPassword);
+        emit(AuthResetPasswordSuccess());
+      } catch (e) {
+        emit(AuthResetPasswordFailure(e.toString()));
+      }
+    });
+
+    on<ResendOTP>((event, emit) async {
+      emit(AuthLoading());
+      try {
+        await _authRepository.resendOTP(event.email);
+        emit(AuthResendOTPSuccess());
+      } catch (e) {
+        emit(AuthResendOTPFailure(e.toString()));
+      }
+    });
   }
 }

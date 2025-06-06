@@ -6,9 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AuthButton extends StatelessWidget {
   final String text;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
-  const AuthButton({super.key, required this.text, required this.onTap});
+  const AuthButton({super.key, required this.text, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class AuthButton extends StatelessWidget {
           borderRadius: BorderRadius.all(
             Radius.circular(32),
           ),
-          color: ColorPallete.primaryColor),
+          color: onTap != null ? ColorPallete.primaryColor : Colors.grey),
       child: ElevatedButton(
           onPressed: onTap,
           style: ElevatedButton.styleFrom(

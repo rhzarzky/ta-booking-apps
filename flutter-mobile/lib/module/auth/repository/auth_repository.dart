@@ -149,4 +149,55 @@ class AuthRepository {
     }
     return null;
   }
+
+  Future<void> forgotPassword(String email) async {
+    try {
+      final res = await _dio.post('/forgot-password', data: {'email': email});
+      if (res.statusCode == 200) {
+        return res.data;
+      }
+    } catch (e) {
+      _logger.e('Error in forgotPassword: $e');
+      throw Exception('Failed to send reset password email: ${e.toString()}');
+    }
+  }
+
+  Future<void> verifyOTP(String otp) async {
+    try {
+      final res = await _dio.post('/verify-otp', data: {'otp': otp});
+      if (res.statusCode == 200) {
+        return res.data;
+      }
+    } catch (e) {
+      _logger.e('Error in verifyOTP: $e');
+      throw Exception('Failed to verify OTP: ${e.toString()}');
+    }
+  }
+
+  Future<void> resetPassword(String password, String confirmPassword) async {
+    try {
+      final res = await _dio.post('/reset-password', data: {
+        'password': password,
+        'password_confirmation': confirmPassword,
+      });
+      if (res.statusCode == 200) {
+        return res.data;
+      }
+    } catch (e) {
+      _logger.e('Error in resetPassword: $e');
+      throw Exception('Failed to reset password: ${e.toString()}');
+    }
+  }
+
+  Future<void> resendOTP(String email) async {
+    try {
+      final res = await _dio.post('/resend-otp', data: {'email': email});
+      if (res.statusCode == 200) {
+        return res.data;
+      }
+    } catch (e) {
+      _logger.e('Error in resendOTP: $e');
+      throw Exception('Failed to resend OTP: ${e.toString()}');
+    }
+  }
 }
