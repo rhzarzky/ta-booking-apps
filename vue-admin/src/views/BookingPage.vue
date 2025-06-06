@@ -85,7 +85,7 @@ const closeConfirmationModal = () => {
 const handleConfirmation = async () => {
     if (!bookingToConfirm.value || !actionType.value) return;
 
-    const validStatuses = ['Approved', 'Declined', 'Completed'];
+    const validStatuses = ['Approved', 'Declined'];
     const status = validStatuses.includes(actionType.value) ? actionType.value : 'Pending';
 
     const formData = new FormData();
@@ -126,7 +126,6 @@ const handleConfirmation = async () => {
                                 <option value="Pending">Pending</option>
                                 <option value="Approved">Approved</option>
                                 <option value="Declined">Declined</option>
-                                <option value="Completed">Completed</option>
                             </select>
                         </div>
                     </div>
@@ -155,7 +154,7 @@ const handleConfirmation = async () => {
                                 <th class="px-6 py-3 text-left font-semibold">No.</th>
                                 <th class="px-6 py-3 text-left font-semibold">Service Title</th>
                                 <th class="px-6 py-3 text-left font-semibold">Option</th>
-                                <th class="px-6 py-3 text-left font-semibold">Date</th>
+                                <th class="px-7 py-3 text-left font-semibold">Date</th>
                                 <th class="px-6 py-3 text-left font-semibold">Time</th>
                                 <th class="px-6 py-3 text-left font-semibold">Note</th>
                                 <th class="px-6 py-3 text-left font-semibold">Booked by</th>
@@ -172,7 +171,9 @@ const handleConfirmation = async () => {
                                 </td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.title }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.option }}</td>
-                                <td class="px-6 py-4 font-medium">{{ booking.service.date }}</td>
+                                <td class="px-7 py-4 font-medium whitespace-nowrap">
+                                    {{ booking.service.date ? booking.service.date.split('-').reverse().join('-') : '' }}
+                                </td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.time }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.note }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.user.email }}</td>
@@ -182,7 +183,6 @@ const handleConfirmation = async () => {
                                         'bg-yellow-100 text-yellow-800': booking.service.status === 'Pending',
                                         'bg-green-100 text-green-800': booking.service.status === 'Approved',
                                         'bg-red-100 text-red-800': booking.service.status === 'Declined',
-                                        'bg-blue-100 text-blue-800': booking.service.status === 'Completed'
                                     }" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold">
                                         {{ booking.service.status }}
                                     </span>
@@ -208,14 +208,6 @@ const handleConfirmation = async () => {
                                                     color="#d60000" />
                                             </svg>
                                         </button>
-                                        <button title="Completed" class="text-green-600 hover:text-green-800"
-                                            @click="handleAction(booking, 'Completed')">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                viewBox="0 0 1024 1024">
-                                                <path fill="#06549b"
-                                                    d="M688 312v-48c0-4.4-3.6-8-8-8H296c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h384c4.4 0 8-3.6 8-8m-392 88c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8zm376 116c-119.3 0-216 96.7-216 216s96.7 216 216 216s216-96.7 216-216s-96.7-216-216-216m107.5 323.5C750.8 868.2 712.6 884 672 884s-78.8-15.8-107.5-44.5S520 772.6 520 732s15.8-78.8 44.5-107.5S631.4 580 672 580s78.8 15.8 107.5 44.5S824 691.4 824 732s-15.8 78.8-44.5 107.5M761 656h-44.3c-2.6 0-5 1.2-6.5 3.3l-63.5 87.8l-23.1-31.9a7.92 7.92 0 0 0-6.5-3.3H573c-6.5 0-10.3 7.4-6.5 12.7l73.8 102.1c3.2 4.4 9.7 4.4 12.9 0l114.2-158c3.9-5.3.1-12.7-6.4-12.7M440 852H208V148h560v344c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8V108c0-17.7-14.3-32-32-32H168c-17.7 0-32 14.3-32 32v784c0 17.7 14.3 32 32 32h272c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8" />
-                                            </svg>
-                                        </button>
                                         <transition name="fade">
                                             <div v-if="showConfirmationModal"
                                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -225,14 +217,11 @@ const handleConfirmation = async () => {
                                                         Confirm
                                                         <span v-if="actionType === 'Approved'">Approval</span>
                                                         <span v-else-if="actionType === 'Declined'">Rejection</span>
-                                                        <span v-else-if="actionType === 'Completed'">Completion</span>
                                                     </h2>
                                                     <p class="text-gray-600 mt-2">
                                                         Are you sure you want to
                                                         <span v-if="actionType === 'Approved'">approve</span>
                                                         <span v-else-if="actionType === 'Declined'">decline</span>
-                                                        <span v-else-if="actionType === 'Completed'">mark as
-                                                            completed</span>
                                                         this booking?
                                                     </p>
                                                     <div class="mt-4 flex justify-end gap-2">
