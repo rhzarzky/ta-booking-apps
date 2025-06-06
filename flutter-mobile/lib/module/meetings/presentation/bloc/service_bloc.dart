@@ -80,12 +80,13 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
         if (token != null && token.isNotEmpty) {
           serviceRepository.updateToken(token);
         }
-        final response = await serviceRepository.postService(
+        final response = await serviceRepository.postServiceWithCalendar(
           event.serviceId,
           time: event.time,
           date: event.date,
           note: event.notes,
           option: event.option,
+          syncToCalendar: true,
         );
 
         final result = await serviceRepository.getServiceById(event.serviceId);
