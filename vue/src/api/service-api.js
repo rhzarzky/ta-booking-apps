@@ -24,7 +24,7 @@ export const serviceApi = {
   async bookService(id, payload) {
     try {
       const response = await api.post(`/service/${id}/book`, payload)
-      return response.data
+      return response.data.service
     } catch (error) {
       // Tambahan debug penting
       if (error.response) {
@@ -33,8 +33,16 @@ export const serviceApi = {
       console.error(`Failed to book service ${id}:`, error)
       throw error
     }
+  },
+
+  async getServiceReviews(serviceId) {
+    try {
+      const response = await api.get(`/service/${serviceId}/reviews`)
+      return response.data.data
+    } catch (error) {
+      console.error(`Failed to fetch reviews for service (id: ${serviceId}):`, error)
+      throw error
+    }
   }
-
-
 }
 

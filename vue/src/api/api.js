@@ -3,7 +3,7 @@ import { authServices } from "../services/auth-services";
 
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_BASE_URL}${import.meta.env.VITE_API_PATH}`, 
-  timeout: 17000, 
+  timeout: 27000, 
   headers: {
     "Content-Type": "application/json", 
     "x-api-key": authServices.getApiKey?.() || "", 

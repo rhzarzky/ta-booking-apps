@@ -88,7 +88,9 @@ class BookingCompletionController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
-    }    public function processExpiredReviews()
+    }    
+    
+    public function processExpiredReviews()
     {
         try {
             $processedCount = $this->completionService->processExpiredReviews();

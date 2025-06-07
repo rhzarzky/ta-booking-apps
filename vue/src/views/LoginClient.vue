@@ -34,7 +34,7 @@ const handleLogin = async () => {
       loginError.value = 'Login gagal. Silakan coba lagi.'
     }
   } catch (err) {
-    loginError.value = err.response?.data?.message || 'Email atau Password salah'
+    loginError.value = err.response?.data?.message || 'Incorrect email or password'
   } finally {
     loading.value = false
   }

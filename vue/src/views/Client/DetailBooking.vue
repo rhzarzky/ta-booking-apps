@@ -45,7 +45,6 @@ const getUserLocation = async () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         userLocation.value = [position.coords.longitude, position.coords.latitude];
-        console.log('Lokasi Pengguna:', userLocation.value);
 
         // Jika peta sudah ada dan marker lokasi pengguna belum ada, tambahkan
         if (map.value && !userLocationMarker.value) {
