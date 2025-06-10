@@ -184,18 +184,6 @@ const store = async () => {
                         <span class="text-red-600">*</span>
                     </label>
 
-                    <div v-for="(t, index) in post.time" :key="index" class="flex items-center gap-2">
-                        <input
-                            class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
-                            type="time" v-model="post.time[index]" :id="'time-' + index"
-                            placeholder="Enter service time" />
-                        <!-- Remove button -->
-                        <button type="button" @click="post.time.splice(index, 1)"
-                            class="text-red-500 hover:text-red-700" v-if="post.time.length > 1">
-                            &times;
-                        </button>
-                    </div>
-
                     <!-- Range input for generating times -->
                     <div class="flex items-center gap-2 mt-2">
                         <input
@@ -205,8 +193,21 @@ const store = async () => {
                         <input
                             class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
                             type="time" v-model="rangeEnd" placeholder="End time" />
-                        <button type="button" @click="generateTimes" class="text-sm text-cobalt-700 hover:underline">
+                        <button type="button" @click="generateTimes"
+                            class="w-full px-4 max-w-fit font-semibold py-2 bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white rounded-xl w-36">
                             Generate per 1 hour
+                        </button>
+                    </div>
+
+                    <div v-for="(t, index) in post.time" :key="index" class="flex items-center gap-2">
+                        <input
+                            class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
+                            type="time" v-model="post.time[index]" :id="'time-' + index"
+                            placeholder="Enter service time" />
+                        <!-- Remove button -->
+                        <button type="button" @click="post.time.splice(index, 1)"
+                            class="text-red-500 hover:text-red-700" v-if="post.time.length > 1">
+                            &times;
                         </button>
                     </div>
 
