@@ -24,7 +24,8 @@ export const useBookingStore = defineStore('booking', {
             this.isLoading = true;
             this.error = null;
             try {
-              const response = await getBookingApi();
+                const response = await getBookingApi();
+                console.log("fetchBooking response:", response);
           
               if (response.data.status === 'success') {
                 // get all bookings and flatten the structure
@@ -47,6 +48,7 @@ export const useBookingStore = defineStore('booking', {
             this.error = null;
             try {
                 const response = await getAssignedBookingApi();
+                console.log("fetchAssignedBooking response:", response);
 
                 if (response.data.status === 'success') {
                     // Filter bookings that are assigned to the current user

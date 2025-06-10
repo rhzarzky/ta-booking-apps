@@ -11,18 +11,18 @@ const servicesStore = useServicesStore();
 const authStore = useAuthStore();
 
 const fetchDataBooking = async () => {
+    await bookingStore.fetchAssignedBooking();
+
     if (authStore.hasPermission('show all booking')) {
         await bookingStore.fetchBookings();
-    } else {
-        await bookingStore.fetchAssignedBooking();
     }
 };
 
 const fetchDataService = async () => {
+    await servicesStore.fetchAssignedService();
+
     if (authStore.hasPermission('show all service')) {
         await servicesStore.fetchServices();
-    } else {
-        await servicesStore.fetchAssignedService();
     }
 };
 
