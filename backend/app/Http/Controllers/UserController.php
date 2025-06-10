@@ -82,11 +82,11 @@ class UserController extends Controller
         try {
             $user = User::findOrFail($id);
 
-            if ($user->is_protected && $user->hasRole('admin')) {
+            if ($user->hasRole('admin')) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Admin cannot be updated.',
-                ], 403); // Status code 403 for forbidden
+                    'message' => 'Admin cannot be edited.',
+                ], 403);
             }
 
             if ($request->has('name')) {

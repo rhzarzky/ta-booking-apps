@@ -323,7 +323,7 @@ function closeLocationModal() {
                                     {{ Array.isArray(service.days) ? service.days.join(", ") : service.days }}
                                 </td>
                                 <td class="px-4 py-4 font-medium whitespace-nowrap">
-                                    {{ Array.isArray(service.time) ?service.time.join(", ") : service.time }}
+                                    {{ Array.isArray(service.time) ? service.time.join(", ") : service.time }}
                                 </td>
                                 <td class="px-4 py-4 font-medium whitespace-nowrap">
                                     <button class="text-cobalt-700 underline hover:text-cobalt-900"

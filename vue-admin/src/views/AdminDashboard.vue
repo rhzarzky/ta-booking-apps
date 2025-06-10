@@ -45,7 +45,7 @@ const totalServices = computed(() => servicesStore.services.length);
 const totalUsers = computed(() => authStore.users?.length || 0);
 
 // Latest data (limit 5)
-const latestBookings = computed(() => bookingStore.bookings.slice(-5).reverse());
+const latestBookings = computed(() => bookingStore.bookings.slice(-5));
 const latestServices = computed(() => servicesStore.services.slice(-5).reverse());
 const latestUsers = computed(() => (authStore.users ? authStore.users.slice(-5).reverse() : []));
 </script>

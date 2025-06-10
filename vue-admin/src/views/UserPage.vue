@@ -131,7 +131,9 @@ const savePermissions = async () => {
     router.push("/user-list");
   } catch (err) {
     console.error("Error saving permissions:", err);
-    authStore.showNotification("Failed to update permissions.", "error");
+    authStore.showNotification(err.response.data.message, "error");
+    isVisible.value = false;
+    router.push("/user-list");
   }
 };
 
