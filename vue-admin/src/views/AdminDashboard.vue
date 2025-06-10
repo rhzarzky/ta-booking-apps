@@ -11,43 +11,46 @@ const servicesStore = useServicesStore();
 const authStore = useAuthStore();
 
 const fetchDataBooking = async () => {
-    await bookingStore.fetchAssignedBooking();
-
     if (authStore.hasPermission('show all booking')) {
         await bookingStore.fetchBookings();
+    } else {
+        await bookingStore.fetchAssignedBooking();
     }
 };
 
 const fetchDataService = async () => {
-    await servicesStore.fetchAssignedService();
-
     if (authStore.hasPermission('show all service')) {
         await servicesStore.fetchServices();
+    } else {
+        await servicesStore.fetchAssignedService();
     }
 };
 
-const FetchDataUser = async () => {
-    if (authStore.hasPermission('show user')) {
-        await authStore.fetchUsersApi();
-    }
+const fetchDataUser = async () => {
+    await authStore.fetchUsersApi();
 };
 
 onMounted(() => {
     fetchDataBooking();
     fetchDataService();
-    FetchDataUser();
+    fetchDataUser();
 });
-
 
 // Summary
 const totalBookings = computed(() => bookingStore.bookings.length);
 const totalServices = computed(() => servicesStore.services.length);
 const totalUsers = computed(() => authStore.users?.length || 0);
 
-// Latest data (limit 5)
-const latestBookings = computed(() => bookingStore.bookings.slice(-5));
-const latestServices = computed(() => servicesStore.services.slice(-5).reverse());
-const latestUsers = computed(() => (authStore.users ? authStore.users.slice(-5).reverse() : []));
+// Latest data (limit 5, sorted by id descending)
+const latestBookings = computed(() =>
+    [...bookingStore.bookings].sort((a, b) => b.id_booking - a.id_booking).slice(0, 5)
+);
+const latestServices = computed(() =>
+    [...servicesStore.services].sort((a, b) => b.id - a.id).slice(0, 5)
+);
+const latestUsers = computed(() =>
+    authStore.users ? [...authStore.users].sort((a, b) => b.id - a.id).slice(0, 5) : []
+);
 </script>
 <template>
     <DefaultLayout>

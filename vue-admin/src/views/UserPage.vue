@@ -200,7 +200,7 @@ watch(searchQuery, () => {
           <table class="w-full table-auto border-collapse border-t border-b border-wildsand-200">
             <thead>
               <tr class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
-                <th class="px-6 py-3 text-left font-semibold max-w-fit">ID</th>
+                <th class="px-6 py-3 text-left font-semibold max-w-fit">No.</th>
                 <th class="px-6 py-3 text-left font-semibold">Name</th>
                 <th class="px-6 py-3 text-left font-semibold hidden sm:table-cell">Email</th>
                 <th class="px-6 py-3 text-left font-semibold">Role</th>
@@ -211,7 +211,7 @@ watch(searchQuery, () => {
             <tbody class="text-codgray-800">
               <tr v-for="user in paginatedUsers" :key="user.id"
                 class="border-t bg-white border-wildsand-200 hover:bg-wildsand-50/70">
-                <td class="px-6 py-2 max-w-fit font-medium">{{ user.id }}</td>
+                <td class="px-6 py-2 max-w-fit font-medium">{{ (currentPage - 1) * usersPerPage + (paginatedUsers.indexOf(user) + 1) }}</td>
                 <td class="px-4 py-2">{{ user.name }}</td>
                 <td class="px-4 py-2 hidden sm:table-cell">{{ user.email }}</td>
                 <td class="px-4 py-2">

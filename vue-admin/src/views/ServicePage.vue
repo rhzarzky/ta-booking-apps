@@ -48,7 +48,7 @@ const totalPages = computed(() => {
 
 // Paginated results from filtered services, sorted by service id descending
 const paginatedServices = computed(() => {
-    const sorted = [...filteredServices.value].sort((a, b) => a.id - b.id);
+    const sorted = [...filteredServices.value].sort((a, b) => b.id - a.id);
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return sorted.slice(start, end);
