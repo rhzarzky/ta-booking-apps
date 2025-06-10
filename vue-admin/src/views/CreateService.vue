@@ -22,11 +22,32 @@ const post = reactive({
 // Validation errors
 const validation = ref([]);
 const notification = ref("");
+const rangeStart = ref("");
+const rangeEnd = ref("");
 
 // Function for canceling the form
 const cancel = () => {
     router.push({ path: "/service" });
 };
+
+// Generate times based on the range start and end
+function generateTimes() {
+    if (!rangeStart.value || !rangeEnd.value) return;
+    const start = rangeStart.value.split(":").map(Number);
+    const end = rangeEnd.value.split(":").map(Number);
+    let current = new Date();
+    current.setHours(start[0], start[1], 0, 0);
+    const endTime = new Date();
+    endTime.setHours(end[0], end[1], 0, 0);
+    const times = [];
+    while (current <= endTime) {
+        const h = current.getHours().toString().padStart(2, "0");
+        const m = current.getMinutes().toString().padStart(2, "0");
+        times.push(`${h}:${m}`);
+        current.setHours(current.getHours() + 1);
+    }
+    post.time = times;
+}
 
 // Submit function for storing service
 const store = async () => {
@@ -172,6 +193,20 @@ const store = async () => {
                         <button type="button" @click="post.time.splice(index, 1)"
                             class="text-red-500 hover:text-red-700" v-if="post.time.length > 1">
                             &times;
+                        </button>
+                    </div>
+
+                    <!-- Range input for generating times -->
+                    <div class="flex items-center gap-2 mt-2">
+                        <input
+                            class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
+                            type="time" v-model="rangeStart" placeholder="Start time" />
+                        <span>-</span>
+                        <input
+                            class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
+                            type="time" v-model="rangeEnd" placeholder="End time" />
+                        <button type="button" @click="generateTimes" class="text-sm text-cobalt-700 hover:underline">
+                            Generate per 1 hour
                         </button>
                     </div>
 
