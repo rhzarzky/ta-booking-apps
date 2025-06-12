@@ -30,6 +30,8 @@ class BookingController extends Controller
                         'title' => $booking->service->title,
                         'description' => $booking->service->description,
                         'location'  => $booking->location,
+                        'latitude' => $booking->service->location->latitude ?? null,
+                        'longitude' => $booking->service->location->longitude ?? null,
                         'option' => $booking->option,
                         'date' => $booking->date,
                         'time' => $booking->time,
@@ -64,6 +66,8 @@ class BookingController extends Controller
                             'title' => $booking->service->title,
                             'description' => $booking->service->description,
                             'location'  => $booking->location,
+                            'latitude' => $booking->service->location->latitude ?? null,
+                            'longitude' => $booking->service->location->longitude ?? null,
                         ],
                         'option' => $booking->option,
                         'date' => $booking->date,
@@ -89,7 +93,6 @@ class BookingController extends Controller
     {
         $assignedUser = Auth::user();
 
-        // Ambil booking dari service yang di-assign ke user ini
         $assignedBookings = Booking::with('user', 'service')
             ->whereHas('service', function ($query) use ($assignedUser) {
                 $query->where('user_id', $assignedUser->id);
@@ -111,6 +114,8 @@ class BookingController extends Controller
                             'title' => $booking->service->title,
                             'description' => $booking->service->description,
                             'location'  => $booking->location,
+                            'latitude' => $booking->service->location->latitude ?? null,
+                            'longitude' => $booking->service->location->longitude ?? null,
                             'option' => $booking->option,
                             'date' => $booking->date,
                             'time' => $booking->time,
@@ -155,6 +160,8 @@ class BookingController extends Controller
                 'title' => $booking->service->title,
                 'description' => $booking->service->description,
                 'location'  => $booking->location,
+                'latitude' => $booking->service->location->latitude ?? null,
+                'longitude' => $booking->service->location->longitude ?? null,
                 'option' => $booking->option,
                 'date' => $booking->date,
                 'time' => $booking->time,
@@ -216,7 +223,7 @@ class BookingController extends Controller
             'status' => 'Pending',
             'location' => $validated['option'] === 'Online' 
                 ? 'Waiting for video meeting URL' 
-                : $service->location,
+                : $service->location->location,
         ]);
 
         return response()->json([
@@ -234,6 +241,8 @@ class BookingController extends Controller
                 'time' => $booking->time,
                 'note' => $booking->note,
                 'location'  => $booking->location,
+                'latitude' => $booking->service->location->latitude ?? null,
+                'longitude' => $booking->service->location->longitude ?? null,
                 'status' => $booking->status,
                 'service' => [
                     'id_service' => $service->id,
@@ -270,6 +279,8 @@ class BookingController extends Controller
                 'id_booking' => $booking->id,
                 'status' => $booking->status,
                 'location' => $booking->location,
+                'latitude' => $booking->service->location->latitude ?? null,
+                'longitude' => $booking->service->location->longitude ?? null,
             ],
         ], 200);
     }
