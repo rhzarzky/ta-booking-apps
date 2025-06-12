@@ -27,6 +27,8 @@ const post = reactive({
 const validation = ref([]);
 const notification = ref("");
 const assignedUsers = ref([]);
+const rangeStart = ref("");
+const rangeEnd = ref("");
 
 const cancel = () => {
     router.push({ path: "/service" });
@@ -62,6 +64,25 @@ onMounted(() => {
     loadService();
     loadUsers();
 });
+
+// Generate times based on the range start and end
+function generateTimes() {
+    if (!rangeStart.value || !rangeEnd.value) return;
+    const start = rangeStart.value.split(":").map(Number);
+    const end = rangeEnd.value.split(":").map(Number);
+    let current = new Date();
+    current.setHours(start[0], start[1], 0, 0);
+    const endTime = new Date();
+    endTime.setHours(end[0], end[1], 0, 0);
+    const times = [];
+    while (current <= endTime) {
+        const h = current.getHours().toString().padStart(2, "0");
+        const m = current.getMinutes().toString().padStart(2, "0");
+        times.push(`${h}:${m}`);
+        current.setHours(current.getHours() + 1);
+    }
+    post.time = times;
+}
 
 const edit = async () => {
     const formData = new FormData();
@@ -184,21 +205,47 @@ const edit = async () => {
                     </div>
                 </div>
 
-                <!-- Time -->
+                <!-- Time (Multiple Input) -->
                 <div class="flex flex-col gap-2">
-                    <label class="text-sm md:text-base text-wildsand-600 flex gap-1">Time
+                    <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="time">Time
+                        <span class="text-red-600">*</span>
                     </label>
-                    <div v-for="(t, index) in post.time" :key="index" class="flex gap-2 items-center">
-                        <input type="time" v-model="post.time[index]"
-                            class="w-full h-12 p-2 border border-wildsand-300 rounded-md text-base text-codgray-900 shadow-sm hover:border-cobalt-700 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700" />
-                        <button type="button" @click="post.time.splice(index, 1)"
-                            class="text-red-500 hover:text-red-700" v-if="post.time.length > 1">&times;</button>
+
+                    <!-- Range input for generating times -->
+                    <div class="flex items-center gap-2 mt-2">
+                        <input
+                            class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
+                            type="time" v-model="rangeStart" placeholder="Start time" />
+                        <span>-</span>
+                        <input
+                            class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
+                            type="time" v-model="rangeEnd" placeholder="End time" />
+                        <button type="button" @click="generateTimes"
+                            class="w-full px-4 max-w-fit font-semibold py-2 bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white rounded-xl w-36">
+                            Generate per 1 hour
+                        </button>
                     </div>
+
+                    <div v-for="(t, index) in post.time" :key="index" class="flex items-center gap-2">
+                        <input
+                            class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
+                            type="time" v-model="post.time[index]" :id="'time-' + index"
+                            placeholder="Enter service time" />
+                        <!-- Remove button -->
+                        <button type="button" @click="post.time.splice(index, 1)"
+                            class="text-red-500 hover:text-red-700" v-if="post.time.length > 1">
+                            &times;
+                        </button>
+                    </div>
+
+                    <!-- Add more time button -->
                     <button type="button" @click="post.time.push('')"
-                        class="text-sm text-cobalt-700 hover:underline mt-1 w-fit">
+                        class="text-sm text-cobalt-700 hover:underline w-fit mt-1">
                         + Add more time
                     </button>
-                    <div v-if="validation.time" class="mt-2 text-red-600">
+
+                    <!-- validation -->
+                    <div class="mt-2 text-red-600" v-if="validation.time">
                         {{ validation.time[0] }}
                     </div>
                 </div>
