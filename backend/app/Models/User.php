@@ -68,7 +68,6 @@ class User extends Authenticatable implements JWTSubject
 
     public function getRoleAttribute()
     {
-        // return $this->getRoleNames()->first();
         return $this->getRoleNames()->first();
     }
 

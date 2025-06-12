@@ -1,9 +1,11 @@
 <script setup>
-import { reactive, ref } from "vue";
+import { reactive, ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { useServicesStore } from "@/stores/service";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
+import mapboxgl from 'mapbox-gl';
+import axios from 'axios';
 
 const servicesStore = useServicesStore();
 const router = useRouter();
@@ -13,6 +15,8 @@ const post = reactive({
     title: "",
     description: "",
     location: "",
+    longitude: 0,
+    latitude: 0,
     option: [],
     time: [],
     days: [],
@@ -49,12 +53,116 @@ function generateTimes() {
     post.time = times;
 }
 
+// Mapbox configuration
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
+
+const mapContainer = ref(null)
+const map = ref(null)
+const marker = ref(null)
+
+const lng = ref(106.816666) // default Jakarta
+const lat = ref(-6.200000)
+const location = ref('')
+const searchQuery = ref('')
+
+// Keep post.location, post.longitude, post.latitude in sync with map values
+watch([location, lng, lat], () => {
+    post.location = location.value;
+    post.longitude = lng.value;
+    post.latitude = lat.value;
+});
+
+onMounted(() => {
+    // get the user's current position using GPS
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                lng.value = position.coords.longitude;
+                lat.value = position.coords.latitude;
+
+                setupMap(); // Initialize the map at user's location
+            },
+            (error) => {
+                console.warn('Geolocation failed or permission denied:', error.message);
+                setupMap(); // Fallback to default Jakarta
+            }
+        );
+    } else {
+        console.warn("Geolocation is not supported by this browser.");
+        setupMap(); // Fallback
+    }
+});
+
+// Function to set up the Mapbox map and marker
+const setupMap = () => {
+    map.value = new mapboxgl.Map({
+        container: mapContainer.value,
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [lng.value, lat.value],
+        zoom: 12
+    });
+
+    marker.value = new mapboxgl.Marker({ draggable: true })
+        .setLngLat([lng.value, lat.value])
+        .addTo(map.value);
+
+    marker.value.on('dragend', () => {
+        const { lng: newLng, lat: newLat } = marker.value.getLngLat();
+        lng.value = newLng;
+        lat.value = newLat;
+        reverseGeocode();
+    });
+
+    reverseGeocode(); // Initial reverse geocode
+}
+
+const reverseGeocode = async () => {
+    const res = await axios.get(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng.value},${lat.value}.json`,
+        {
+            params: {
+                access_token: mapboxgl.accessToken
+            }
+        }
+    )
+    if (res.data?.features?.length > 0) {
+        location.value = res.data.features[0].place_name
+    }
+}
+
+const searchLocation = async () => {
+    const res = await axios.get(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery.value)}.json`,
+        {
+            params: {
+                access_token: mapboxgl.accessToken,
+                limit: 1
+            }
+        }
+    )
+    if (res.data?.features?.length > 0) {
+        const feature = res.data.features[0]
+        lng.value = feature.center[0]
+        lat.value = feature.center[1]
+        location.value = feature.place_name
+        map.value.flyTo({ center: [lng.value, lat.value], zoom: 14 })
+        marker.value.setLngLat([lng.value, lat.value])
+    }
+}
+
 // Submit function for storing service
 const store = async () => {
+    // Ensure post.location, longitude, latitude are up to date
+    post.location = location.value;
+    post.longitude = lng.value;
+    post.latitude = lat.value;
+
     const formData = new FormData();
     formData.append("title", post.title);
     formData.append("description", post.description);
     formData.append("location", post.location);
+    formData.append("longitude", post.longitude);
+    formData.append("latitude", post.latitude);
     formData.append("end_date", post.end_date);
 
     // Append the image file with its name
@@ -101,9 +209,6 @@ const store = async () => {
                 <h2 class="text-codgray-900 md:text-2xl text-base font-semibold">
                     Create Service
                 </h2>
-                <p class="md:text-base text-sm text-wildsand-400">
-                    Start here! Complete this field to move forward
-                </p>
             </div>
             <form @submit.prevent="store" class="flex flex-col gap-6">
                 <!-- Title -->
@@ -154,9 +259,22 @@ const store = async () => {
                     <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="location">Location
                         <span class="text-red-600">*</span>
                     </label>
-                    <input
-                        class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
-                        id="location" placeholder="Enter service location" type="text" v-model="post.location" />
+                    <div class="space-y-4">
+                        <div class="flex gap-2">
+                            <input v-model="searchQuery" type="text" class="w-full border p-2 rounded"
+                                placeholder="Find Location..." @keyup.enter="searchLocation" />
+                            <button type="button" @click="searchLocation"
+                                class="px-4 py-2 w-full px-4 max-w-fit font-semibold py-2 bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white rounded-xl w-36">
+                                Search
+                            </button>
+                        </div>
+                        <div ref="mapContainer" class="w-full h-[400px] rounded shadow" />
+                        <div class="text-sm">
+                            <p><strong>Location:</strong> {{ location }}</p>
+                            <p><strong>Longitude:</strong> {{ lng }}</p>
+                            <p><strong>Latitude:</strong> {{ lat }}</p>
+                        </div>
+                    </div>
                     <!-- validation -->
                     <div class="mt-2 text-red-600" v-if="validation.location">
                         {{ validation.location[0] }}
@@ -279,3 +397,6 @@ const store = async () => {
         </div>
     </DefaultLayout>
 </template>
+<style>
+@import "mapbox-gl/dist/mapbox-gl.css";
+</style>

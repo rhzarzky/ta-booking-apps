@@ -189,7 +189,7 @@ export const useAuthStore = defineStore("authStore", () => {
         errors.value = error.response.data.errors;
       } else if (!errors.value.general) {
         errors.value = {
-          general: "Login failed. Please try again.",
+          general: "Login failed. Please check your credentials and try again.",
         };
       }
       throw error;

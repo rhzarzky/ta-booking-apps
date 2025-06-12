@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{AuthController, RoleController, ServiceController, 
-    UserController, BookingController, VerificationController,ForgotPasswordController,
+    UserController, BookingController, VerificationController,
     BookingCompletionController, ReviewController};
 use App\Http\Middleware\JwtMiddleware;
 

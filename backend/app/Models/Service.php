@@ -14,7 +14,6 @@ class Service extends Model
     protected $fillable = [
         'user_id',
         'image',
-        'location',
         'title',
         'description',
         'option', 
@@ -34,4 +33,8 @@ class Service extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function location() 
+    {
+        return $this->hasOne(Location::class, 'service_id');
+    }
 }

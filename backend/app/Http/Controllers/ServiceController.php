@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Service;
 use App\Models\Schedule;
+use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -15,7 +16,7 @@ class ServiceController extends Controller
     public function showAllService()
     {
         $services = Service::with('schedule')
-            ->select('id', 'user_id','image', 'title', 'description','location', 'option') 
+            ->select('id', 'user_id','image', 'title', 'description', 'option') 
             ->get()
             ->map(function ($service) {
                 return [
@@ -28,7 +29,7 @@ class ServiceController extends Controller
                     'image' => $service->image ? asset('storage/' . $service->image) : null,
                     'title' => $service->title,
                     'description' => $service->description,
-                    'location'  => $service->location,
+                    'location'  => $service->location->location,
                     'option' => json_decode($service->option, true),
                     'time' => $service->schedule ? json_decode($service->schedule->time, true) : null,
                     'days' => $service->schedule ? json_decode($service->schedule->days, true) : null,
@@ -60,7 +61,7 @@ class ServiceController extends Controller
                 'image' => $service->image ? asset('storage/' . $service->image) : null,
                 'title' => $service->title,
                 'description' => $service->description,
-                'location'  => $service->location,
+                'location'  => $service->location->location,
                 'option' => json_decode($service->option, true),
                 'time' => $service->schedule ? json_decode($service->schedule->time, true) : null,
                 'days' => $service->schedule ? json_decode($service->schedule->days, true) : null,
@@ -90,7 +91,7 @@ class ServiceController extends Controller
                     'image' => $service->image ? asset('storage/' . $service->image) : null,
                     'title' => $service->title,
                     'description' => $service->description,
-                    'location'  => $service->location,
+                    'location'  => $service->location->location,
                     'option' => json_decode($service->option, true),
                     'time' => $service->schedule ? json_decode($service->schedule->time, true) : null,
                     'days' => $service->schedule ? json_decode($service->schedule->days, true) : null,
@@ -112,13 +113,15 @@ class ServiceController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:255',
             'location'  => 'required|string|max:255',
+            'longitude' => 'nullable|numeric',
+            'latitude' => 'nullable|numeric',
             'option' => 'required|array',
             'option.*' => 'in:Offline,Online',
             'days' => 'required|array',
             'days.*' => 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
             'time' => 'required|array',
             'time.*' => 'required|date_format:H:i',
-            'end_date' => 'nullable|date|after_or_equal:today',
+            'end_date' => 'required|date|after_or_equal:today',
         ]);
 
         if ($request->hasFile('image')) {
@@ -152,6 +155,13 @@ class ServiceController extends Controller
             $today->addDay();
         }
 
+        $location = Location::create([
+            'service_id' => $service->id,
+            'location' => $request->location,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
+
         $schedule = Schedule::create([
             'service_id' => $service->id, 
             'days' => json_encode($days),
@@ -173,7 +183,7 @@ class ServiceController extends Controller
                 'image' => $service->image ? asset('storage/' . $service->image) : null,
                 'title' => $service->title,
                 'description' => $service->description,
-                'location'  => $service->location,
+                'location'  => $location->location,
                 'option' => json_decode($service->option),
                 'days' => json_decode($schedule->days),
                 'time' => json_decode($schedule->time),
@@ -189,6 +199,8 @@ class ServiceController extends Controller
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string|max:255',
             'location' => 'sometimes|string|max:255',
+            'longitude' => 'sometimes|numeric',
+            'latitude' => 'sometimes|numeric',
             'option' => 'sometimes|array',
             'option.*' => 'in:Offline,Online',
             'days' => 'sometimes|array',
@@ -237,6 +249,15 @@ class ServiceController extends Controller
             // Update service
             $service->update($validated);
 
+            Location::updateOrCreate(
+                ['service_id' => $service->id],
+                [
+                    'location' => $request->input('location', $service->location->location),
+                    'latitude' => $request->input('latitude', $service->location->latitude),
+                    'longitude' => $request->input('longitude', $service->location->longitude),
+                ]
+            );
+
             // Handle schedule creation/update
             if ($request->has('days') || $request->has('end_date') || $request->has('time')) {
                 $days = $request->has('days') ? json_decode($validated['days'], true) : json_decode($service->schedule->days ?? '[]', true);
@@ -280,7 +301,7 @@ class ServiceController extends Controller
                     'image' => $service->image ? asset('storage/' . $service->image) : null,
                     'title' => $service->title,
                     'description' => $service->description,
-                    'location' => $service->location,
+                    'location' => $service->location->location,
                     'option' => json_decode($service->option ?? '[]', true),
                     'days' => json_decode(optional($service->schedule)->days ?? '[]', true),
                     'time' => json_decode(optional($service->schedule)->time ?? '[]', true),
