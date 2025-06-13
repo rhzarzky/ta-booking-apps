@@ -3,6 +3,8 @@ import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import { reactive, watch, ref } from "vue";
 import { storeToRefs } from "pinia";
+import showIcon from "@/assets/image/showps.png";
+import hideIcon from "@/assets/image/hideps.png";
 
 const router = useRouter();
 const store = useAuthStore();
@@ -21,6 +23,17 @@ watch(isLoggedIn, (newValue) => {
     router.push({ name: "Service" });
   }
 });
+
+// Variabel untuk visibilitas password
+const isPasswordVisible = ref({
+  password: false,
+  confirmPassword: false,
+});
+
+// Fungsi toggle visibilitas password
+const togglePasswordVisibility = (field) => {
+  isPasswordVisible.value[field] = !isPasswordVisible.value[field];
+};
 
 const handleSubmit = async () => {
   isSubmitted.value = true;
@@ -52,7 +65,7 @@ const handleSubmit = async () => {
               <div>
                 <label for="email" class="block text-sm text-codgray-700 font-medium">Email address</label>
                 <input id="email" name="email" type="email" required autofocus
-                  class="mt-1 block w-full px-4 py-3 border-2 border-wildsand-200 rounded-lg text-codgray-900 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 text-sm"
+                  class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
                   placeholder="abcd@gmail.com" :class="{ 'border-red-500': isSubmitted && errors.email }"
                   v-model="form.email" />
                 <div v-if="isSubmitted && errors.email" class="text-red-500 text-sm mt-1">
@@ -60,12 +73,17 @@ const handleSubmit = async () => {
                 </div>
               </div>
 
-              <div>
+              <div class="relative">
                 <label for="password" class="block text-sm text-codgray-700 font-medium">Password</label>
-                <input id="password" name="password" type="password" required autocomplete="current-password"
-                  class="mt-1 block w-full px-4 py-3 border-2 border-wildsand-200 rounded-lg text-codgray-900 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 text-sm"
+                <input id="password" name="password" :type="isPasswordVisible.password ? 'text' : 'password'" required
+                  autocomplete="current-password"
+                  class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
                   placeholder="Enter your password" :class="{ 'border-red-500': isSubmitted && errors.password }"
                   v-model="form.password" />
+                <img :src="isPasswordVisible.password ? showIcon : hideIcon"
+                  @click="togglePasswordVisibility('password')"
+                  class="absolute top-[65%] right-3 -translate-y-1/2 cursor-pointer w-5 h-5"
+                  alt="Toggle password visibility" />
                 <div v-if="isSubmitted && errors.password" class="text-red-500 text-sm mt-1">
                   {{ Array.isArray(errors.password) ? errors.password[0] : errors.password }}
                 </div>

@@ -5,7 +5,6 @@ import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { useAuthStore } from "@/stores/auth";
 import showIcon from "@/assets/image/showps.png";
 import hideIcon from "@/assets/image/hideps.png";
-import alertStatus from "@/components/alert/AlertStatus.vue";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
 
 const authStore = useAuthStore();
