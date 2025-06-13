@@ -92,7 +92,8 @@ const latestUsers = computed(() =>
                             <td class="px-4 py-2">{{ booking.service?.title }}</td>
                             <td class="px-4 py-2">{{ booking.user?.email }}</td>
                             <td class="px-4 py-2">{{ booking.service?.status }}</td>
-                            <td class="px-4 py-2">{{ booking.service?.date }}</td>
+                            <td class="px-4 py-2">{{ booking.service?.date ?
+                                booking.service.date.split('-').reverse().join('-') : '' }}</td>
                         </tr>
                     </tbody>
                 </table>
