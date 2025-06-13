@@ -3,11 +3,13 @@ import { reactive, ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { useServicesStore } from "@/stores/service";
+import { useMapsStore } from "@/stores/map";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
 import mapboxgl from 'mapbox-gl';
 import axios from 'axios';
 
 const servicesStore = useServicesStore();
+const mapsStore = useMapsStore();
 const router = useRouter();
 
 const post = reactive({
@@ -345,16 +347,15 @@ const store = async () => {
                 <!-- Days (Multiple Checkboxes) -->
                 <div class="flex flex-col gap-2">
                     <label class="text-sm md:text-base text-wildsand-600 flex gap-1">Days
-                        <span class="text-red-600">*</span>
                     </label>
-                    <div class="grid grid-cols-4 gap-2">
-                        <label><input type="checkbox" value="Sunday" v-model="post.days" /> Sunday</label>
+                    <div class="grid grid-cols-3 gap-2">
                         <label><input type="checkbox" value="Monday" v-model="post.days" /> Monday</label>
                         <label><input type="checkbox" value="Tuesday" v-model="post.days" /> Tuesday</label>
                         <label><input type="checkbox" value="Wednesday" v-model="post.days" /> Wednesday</label>
                         <label><input type="checkbox" value="Thursday" v-model="post.days" /> Thursday</label>
                         <label><input type="checkbox" value="Friday" v-model="post.days" /> Friday</label>
                         <label><input type="checkbox" value="Saturday" v-model="post.days" /> Saturday</label>
+                        <label><input type="checkbox" value="Sunday" v-model="post.days" /> Sunday</label>
                     </div>
                     <div v-if="validation.days" class="mt-2 text-red-600">
                         {{ validation.days[0] }}
