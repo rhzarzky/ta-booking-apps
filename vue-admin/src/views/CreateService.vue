@@ -1,16 +1,24 @@
 <script setup>
-import { reactive, ref, onMounted, watch } from "vue";
+import { reactive, ref, onMounted, watch, nextTick, toRefs } from "vue";
 import { useRouter } from "vue-router";
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { useServicesStore } from "@/stores/service";
-import { useMapsStore } from "@/stores/map";
+import { useMapStore } from "@/stores/map";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
-import mapboxgl from 'mapbox-gl';
-import axios from 'axios';
 
 const servicesStore = useServicesStore();
-const mapsStore = useMapsStore();
+const mapStore = useMapStore();
 const router = useRouter();
+
+const {
+    mapContainer,
+    initMap,
+    searchQuery,
+    searchLocation,
+    location,
+    lng,
+    lat
+} = toRefs(mapStore);
 
 const post = reactive({
     image: null,
@@ -25,18 +33,17 @@ const post = reactive({
     end_date: "",
 });
 
-// Validation errors
 const validation = ref([]);
 const notification = ref("");
 const rangeStart = ref("");
 const rangeEnd = ref("");
 
-// Function for canceling the form
+// Cancel button
 const cancel = () => {
     router.push({ path: "/service" });
 };
 
-// Generate times based on the range start and end
+// Generate time slots between start and end
 function generateTimes() {
     if (!rangeStart.value || !rangeEnd.value) return;
     const start = rangeStart.value.split(":").map(Number);
@@ -55,106 +62,39 @@ function generateTimes() {
     post.time = times;
 }
 
-// Mapbox configuration
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN
-
-const mapContainer = ref(null)
-const map = ref(null)
-const marker = ref(null)
-
-const lng = ref(106.816666) // default Jakarta
-const lat = ref(-6.200000)
-const location = ref('')
-const searchQuery = ref('')
-
-// Keep post.location, post.longitude, post.latitude in sync with map values
+// Sync map data to form
 watch([location, lng, lat], () => {
     post.location = location.value;
     post.longitude = lng.value;
     post.latitude = lat.value;
 });
 
-onMounted(() => {
-    // get the user's current position using GPS
+// Init map on mount
+onMounted(async () => {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
                 lng.value = position.coords.longitude;
                 lat.value = position.coords.latitude;
 
-                setupMap(); // Initialize the map at user's location
+                await nextTick(); // wait DOM
+                initMap.value(); // call as value (from toRefs)
             },
-            (error) => {
+            async (error) => {
                 console.warn('Geolocation failed or permission denied:', error.message);
-                setupMap(); // Fallback to default Jakarta
+                await nextTick();
+                initMap.value(); // fallback
             }
         );
     } else {
         console.warn("Geolocation is not supported by this browser.");
-        setupMap(); // Fallback
+        await nextTick();
+        initMap.value();
     }
 });
 
-// Function to set up the Mapbox map and marker
-const setupMap = () => {
-    map.value = new mapboxgl.Map({
-        container: mapContainer.value,
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [lng.value, lat.value],
-        zoom: 12
-    });
-
-    marker.value = new mapboxgl.Marker({ draggable: true })
-        .setLngLat([lng.value, lat.value])
-        .addTo(map.value);
-
-    marker.value.on('dragend', () => {
-        const { lng: newLng, lat: newLat } = marker.value.getLngLat();
-        lng.value = newLng;
-        lat.value = newLat;
-        reverseGeocode();
-    });
-
-    reverseGeocode(); // Initial reverse geocode
-}
-
-const reverseGeocode = async () => {
-    const res = await axios.get(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng.value},${lat.value}.json`,
-        {
-            params: {
-                access_token: mapboxgl.accessToken
-            }
-        }
-    )
-    if (res.data?.features?.length > 0) {
-        location.value = res.data.features[0].place_name
-    }
-}
-
-const searchLocation = async () => {
-    const res = await axios.get(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchQuery.value)}.json`,
-        {
-            params: {
-                access_token: mapboxgl.accessToken,
-                limit: 1
-            }
-        }
-    )
-    if (res.data?.features?.length > 0) {
-        const feature = res.data.features[0]
-        lng.value = feature.center[0]
-        lat.value = feature.center[1]
-        location.value = feature.place_name
-        map.value.flyTo({ center: [lng.value, lat.value], zoom: 14 })
-        marker.value.setLngLat([lng.value, lat.value])
-    }
-}
-
-// Submit function for storing service
+// Handle store
 const store = async () => {
-    // Ensure post.location, longitude, latitude are up to date
     post.location = location.value;
     post.longitude = lng.value;
     post.latitude = lat.value;
@@ -167,12 +107,10 @@ const store = async () => {
     formData.append("latitude", post.latitude);
     formData.append("end_date", post.end_date);
 
-    // Append the image file with its name
     if (post.image) {
         formData.append("image", post.image, post.image.name);
     }
 
-    // Append array fields
     post.option.forEach((opt, i) => {
         formData.append(`option[${i}]`, opt);
     });
@@ -258,26 +196,33 @@ const store = async () => {
 
                 <!-- Location -->
                 <div class="flex flex-col gap-2">
-                    <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="location">Location
-                        <span class="text-red-600">*</span>
+                    <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="location">
+                        Location <span class="text-red-600">*</span>
                     </label>
+
                     <div class="space-y-4">
+                        <!-- Search input -->
                         <div class="flex gap-2">
                             <input v-model="searchQuery" type="text" class="w-full border p-2 rounded"
                                 placeholder="Find Location..." @keyup.enter="searchLocation" />
                             <button type="button" @click="searchLocation"
-                                class="px-4 py-2 w-full px-4 max-w-fit font-semibold py-2 bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white rounded-xl w-36">
+                                class="w-36 px-4 py-2 font-semibold bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white rounded-xl">
                                 Search
                             </button>
                         </div>
-                        <div ref="mapContainer" class="w-full h-[400px] rounded shadow" />
+
+                        <!-- Mapbox container -->
+                        <div ref="mapContainer" class="h-96 w-full rounded-xl"></div>
+
+                        <!-- Info -->
                         <div class="text-sm">
                             <p><strong>Location:</strong> {{ location }}</p>
                             <p><strong>Longitude:</strong> {{ lng }}</p>
                             <p><strong>Latitude:</strong> {{ lat }}</p>
                         </div>
                     </div>
-                    <!-- validation -->
+
+                    <!-- Validation error -->
                     <div class="mt-2 text-red-600" v-if="validation.location">
                         {{ validation.location[0] }}
                     </div>

@@ -1,70 +1,75 @@
-import { defineStore } from 'pinia';
-import {
-    reverseGeocodeApi,
-    searchGeocodeApi
-} from "@/api/map-api"; 
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import mapboxgl from "mapbox-gl";
+import { reverseGeocode, forwardGeocode } from "@/api/map-api";
 
-export const useMapsStore = defineStore('maps', {
-    state: () => ({
-        maps: [],
-        isLoading: false,
-        error: null,
-        notification: {
-            show: false,
-            message: '',
-            type: 'success',
-        },
-    }),
+// Set token
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
+export const useMapStore = defineStore("map", () => {
+  const map = ref(null);
+  const mapContainer = ref(null);
+  const location = ref("");
+  const lng = ref(106.816666); // Default Jakarta
+  const lat = ref(-6.200000);
+  const searchQuery = ref("");
+  const marker = ref(null);
 
-    actions: {
-        // Reverse geocode API call
-        async reverseGeocode(lng, lat) {
-            this.isLoading = true;
-            this.error = null;
-            try {
-                const response = await reverseGeocodeApi(lng, lat);
-                if (response.data.features && response.data.features.length > 0) {
-                    return response.data.features[0];
-                } else {
-                    throw new Error('No results found for the given coordinates');
-                }
-            } catch (err) {
-                this.error = err.message || 'An unexpected error occurred';
-                this.showNotification(this.error, 'error');
-            } finally {
-                this.isLoading = false;
-            }
-        },
+  const initMap = () => {
+    if (!mapContainer.value) return;
 
-        // Search geocode API call
-        async searchGeocode(searchQuery) {
-            this.isLoading = true;
-            this.error = null;
-            try {
-                const response = await searchGeocodeApi(searchQuery);
-                if (response.data.features && response.data.features.length > 0) {
-                    return response.data.features;
-                } else {
-                    throw new Error('No results found for the search query');
-                }
-            } catch (err) {
-                this.error = err.message || 'An unexpected error occurred';
-                this.showNotification(this.error, 'error');
-            } finally {
-                this.isLoading = false;
-            }
-        },
+    map.value = new mapboxgl.Map({
+      container: mapContainer.value,
+      style: "mapbox://styles/mapbox/streets-v11",
+      center: [lng.value, lat.value],
+      zoom: 13,
+    });
 
-        // Show notification
-        showNotification(message, type = 'success') {
-            this.notification.show = true;
-            this.notification.message = message;
-            this.notification.type = type;
+    marker.value = new mapboxgl.Marker({ draggable: true })
+      .setLngLat([lng.value, lat.value])
+      .addTo(map.value)
 
-            setTimeout(() => {
-                this.notification.show = false;
-            }, 3000); // Hide notification after 3 seconds
-        },
-    },
+    marker.value.on('dragend', async () => {
+      const { lng: newLng, lat: newLat } = marker.value.getLngLat()
+      lng.value = newLng
+      lat.value = newLat
+      const place = await reverseGeocode(newLng, newLat)
+      if (place) {
+        location.value = place
+      }
+    })
+
+    reverseGeocode(lng.value, lat.value).then(place => {
+      location.value = place;
+    });
+  };
+
+  const searchLocation = async () => {
+    if (!searchQuery.value) return;
+
+    const result = await forwardGeocode(searchQuery.value);
+    if (result) {
+      lng.value = result.lng;
+      lat.value = result.lat;
+      location.value = result.name;
+
+      map.value?.flyTo({
+        center: [lng.value, lat.value],
+        zoom: 14,
+      });
+
+      marker.value?.setLngLat([lng.value, lat.value]);
+    }
+  };
+
+  return {
+    map,
+    mapContainer,
+    lng,
+    lat,
+    location,
+    searchQuery,
+    initMap,
+    searchLocation,
+  };
 });
