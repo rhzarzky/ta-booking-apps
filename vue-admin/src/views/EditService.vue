@@ -1,16 +1,18 @@
 <script setup>
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted, watch, nextTick, toRefs } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { useServicesStore } from "@/stores/service";
 import { useAuthStore } from "@/stores/auth";
+import { useMapStore } from "@/stores/map";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
 
 const route = useRoute();
+const mapStore = useMapStore();
 const router = useRouter();
 
 const servicesStore = useServicesStore();
-const authStore = useAuthStore(); // optional, if you're populating assigned users
+const authStore = useAuthStore(); 
 
 const post = reactive({
     image: null,
@@ -18,11 +20,23 @@ const post = reactive({
     description: "",
     user_id: "",
     location: "",
+    longitude: 0,
+    latitude: 0,
     option: [],
     time: [],
     days: [],
     end_date: "",
 });
+
+const {
+    mapContainer,
+    initMap,
+    searchQuery,
+    searchLocation,
+    location,
+    lng,
+    lat
+} = toRefs(mapStore);
 
 const validation = ref([]);
 const notification = ref("");
@@ -36,17 +50,22 @@ const cancel = () => {
 
 const loadService = async () => {
     const { id } = route.params;
-    const data = await servicesStore.fetchServiceDetail(id); // make sure this exists
+    const data = await servicesStore.fetchServiceDetail(id); 
     if (data) {
         post.title = data.title;
         post.description = data.description;
-        post.user_id = data.user.id || ""; // assuming user_id is the assigned user
+        post.user_id = data.user.id || ""; // user_id is the assigned user
         post.location = data.location;
+        post.longitude = data.longitude || 0;
+        post.latitude = data.latitude || 0;
         post.option = data.option || [];
         post.time = data.time || [""];
         post.days = data.days || [];
         post.end_date = data.end_date;
-        // Note: image cannot be set directly; user must re-upload
+
+        lng.value = post.longitude;
+        lat.value = post.latitude;
+        location.value = post.location;
     }
 };
 
@@ -59,11 +78,6 @@ const loadUsers = async () => {
         );
     }
 };
-
-onMounted(() => {
-    loadService();
-    loadUsers();
-});
 
 // Generate times based on the range start and end
 function generateTimes() {
@@ -84,13 +98,35 @@ function generateTimes() {
     post.time = times;
 }
 
+// Sync map data to form
+watch([location, lng, lat], () => {
+    post.location = location.value;
+    post.longitude = lng.value;
+    post.latitude = lat.value;
+});
+
+// Init map on mount
+onMounted(async () => {
+    await loadService(); 
+    await loadUsers();
+
+    await nextTick(); 
+    initMap.value(); 
+});
+
 const edit = async () => {
+    post.location = location.value;
+    post.longitude = lng.value;
+    post.latitude = lat.value;
+
     const formData = new FormData();
     formData.append("_method", "PUT");
     formData.append("title", post.title);
     formData.append("description", post.description);
     formData.append("user_id", post.user_id);
     formData.append("location", post.location);
+    formData.append("longitude", post.longitude);
+    formData.append("latitude", post.latitude);
     formData.append("end_date", post.end_date);
 
     if (post.image) {
@@ -183,11 +219,34 @@ const edit = async () => {
 
                 <!-- Location -->
                 <div class="flex flex-col gap-2">
-                    <label for="location" class="text-sm md:text-base text-wildsand-600 flex gap-1">Location
+                    <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="location">
+                        Location <span class="text-red-600">*</span>
                     </label>
-                    <input id="location" type="text" placeholder="Enter service location" v-model="post.location"
-                        class="w-full h-12 p-2 border border-wildsand-300 rounded-md text-base text-codgray-900 shadow-sm hover:border-cobalt-700 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700" />
-                    <div v-if="validation.location" class="mt-2 text-red-600">
+
+                    <div class="space-y-4">
+                        <!-- Search input -->
+                        <div class="flex gap-2">
+                            <input v-model="searchQuery" type="text" class="w-full border p-2 rounded"
+                                placeholder="Find Location..." @keyup.enter="searchLocation" />
+                            <button type="button" @click="searchLocation"
+                                class="w-36 px-4 py-2 font-semibold bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white rounded-xl">
+                                Search
+                            </button>
+                        </div>
+
+                        <!-- Mapbox container -->
+                        <div ref="mapContainer" class="h-96 w-full rounded-xl"></div>
+
+                        <!-- Info -->
+                        <div class="text-sm">
+                            <p><strong>Location:</strong> {{ location }}</p>
+                            <p><strong>Longitude:</strong> {{ lng }}</p>
+                            <p><strong>Latitude:</strong> {{ lat }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Validation error -->
+                    <div class="mt-2 text-red-600" v-if="validation.location">
                         {{ validation.location[0] }}
                     </div>
                 </div>
