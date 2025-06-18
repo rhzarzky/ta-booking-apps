@@ -3,11 +3,12 @@ import { reactive, ref} from "vue";
 import { useRouter } from "vue-router";
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { useAuthStore } from "@/stores/auth";
-import showIcon from "@/assets/image/showps.png";
-import hideIcon from "@/assets/image/hideps.png";
+import { useRoleStore } from "@/stores/role";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
 
 const authStore = useAuthStore();
+
+const roleStore = useRoleStore();
 const router = useRouter();
 
 const post = reactive({
@@ -24,7 +25,7 @@ const store = async () => {
 
   };
   try {
-    await authStore.handleCreateRole(roleData);
+    await roleStore.handleCreateRole(roleData);
     authStore.showNotification("Role created successfully.", "success");
     router.push("/user-list");
   } catch (error) {

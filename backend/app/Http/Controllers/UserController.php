@@ -29,7 +29,7 @@ class UserController extends Controller
                     'email' => $user->email,
                     'status' => $user->status,
                     'role' => $user->roles->pluck('name')->toArray(),  
-                    'permission' => $user->permissions->pluck('name')->toArray(), 
+                    'permission' => $user->getAllPermissions()->pluck('name')->toArray(), 
                 ];
             }),
         ], 200);
@@ -55,7 +55,7 @@ class UserController extends Controller
                 'email' => $user->email,
                 'status' => $user->status,
                 'role' => $user->roles->pluck('name')->toArray(),  
-                'permission' => $user->permissions->pluck('name')->toArray(), 
+                'permission' => $user->getAllPermissions()->pluck('name')->toArray(), 
             ],
         ], 200);
     }
@@ -65,7 +65,7 @@ class UserController extends Controller
         $dataValidation = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|string|email|max:255|unique:users,email,' . $id,
-            'role' => 'nullable|string|max:50',
+            'role' => 'nullable|string|exists:roles,name',
             'password' => 'sometimes|string|min:8|confirmed',
             'status' => 'sometimes|in:Active,Inactive',
             'permissions' => 'nullable|array', 
@@ -175,7 +175,7 @@ class UserController extends Controller
             'message' => 'User deleted successfully'
         ], 200);
     }
-    public function assignRole(Request $request, $id)
+    public function assignRoleUser(Request $request, $id)
     {
         try {
             $request->validate([
@@ -196,7 +196,7 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'role' => $role->name
+                    'role' => $role->name,
                 ]
             ], 200);
         } catch (Exception $e) {
@@ -206,7 +206,7 @@ class UserController extends Controller
             ], 500);
         }
     }
-    public function assignPermission(Request $request, $id)
+    public function assignPermissionUser(Request $request, $id)
     {
         try{
             $request->validate([
@@ -251,7 +251,7 @@ class UserController extends Controller
                 'status' => $user->status,
                 'email' => $user->email,
                 'role' => $user->roles->pluck('name')->toArray(),
-                'permissions' => $user->permissions->pluck('name')->toArray(), 
+                'permissions' => $user->getAllPermissions()->pluck('name')->toArray(), 
             ],
         ], 200);
     }

@@ -36,6 +36,14 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::middleware(['permission:create role'])->group(function () {
         Route::post('/role', [RoleController::class, 'storeRole']);
     });
+    
+    Route::middleware(['permission:edit role'])->group(function () {
+        Route::put('/role/{id}', [RoleController::class, 'editRole']);
+    });
+
+    Route::middleware(['permission:delete role'])->group(function () {
+        Route::delete('/role/{id}', [RoleController::class, 'deleteRole']);
+    });
 
     Route::middleware(['permission:show role'])->group(function () {
         Route::get('/role', [RoleController::class, 'showRole']); 
@@ -46,11 +54,15 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     });
 
     Route::middleware(['permission:assign role'])->group(function () {
-        Route::post('/users/{id}/assign-role', [UserController::class, 'assignRole']);
+        Route::post('/users/{id}/assign-role-user', [UserController::class, 'assignRoleUser']);
     });
 
     Route::middleware(['permission:assign permission'])->group(function () {
-        Route::post('/users/{id}/assign-permission', [UserController::class, 'assignPermission']);
+        Route::post('/users/{id}/assign-permission-user', [UserController::class, 'assignPermissionUser']);
+    });
+
+    Route::middleware(['permission:assign permission role'])->group(function () {
+        Route::post('/role/{id}/assign-permission-role', [RoleController::class, 'assignPermissionRole']);
     });
 
     Route::middleware(['permission:show all service'])->group(function () {

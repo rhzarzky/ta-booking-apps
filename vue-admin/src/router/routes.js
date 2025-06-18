@@ -12,6 +12,7 @@ import CreateUser from "@/views/CreateUser.vue";
 import CreateRole from "@/views/CreateRole.vue";
 import EditService from "@/views/EditService.vue";
 import BookingPage from "@/views/BookingPage.vue";
+import RolePage from "@/views/RolePage.vue";
 
 const routes = [
     {
@@ -73,6 +74,17 @@ const routes = [
         meta: {
             title: "User List",
             breadcrumbs: "User List",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/role-list",
+        name: "Role List",
+        component: RolePage,
+        meta: {
+            title: "Role List",
+            breadcrumbs: "Role List",
             excludeRole: ["user"], 
             requiresAuth: true,
         },

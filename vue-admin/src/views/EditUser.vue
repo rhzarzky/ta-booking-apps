@@ -3,9 +3,11 @@ import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { ref, reactive, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useRoleStore } from "@/stores/role";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
 
 const authStore = useAuthStore();
+const roleStore = useRoleStore();
 const router = useRouter();
 const route = useRoute();
 const userRoles = ref([]);
@@ -21,7 +23,7 @@ const notification = ref("");
 
 // Function to fetch roles from API
 onMounted(async () => {
-  userRoles.value = await authStore.fetchRoleApi();
+  userRoles.value = await roleStore.fetchRoleApi();
 });
 
 // Function to fetch user data by ID

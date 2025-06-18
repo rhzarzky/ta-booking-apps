@@ -203,10 +203,7 @@ watch(searchQuery, () => {
             <thead>
               <tr class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
                 <th class="px-6 py-3 text-left font-semibold max-w-fit">No.</th>
-                <th class="px-6 py-3 text-left font-semibold">Name</th>
-                <th class="px-6 py-3 text-left font-semibold hidden sm:table-cell">Email</th>
-                <th class="px-6 py-3 text-left font-semibold">Role</th>
-                <th class="px-6 py-3 text-left font-semibold">Status</th>
+                <th class="px-6 py-3 text-left font-semibold">Role Name</th>
                 <th class="px-6 py-3 text-left font-semibold">Actions</th>
               </tr>
             </thead>
@@ -215,20 +212,6 @@ watch(searchQuery, () => {
                 class="border-t bg-white border-wildsand-200 hover:bg-wildsand-50/70">
                 <td class="px-6 py-2 max-w-fit font-medium">{{ (currentPage - 1) * usersPerPage + (paginatedUsers.indexOf(user) + 1) }}</td>
                 <td class="px-4 py-2">{{ user.name }}</td>
-                <td class="px-4 py-2 hidden sm:table-cell">{{ user.email }}</td>
-                <td class="px-4 py-2">
-                  {{ Array.isArray(user.role) ? user.role.join(", ") : user.role }}
-                </td>
-                <td>
-                  <span :class="{
-                    'px-4 py-2 rounded-full text-sm size-fit': true,
-                    'bg-green-100 text-green-600 border border-green-600': user.status === 'Active',
-                    'bg-red-100 text-red-600 border border-red-600': user.status === 'Inactive',
-                  }">
-                    {{ user.status }}
-                  </span>
-                </td>
-
                 <td class="flex items-center gap-6 py-4 px-1">
                   <button @click="confirmDelete(user.id)" title="Delete" class="text-red-500">
                     <!-- Delete Icon -->

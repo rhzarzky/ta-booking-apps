@@ -4,7 +4,6 @@ import { computed, ref } from "vue";
 import {
   login,
   createUser,
-  createRole,
   logout,
   deleteUserId,
   fetchUsers,
@@ -13,8 +12,6 @@ import {
   userProfile,
   updateProfile,
   currentUserApi,
-  permissionApi,
-  roleApi,
 } from "@/api/auth-api";
 import { authServices } from "@/services/auth-services";
 
@@ -43,31 +40,6 @@ export const useAuthStore = defineStore("authStore", () => {
     setTimeout(() => {
       notification.value.show = false;
     }, 3000); // Hide notification after 3 seconds
-  };
-
-  // Permissions
-  const userPermissions = ref([]);
-  const fetchPermissionApi = async () => {
-    try {
-        const permissions = await permissionApi();
-        console.log("Fetched Permissions:", permissions);
-        currentPermission.value = permissions.map(p => p.name); 
-    } catch (err) {
-        console.error("Failed to fetch permission", err);
-    }
-  };
-  
-  // Role
-  const userRoles = ref([]);
-  const fetchRoleApi = async () => {
-    try {
-      const roles = await roleApi();
-      console.log("Fetched Roles:", roles);
-      return roles; //return the array
-    } catch (err) {
-      console.error("Failed to fetch roles", err);
-      return []; 
-    }
   };
 
   // Fetch user with permissions
@@ -217,24 +189,6 @@ export const useAuthStore = defineStore("authStore", () => {
     }
   };
 
-  // handle create role
-  const handleCreateRole = async (roleData) => {
-    try {
-      const response = await createRole(roleData);
-      if (response.data && response.data.role) {
-        return response.data;
-      }
-    } catch (error) {
-      console.error("Create role failed:", error);
-      if (error.response && error.response.status === 422) {
-        errors.value = error.response.data.errors;
-      } else {
-        errors.value = { general: "Create role failed. Please try again" };
-      }
-      throw error;
-    }
-  }
-
   // handle get user by id
   const handleGetUserById = async (id) => {
     if (!id) {
@@ -337,15 +291,11 @@ export const useAuthStore = defineStore("authStore", () => {
     users,
     user,
     isLoggedIn,
-    userPermissions,
-    userRoles,
     loading,
     currentPermission,
     currentUser,
     notification,
     showNotification,
-    fetchRoleApi,
-    fetchPermissionApi,
     fetchCurrentUserApi,
     fetchCurrentUser,
     fetchUsersApi,
@@ -355,7 +305,6 @@ export const useAuthStore = defineStore("authStore", () => {
     handleLogout,
     handleDeleteUser,
     handleCreateUser,
-    handleCreateRole,
     handleGetUserById,
     handleUpdateUser,
     handleUserProfile,
