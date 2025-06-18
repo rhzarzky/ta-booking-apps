@@ -53,6 +53,9 @@ const totalPages = computed(() => {
   return Math.ceil(filteredUsers.value.length / usersPerPage);
 });
 
+const hasNextPage = computed(() => currentPage.value < totalPages.value);
+const hasPrevPage = computed(() => currentPage.value > 1);
+
 const paginatedUsers = computed(() => {
   const start = (currentPage.value - 1) * usersPerPage;
   const end = start + usersPerPage;

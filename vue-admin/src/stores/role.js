@@ -38,7 +38,7 @@ export const useRoleStore = defineStore("roleStore", () => {
         try {
           const roles = await roleApi();
           console.log("Fetched Roles:", roles);
-          return roles; //return the array
+          return roles; 
         } catch (err) {
           console.error("Failed to fetch roles", err);
           return []; 
@@ -100,7 +100,7 @@ export const useRoleStore = defineStore("roleStore", () => {
         }
     };
 
-    // handle GET Permissions
+    // handle GET Permissions from user
     const userPermissions = ref([]);
     const fetchPermissionApi = async () => {
       try {

@@ -45,7 +45,7 @@ export const editRole = async (roleId, roleData) => {
     }
 };
 
-// GET permission api
+// GET permission api from user
 export const permissionApi = async () => {
     try {
       const response = await api.get("/permission");
