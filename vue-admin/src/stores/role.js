@@ -55,7 +55,7 @@ export const useRoleStore = defineStore("roleStore", () => {
         } catch (error) {
             console.error("Create role failed:", error);
             if (error.response && error.response.status === 422) {
-                errors.value = error.response.data.errors;
+                errors.value = error.response.data.meesage;
             } else {
                 errors.value = { general: "Create role failed. Please try again" };
             }

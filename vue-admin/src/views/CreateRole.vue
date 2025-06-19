@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref} from "vue";
+import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import DefaultLayout from "@/layout/DefaultLayout.vue";
 import { useAuthStore } from "@/stores/auth";
@@ -27,13 +27,13 @@ const store = async () => {
   try {
     await roleStore.handleCreateRole(roleData);
     authStore.showNotification("Role created successfully.", "success");
-    router.push("/user-list");
+    router.push("/role-list");
   } catch (error) {
     console.error("Error creating role:", error);
     authStore.showNotification(error.response.data.responseMessage, "error");
     if (error.response) {
       console.error("Response data:", error.response.data);
-      authStore.showNotification("Error creating user", "error");
+      authStore.showNotification(error.response.data.message, "error");
       validation.value = error.response.data.errors || {};
     }
   }
@@ -41,7 +41,7 @@ const store = async () => {
 
 // Fungsi untuk tombol Cancel
 const cancel = () => {
-  router.push({ path: "/user-list" });
+  router.push({ path: "/role-list" });
 };
 </script>
 
