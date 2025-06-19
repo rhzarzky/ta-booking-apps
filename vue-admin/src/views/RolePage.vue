@@ -149,8 +149,10 @@ watch(searchQuery, () => {
         <!-- Notification -->
         <AlertStatus :message="roleStore.notification.message" :type="roleStore.notification.type"
           :is-visible="roleStore.notification.show" @close="roleStore.notification.show = false" />
-        <!-- Filter Search -->
-        <SearchUser @search="searchQuery = $event" />
+
+        <!-- Search -->
+        <input v-model="searchQuery" type="text" placeholder="Search Role"
+          class="flex-1 min-w-0 px-4 py-2 border md:border-2 border-wildsand-200 rounded-lg text-codgray-900 font-medium cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:text-cobalt-700 focus:ring-cobalt-600 hover:border-cobalt-500 transition-colors duration-200 text-sm md:text-base ease-in-out" />
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
           <RouterLink to="/create-role"
             class="flex gap-2 items-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25 hover:transition hover:ease-in-out">
@@ -221,7 +223,7 @@ watch(searchQuery, () => {
                     </div>
                   </transition>
 
-                  <RouterLink title="Edit" >
+                  <RouterLink title="Edit">
                     <!-- Edit Icon -->
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path
