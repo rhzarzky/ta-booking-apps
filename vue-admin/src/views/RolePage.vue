@@ -45,8 +45,16 @@ const fetchRoleData = async () => {
   isLoading.value = true;
   try {
     const response = await roleApi();
-    console.log("Role API Response:", response);
-    roles.value = response;
+    console.log("Fetched roles response:", response);
+
+    // Pastikan response adalah array
+    if (Array.isArray(response)) {
+      roles.value = response;
+    } else if (Array.isArray(response.roles)) {
+      roles.value = response.roles;
+    } else {
+      throw new Error("Invalid response format for roles");
+    }
   } catch (err) {
     error.value = "Failed to fetch roles";
     console.error("Error fetching roles:", err);
@@ -152,12 +160,6 @@ onMounted(() => {
   } else {
     fetchUserData();
     fetchRoleData();
-
-    roleStore.fetchPermissionApi().then(() => {
-      console.log("role permission options:", roleStore.currentPermissionRole);
-    });
-
-    console.log("User permissions:", authStore.currentPermission);
   }
 });
 
