@@ -21,6 +21,16 @@ class RoleController extends Controller
         return response()->json($roles);
     }
 
+    public function showDetailRole($id)
+    {
+        $role = Role::with('permissions:name')->findOrFail($id);
+        return response()->json([
+            'id' => $role->id,
+            'name' => $role->name,
+            'permissions' => $role->permissions->pluck('name'),
+        ]);
+    }
+
     public function storeRole(Request $request)
     {
         try {

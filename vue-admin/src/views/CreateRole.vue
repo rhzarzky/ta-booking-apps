@@ -13,6 +13,7 @@ const router = useRouter();
 
 const post = reactive({
   name: "",
+  permissions: [],
 });
 
 const validation = ref([]);
@@ -64,6 +65,17 @@ const cancel = () => {
           <input
             class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
             id="name" placeholder="Enter user name" type="text" v-model="post.name" />
+          <label class="text-sm md:text-base text-wildsand-600 flex gap-1" for="permissions">Permissions
+            <span class="text-red-600">*</span>
+          </label>
+          <select
+            class="w-full hover:border-cobalt-700 h-12 border border-wildsand-300 hover:bg-cobalt-50 focus:outline-none focus:ring-1 focus:ring-cobalt-700 text-codgray-900 rounded-md shadow-sm p-2 text-base placeholder-small"
+            id="permissions" v-model="post.permissions" multiple>
+            <option value="view">View</option>
+            <option value="edit">Edit</option>
+            <option value="delete">Delete</option>
+            <option value="create">Create</option>
+          </select>
           <!-- validation -->
           <div class="mt-2 text-red-600" v-if="validation.name">
             {{ validation.name[0] }}

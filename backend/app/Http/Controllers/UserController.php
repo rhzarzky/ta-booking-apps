@@ -82,10 +82,10 @@ class UserController extends Controller
         try {
             $user = User::findOrFail($id);
 
-            if ($user->hasRole('admin')) {
+            if ($user->hasRole('admin') && $user->id == 1) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Admin cannot be edited.',
+                    'message' => 'Admin with ID 1 cannot be edited.',
                 ], 403);
             }
 
@@ -161,10 +161,10 @@ class UserController extends Controller
             ], 403);
         }
 
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole('admin') && $user->id == 1) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'Admin cannot be deleted.',
+            'status' => 'error',
+            'message' => 'Admin with ID 1 cannot be deleted.',
             ], 403);
         }
 

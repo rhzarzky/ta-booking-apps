@@ -10,10 +10,12 @@ import {
     assignRoleUserApi,
     assignPermissionUserApi,
     assignPermissionRoleApi,
+    getRoleById
 } from "@/api/role-api";
 
 export const useRoleStore = defineStore("roleStore", () => {
     const currentPermission = ref(null);
+    const currentPermissionRole = ref(null);
     const errors = ref({});
     const loading = ref(false);
     const notification = ref({
@@ -112,6 +114,28 @@ export const useRoleStore = defineStore("roleStore", () => {
       }
     };
 
+    // handle GET Permissions from role
+    const rolePermissions = ref([]);
+    const fetchPermissionRoleApi = async (roleId) => {
+        try {
+            const roleData = await getRoleById(roleId);
+            console.log("Fetched Role Data:", roleData);
+            if (roleData && roleData.permissions) {
+                currentPermissionRole.value = roleData.permissions.map(p => p.name);
+                rolePermissions.value = roleData.permissions;
+            } else {
+                currentPermissionRole.value = [];
+                rolePermissions.value = [];
+            }
+            return roleData;
+        } catch (err) {
+            console.error("Failed to fetch role permission data:", err);
+            currentPermissionRole.value = [];
+            rolePermissions.value = [];
+            return null;
+        }
+    };
+    
     // handle assign permission to role
     const assignPermissionToRole = async (roleId, permissions) => {
         try {
@@ -169,10 +193,13 @@ export const useRoleStore = defineStore("roleStore", () => {
         notification,
         userRoles,
         userPermissions,
+        rolePermissions,
+        currentPermissionRole,
         currentPermission,
         showNotification,
         fetchRoleApi,
         fetchPermissionApi,
+        fetchPermissionRoleApi,
         handleCreateRole,
         handleDeleteRole,
         handleEditRole,

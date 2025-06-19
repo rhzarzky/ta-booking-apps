@@ -47,6 +47,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
 
     Route::middleware(['permission:show role'])->group(function () {
         Route::get('/role', [RoleController::class, 'showRole']); 
+        Route::get('/role/{id}', [RoleController::class, 'showDetailRole']);
     });
 
     Route::middleware(['permission:show permission'])->group(function () {

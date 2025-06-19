@@ -41,10 +41,14 @@ class DatabaseSeeder extends Seeder
                 'status' => 'Active'
             ]
         );
+        $adminRole = Role::where('name', 'admin')->first();
+        $userRole = Role::where('name', 'user')->first();
 
         // Assign the 'admin' role to the admin user
         $adminUser->assignRole('admin');
         $adminUser->syncPermissions($permissions); // Assign all permissions
+        $adminRole->syncPermissions($permissions); // Ensure the role has all permissions
+        $userRole->syncPermissions(['show all service']); // Assign basic permissions to user role
         Log::info("Admin user created.");
     }
 }

@@ -6,9 +6,9 @@ import { RouterLink, useRouter } from "vue-router";
 import { ref, computed, onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useRoleStore } from "@/stores/role";
-import SearchUser from "@/components/searchforms/SearchUser.vue";
 import PaginationPage from "@/components/pagination/PaginationPage.vue";
-import { roleApi } from "@/api/auth-api";
+import { roleApi } from "@/api/role-api";
+import { fetchUsers } from "@/api/auth-api";
 
 const router = useRouter();
 const isLoading = ref(false);
@@ -17,6 +17,7 @@ const currentPage = ref(1);
 const rolesPerPage = 10;
 const authStore = useAuthStore();
 const roleStore = useRoleStore();
+const users = ref([]);
 const roles = ref([]);
 const searchQuery = ref("");
 const isVisible = ref(false);
@@ -24,6 +25,20 @@ const rolePermissions = ref([]);
 const roleIdForPermissions = ref(null);
 const showDeleteModal = ref(false);
 const roleToDelete = ref(null);
+
+// Fetch Users
+const fetchUserData = async () => {
+  isLoading.value = true;
+  try {
+    const response = await fetchUsers();
+    users.value = response.users;
+  } catch (err) {
+    error.value = "Failed to fetch users";
+    console.error("Error fetching users:", err);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 // Fetch Roles
 const fetchRoleData = async () => {
@@ -67,6 +82,7 @@ const handlePageChange = (page) => {
 };
 
 const retryFetch = () => {
+  fetchUsers();
   fetchRoleData();
 };
 
@@ -90,22 +106,25 @@ const handleDeleteConfirmed = async () => {
   }
 };
 
-// Check if user has permission
+// Check if role has permission
 const hasPermission = (permission) => {
   return authStore.currentPermission?.includes(permission);
 };
 
-// Toggle permission modal
-const ontoggle = (roleId) => {
+// Checked Box Permission
+const ontoggle = async (roleId) => {
   isVisible.value = !isVisible.value;
   roleIdForPermissions.value = roleId;
+
   if (isVisible.value && roleId) {
-    // Ambil permission dari role yang dipilih
-    const role = roleStore.userRoles.find(r => r.id === roleId);
-    rolePermissions.value = Array.isArray(role?.permissions) ? [...role.permissions] : [];
-  } else {
-    rolePermissions.value = [];
-    roleIdForPermissions.value = null;
+    try {
+      const roleData = await roleStore.fetchPermissionRoleApi(roleId);
+      rolePermissions.value = roleData.permissions || [];
+      console.log("Set rolePermissions to:", rolePermissions.value);
+    } catch (err) {
+      console.error("Failed to fetch role permissions:", err);
+      rolePermissions.value = [];
+    }
   }
 };
 
@@ -131,8 +150,14 @@ onMounted(() => {
   if (!authStore.isLoggedIn) {
     router.push("/login");
   } else {
+    fetchUserData();
     fetchRoleData();
-    roleStore.fetchPermissionApi();
+
+    roleStore.fetchPermissionApi().then(() => {
+      console.log("role permission options:", roleStore.currentPermissionRole);
+    });
+
+    console.log("User permissions:", authStore.currentPermission);
   }
 });
 
@@ -233,7 +258,7 @@ watch(searchQuery, () => {
                   </RouterLink>
 
                   <!-- Access Control -->
-                  <button type="button" @click="ontoggle(user.id)" title="Role Access Control">
+                  <button type="button" @click="ontoggle(role.id)" title="Role Access Control">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24"
                       class="text-green-900">
                       <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -261,7 +286,7 @@ watch(searchQuery, () => {
                       <form @submit.prevent="savePermissions">
                         <div class="max-h-60 overflow-y-auto mb-4 grid grid-cols-2 gap-x-6 gap-y-3">
                           <label v-for="permission in authStore.currentPermission" :key="permission"
-                            class="inline-flex items-center gap-2 cursor-pointer">
+                            class=" inline-flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" :value="permission" v-model="rolePermissions"
                               :disabled="!hasPermission('assign permission')"
                               class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700" />
@@ -282,7 +307,6 @@ watch(searchQuery, () => {
                       </form>
                     </div>
                   </div>
-
                 </td>
               </tr>
             </tbody>
