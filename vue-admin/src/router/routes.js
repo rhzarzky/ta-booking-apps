@@ -14,6 +14,7 @@ import EditService from "@/views/EditService.vue";
 import BookingPage from "@/views/BookingPage.vue";
 import RolePage from "@/views/RolePage.vue";
 import ChangePasswordProfile from "@/views/ChangePasswordProfile.vue";
+import EditRole from "@/views/EditRole.vue";
 
 const routes = [
     {
@@ -108,6 +109,17 @@ const routes = [
         meta: {
             title: "Create Role",
             breadcrumbs: "Create Role",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/edit-role/:id",
+        name: "Edit Role",
+        component: EditRole,
+        meta: {
+            title: "Edit Role",
+            breadcrumbs: "Edit Role",
             excludeRole: ["user"], 
             requiresAuth: true,
         },

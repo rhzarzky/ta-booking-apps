@@ -296,7 +296,7 @@ watch(searchQuery, () => {
                         &times;
                       </button>
                       <h3 id="modal-title" class="text-lg font-bold mb-4 text-cobalt-950">
-                        Manage Permissions
+                        Manage Permissions for User: {{ users.find(u => u.id === userIdForPermissions)?.name || 'User' }}
                       </h3>
 
                       <form @submit.prevent="savePermissions">

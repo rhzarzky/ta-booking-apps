@@ -76,8 +76,8 @@ const cancel = () => {
             <label v-for="permission in authStore.currentPermission" :key="permission"
               class="inline-flex items-center gap-2 cursor-pointer">
               <input type="checkbox" :value="permission" v-model="post.permissions"
-          :disabled="!hasPermission('assign permission')"
-          class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700" />
+                :disabled="!hasPermission('assign permission')"
+                class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700" />
               {{ permission }}
             </label>
           </div>

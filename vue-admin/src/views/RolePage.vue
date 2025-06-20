@@ -25,6 +25,7 @@ const rolePermissions = ref([]);
 const roleIdForPermissions = ref(null);
 const showDeleteModal = ref(false);
 const roleToDelete = ref(null);
+const roleNameForPermissions = ref("");
 
 // Fetch Users
 const fetchUserData = async () => {
@@ -114,21 +115,21 @@ const handleDeleteConfirmed = async () => {
   }
 };
 
-// Check if role has permission
+// Check if user has permission
 const hasPermission = (permission) => {
   return authStore.currentPermission?.includes(permission);
 };
 
 // Checked Box Permission
-const ontoggle = async (roleId) => {
+const ontoggle = async (roleId, roleName = "") => {
   isVisible.value = !isVisible.value;
   roleIdForPermissions.value = roleId;
+  roleNameForPermissions.value = roleName;
 
   if (isVisible.value && roleId) {
     try {
       const roleData = await roleStore.fetchPermissionRoleApi(roleId);
       rolePermissions.value = roleData.permissions || [];
-      console.log("Set rolePermissions to:", rolePermissions.value);
     } catch (err) {
       console.error("Failed to fetch role permissions:", err);
       rolePermissions.value = [];
@@ -253,14 +254,14 @@ watch(searchQuery, () => {
                   <RouterLink title="Edit" :to="`/edit-role/${role.id}` ">
                     <!-- Edit Icon -->
                     <svg width=" 24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M15 6L18 9M13 20H21M5 16L4 20L8 19L19.586 7.414C19.9609 7.03895 20.1716 6.53033 20.1716 6C20.1716 5.46967 19.9609 4.96106 19.586 4.586L19.414 4.414C19.0389 4.03906 18.5303 3.82843 18 3.82843C17.4697 3.82843 16.9611 4.03906 16.586 4.414L5 16Z"
-                      stroke="#1858DD" stroke-linecap="round" stroke-linejoin="round" />
+                      <path
+                        d="M15 6L18 9M13 20H21M5 16L4 20L8 19L19.586 7.414C19.9609 7.03895 20.1716 6.53033 20.1716 6C20.1716 5.46967 19.9609 4.96106 19.586 4.586L19.414 4.414C19.0389 4.03906 18.5303 3.82843 18 3.82843C17.4697 3.82843 16.9611 4.03906 16.586 4.414L5 16Z"
+                        stroke="#1858DD" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </RouterLink>
 
                   <!-- Access Control -->
-                  <button type="button" @click="ontoggle(role.id)" title="Role Access Control">
+                  <button type="button" @click="ontoggle(role.id, role.name)" title="Role Access Control">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24"
                       class="text-green-900">
                       <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -274,7 +275,7 @@ watch(searchQuery, () => {
 
                   <!-- Permissions Modal -->
                   <div v-if="isVisible"
-                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" aria-modal="true"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-20" aria-modal="true"
                     role="dialog" aria-labelledby="modal-title">
                     <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
                       <button @click="ontoggle(null)" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900"
@@ -282,7 +283,7 @@ watch(searchQuery, () => {
                         &times;
                       </button>
                       <h3 id="modal-title" class="text-lg font-bold mb-4 text-cobalt-950">
-                        Manage Permissions
+                        Manage Permissions for Role: {{ roleNameForPermissions }}
                       </h3>
 
                       <form @submit.prevent="savePermissions">

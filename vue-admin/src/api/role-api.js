@@ -12,6 +12,7 @@ export const roleApi = async () => {
     }
 };
 
+// GET role by ID api
 export const getRoleById = async (roleId) => {
     const res = await api.get(`/role/${roleId}`); 
     return res.data;
