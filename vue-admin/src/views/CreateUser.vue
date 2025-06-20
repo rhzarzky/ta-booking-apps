@@ -6,8 +6,10 @@ import { useAuthStore } from "@/stores/auth";
 import showIcon from "@/assets/image/showps.png";
 import hideIcon from "@/assets/image/hideps.png";
 import AlertStatus from "@/components/alert/AlertStatus.vue";
+import { useRoleStore } from "@/stores/role";
 
 const authStore = useAuthStore();
+const roleStore = useRoleStore();
 const router = useRouter();
 const userRoles = ref([]);
 
@@ -25,7 +27,7 @@ const notification = ref("");
 
 // Function to fetch roles from API
 onMounted(async () => {
-  userRoles.value = await authStore.fetchRoleApi();
+  userRoles.value = await roleStore.fetchRoleApi();
 });
 
 // Variabel untuk visibilitas password

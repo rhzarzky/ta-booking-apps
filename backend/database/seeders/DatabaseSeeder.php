@@ -17,8 +17,10 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $permissions = [
-            'show user', 'create user', 'edit user', 'delete user', 'show permission', 'show role', 'create role',
-            'assign role', 'assign permission', 'show all service', 'create service', 'edit service', 'delete service',
+            'show user', 'create user', 'edit user', 'delete user', 
+            'show permission', 'show role', 'create role', 'delete role', 
+            'edit role','assign role', 'assign permission', 'assign permission role',
+            'show all service', 'create service', 'edit service', 'delete service',
             'show all booking', 'confirm booking'
         ];
 
@@ -39,10 +41,14 @@ class DatabaseSeeder extends Seeder
                 'status' => 'Active'
             ]
         );
+        $adminRole = Role::where('name', 'admin')->first();
+        $userRole = Role::where('name', 'user')->first();
 
         // Assign the 'admin' role to the admin user
         $adminUser->assignRole('admin');
         $adminUser->syncPermissions($permissions); // Assign all permissions
+        $adminRole->syncPermissions($permissions); // Ensure the role has all permissions
+        $userRole->syncPermissions(['show all service']); // Assign basic permissions to user role
         Log::info("Admin user created.");
     }
 }

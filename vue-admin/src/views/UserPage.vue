@@ -5,7 +5,8 @@ import SkeltonLoader from "@/components/loading-skelton/SkeltonLoader.vue";
 import { RouterLink, useRouter } from "vue-router";
 import { ref, computed, onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
-import { fetchUsers, permissionApi } from "@/api/auth-api";
+import { fetchUsers } from "@/api/auth-api";
+import { useRoleStore } from "@/stores/role";
 import SearchUser from "@/components/searchforms/SearchUser.vue";
 import PaginationPage from "@/components/pagination/PaginationPage.vue";
 
@@ -16,6 +17,7 @@ const error = ref(null);
 const currentPage = ref(1);
 const usersPerPage = 10;
 const authStore = useAuthStore();
+const roleStore = useRoleStore();
 const searchQuery = ref("");
 const isVisible = ref(false);
 const userPermissions = ref([]);
@@ -50,6 +52,9 @@ const filteredUsers = computed(() => {
 const totalPages = computed(() => {
   return Math.ceil(filteredUsers.value.length / usersPerPage);
 });
+
+const hasNextPage = computed(() => currentPage.value < totalPages.value);
+const hasPrevPage = computed(() => currentPage.value > 1);
 
 const paginatedUsers = computed(() => {
   const start = (currentPage.value - 1) * usersPerPage;
@@ -143,7 +148,7 @@ onMounted(() => {
     router.push("/login");
   } else {
     fetchUserData();
-    authStore.fetchPermissionApi();
+    roleStore.fetchPermissionApi();
   }
 });
 
@@ -163,14 +168,6 @@ watch(searchQuery, () => {
         <!-- Filter Search -->
         <SearchUser @search="searchQuery = $event" />
         <div class="flex flex-col md:flex-row gap-3 md:items-center">
-          <RouterLink to="/create-role"
-            class="flex gap-2 items-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25 hover:transition hover:ease-in-out">
-            Create Role
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                d="M18 12h-6m0 0H6m6 0V6m0 6v6" />
-            </svg>
-          </RouterLink>
           <!-- Add User Button -->
           <RouterLink to="/create-user"
             class="flex gap-2 items-center bg-gradient-to-b from-cobalt-700 to-cobalt-900 text-white text-sm md:text-base px-3 py-[6px] md:px-4 md:py-2 rounded-xl hover:shadow-md hover:shadow-cobalt-700/25 hover:transition hover:ease-in-out">
@@ -211,7 +208,8 @@ watch(searchQuery, () => {
             <tbody class="text-codgray-800">
               <tr v-for="user in paginatedUsers" :key="user.id"
                 class="border-t bg-white border-wildsand-200 hover:bg-wildsand-50/70">
-                <td class="px-6 py-2 max-w-fit font-medium">{{ (currentPage - 1) * usersPerPage + (paginatedUsers.indexOf(user) + 1) }}</td>
+                <td class="px-6 py-2 max-w-fit font-medium">{{ (currentPage - 1) * usersPerPage +
+                  (paginatedUsers.indexOf(user) + 1) }}</td>
                 <td class="px-4 py-2">{{ user.name }}</td>
                 <td class="px-4 py-2 hidden sm:table-cell">{{ user.email }}</td>
                 <td class="px-4 py-2">
@@ -298,7 +296,7 @@ watch(searchQuery, () => {
                         &times;
                       </button>
                       <h3 id="modal-title" class="text-lg font-bold mb-4 text-cobalt-950">
-                        Manage Permissions
+                        Manage Permissions for User: {{ users.find(u => u.id === userIdForPermissions)?.name || 'User' }}
                       </h3>
 
                       <form @submit.prevent="savePermissions">

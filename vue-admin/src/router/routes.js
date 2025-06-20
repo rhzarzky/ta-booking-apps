@@ -12,6 +12,9 @@ import CreateUser from "@/views/CreateUser.vue";
 import CreateRole from "@/views/CreateRole.vue";
 import EditService from "@/views/EditService.vue";
 import BookingPage from "@/views/BookingPage.vue";
+import RolePage from "@/views/RolePage.vue";
+import ChangePasswordProfile from "@/views/ChangePasswordProfile.vue";
+import EditRole from "@/views/EditRole.vue";
 
 const routes = [
     {
@@ -78,6 +81,17 @@ const routes = [
         },
     },
     {
+        path: "/role-list",
+        name: "Role List",
+        component: RolePage,
+        meta: {
+            title: "Role List",
+            breadcrumbs: "Role List",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
         path: "/create-user",
         name: "Create User",
         component: CreateUser,
@@ -95,6 +109,17 @@ const routes = [
         meta: {
             title: "Create Role",
             breadcrumbs: "Create Role",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/edit-role/:id",
+        name: "Edit Role",
+        component: EditRole,
+        meta: {
+            title: "Edit Role",
+            breadcrumbs: "Edit Role",
             excludeRole: ["user"], 
             requiresAuth: true,
         },
@@ -139,6 +164,17 @@ const routes = [
         meta: {
             title: "Change Password User",
             breadcrumbs: "Change Password User",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/change-password-profile",
+        name: "Change Password Profile",
+        component: ChangePasswordProfile,
+        meta: {
+            title: "Change Password Profile",
+            breadcrumbs: "Change Password Profile",
             excludeRole: ["user"], 
             requiresAuth: true,
         },
