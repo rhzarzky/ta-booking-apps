@@ -35,7 +35,7 @@ import { RouterLink } from "vue-router";
           </div>
         </div>
         <router-link
-          to="/service"
+          to="/dashboard"
           class="flex gap-2 items-center px-4 py-2 md:px-6 md:py-3 rounded-2xl bg-gradient-to-b from-cobalt-950 to-cobalt-800 shadow-md shadow-cobalt-200 w-max"
         >
           <svg
