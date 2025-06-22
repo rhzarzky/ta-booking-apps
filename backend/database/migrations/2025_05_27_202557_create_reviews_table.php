@@ -13,13 +13,10 @@ return new class extends Migration
     {
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('booking_id')->constrained()->onDelete('cascade');
+            $table->foreignId('service_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->integer('rating')->nullable();
             $table->text('comment')->nullable();
-            $table->enum('status', ['pending', 'submitted', 'declined'])->default('pending');
-            $table->timestamp('completed_at')->nullable();
-            $table->timestamp('review_deadline')->nullable();
             $table->timestamps();
         });
     }

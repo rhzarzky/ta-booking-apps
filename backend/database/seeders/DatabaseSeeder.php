@@ -17,10 +17,10 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $permissions = [
-            'show user', 'create user', 'edit user', 'delete user', 
-            'show permission', 'show role', 'create role', 'delete role', 
-            'edit role','assign role', 'assign permission', 'assign permission role',
-            'show all service', 'create service', 'edit service', 'delete service',
+            'create user','show user', 'edit user', 'delete user', 
+            'create role','show role', 'edit role', 'delete role', 
+            'assign role', 'assign permission', 'show permission',
+            'create service', 'show all service', 'edit service', 'delete service',
             'show all booking', 'confirm booking'
         ];
 

@@ -2,8 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{AuthController, RoleController, ServiceController, 
-    UserController, BookingController, VerificationController,
-    BookingCompletionController, ReviewController};
+    UserController, BookingController, VerificationController, ReviewController};
 use App\Http\Middleware\JwtMiddleware;
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -60,9 +59,6 @@ Route::middleware([JwtMiddleware::class])->group(function () {
 
     Route::middleware(['permission:assign permission'])->group(function () {
         Route::post('/users/{id}/assign-permission-user', [UserController::class, 'assignPermissionUser']);
-    });
-
-    Route::middleware(['permission:assign permission role'])->group(function () {
         Route::post('/role/{id}/assign-permission-role', [RoleController::class, 'assignPermissionRole']);
     });
 
@@ -93,7 +89,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::middleware(['permission:confirm booking'])->group(function () {
         Route::post('/booking/{id}/confirm', [BookingController::class, 'confirm']);
     });
-    
+
     
     Route::get('/service/{id}', [ServiceController::class, 'showService']);
 
@@ -104,13 +100,8 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     Route::get('/user/profile', [UserController::class, 'userProfile']);
     Route::put('/user/profile', [UserController::class, 'updateProfile']);
     
-    
-    Route::post('/booking/{id}/complete', [BookingCompletionController::class, 'markAsCompleted']);
-    Route::get('/booking/{id}/completion-status', [BookingCompletionController::class, 'getCompletionStatus']);
-    
-    Route::post('/booking/{id}/review', [ReviewController::class, 'submitReview']);
-    Route::get('/booking/{id}/review', [ReviewController::class, 'getReview']);
-    Route::get('/booking/{id}/can-review', [ReviewController::class, 'canReview']);
+    Route::post('/booking/{id}/complete', [ReviewController::class, 'markCompleted']);
+    Route::post('/service/{id}/review', [ReviewController::class, 'submitReview']);
     Route::get('/service/{id}/reviews', [ReviewController::class, 'getServiceReviews']);
     Route::get('/user/reviews', [ReviewController::class, 'getUserReviews']);
     

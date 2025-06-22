@@ -103,7 +103,7 @@ const baseMenuItems = ref([
 
 const adminMenuItems = ref([
   {
-    name: "User Management",
+    name: "Access Management",
     menuItems: [
       {
         icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

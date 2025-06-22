@@ -2,180 +2,125 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Review;
 use App\Models\Booking;
-use App\Services\ReviewService;
+use App\Models\Review;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 class ReviewController extends Controller
 {
-    protected $reviewService;
-
-    public function __construct(ReviewService $reviewService)
+    public function markCompleted($id)
     {
-        $this->reviewService = $reviewService;
-    }
+        $booking = Booking::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->first();
 
-   
-    public function submitReview(Request $request, $bookingId)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'rating' => 'required|integer|min:1|max:5',
-                'comment' => 'nullable|string|max:1000'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Data tidak valid',
-                    'errors' => $validator->errors()
-                ], 400);
-            }
-
-            $userId = Auth::id();
-            $review = $this->reviewService->submitReview(
-                $bookingId,
-                $userId,
-                $request->rating,
-                $request->comment
-            );
-
+        if (!$booking) {
             return response()->json([
-                'success' => true,
-                'message' => 'Review berhasil dikirim',
-                'data' => $review
-            ]);
+                'responseMessage' => 'The requested booking was not found in this user.'
+            ], 404);
+        }   
 
-        } catch (\Exception $e) {
+        if ($booking->status !== 'Approved') {
             return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 400);
+                'message' => 'Only approved booking can be marked as completed.'
+            ], 403);
         }
+
+        $booking->status = 'Completed';
+        $booking->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Booking marked as completed.'
+        ]);
+    }
+    public function submitReview(Request $request,$id)
+    {
+        $service = Service::findOrFail($id);
+
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string',
+        ]);
+
+        // Check if the service exists
+        if (!$service) {
+            return response()->json(['message' => 'Service not found.'], 404);
+        }
+
+        // Check if the user has already booked the service
+        $hasBooked = Booking::where('user_id', auth()->id())
+            ->where('service_id', $request->service_id)
+            ->where('status', 'approved')
+            ->exists();
+
+        if (!$hasBooked) {
+            return response()->json(['message' => 'You must book the service before reviewing.'], 403);
+        }
+
+        Review::create([
+            'user_id' => auth()->id(),
+            'service_id' => $request->service_id,
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+        ]);
+
+        return response()->json([
+            'status' => "success",
+            'message' => 'Review submitted successfully.'
+        ], 201);
     }
 
-   
-    public function getReview($bookingId)
+    public function getServiceReviews($id)
     {
         try {
-            $userId = Auth::id();
-            $booking = Booking::where('id', $bookingId)
-                ->where('user_id', $userId)
-                ->first();
+            $reviews = Review::where('service_id', $id)->get();
 
-            if (!$booking) {
+            if ($reviews->isEmpty()) {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Booking tidak ditemukan'
+                    'status' => "success",
+                    'message' => 'No reviews found for this service.'
                 ], 404);
             }
 
-            $review = $this->reviewService->getReviewByBooking($bookingId);
-            $isWithinPeriod = $this->reviewService->isWithinReviewPeriod($bookingId);
-
             return response()->json([
-                'success' => true,
-                'data' => [
-                    'review' => $review,
-                    'booking' => $booking,
-                    'can_review' => $isWithinPeriod && (!$review || $review->status === 'pending'),
-                    'deadline' => $review ? $review->review_deadline : null,
-                    'completed_at' => $review ? $review->completed_at : null
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function getServiceReviews($serviceId)
-    {
-        try {
-            $reviews = $this->reviewService->getServiceReviews($serviceId);
-            $averageRating = $this->reviewService->getAverageRating($serviceId);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'reviews' => $reviews,
-                    'average_rating' => round($averageRating, 1),
-                    'total_reviews' => $reviews->count()
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    
-    public function getUserReviews()
-    {
-        try {
-            $userId = Auth::id();
-            $reviews = $this->reviewService->getUserReviews($userId);
-
-            return response()->json([
-                'success' => true,
+                'status' => "success",
                 'data' => $reviews
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'status' => "error",
                 'message' => $e->getMessage()
             ], 500);
         }
     }
-
     
-    public function canReview($bookingId)
+    public function getUserReviews()
     {
         try {
             $userId = Auth::id();
-            $booking = Booking::where('id', $bookingId)
-                ->where('user_id', $userId)
-                ->first();
+            $reviews = Review::where('user_id', $userId)->get();
 
-            if (!$booking) {
+            if ($reviews->isEmpty()) {
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Booking tidak ditemukan'
+                    'status' => "success",
+                    'message' => 'No reviews found for this user.'
                 ], 404);
             }
 
-            $completionStatus = $this->reviewService->getBookingCompletionStatus($bookingId);
-            $review = $completionStatus['review'];
-            $canReview = $completionStatus['can_review'];
-
             return response()->json([
-                'success' => true,
-                'data' => [
-                    'can_review' => $canReview,
-                    'booking_status' => $booking->status,
-                    'review_status' => $completionStatus['review_status'],
-                    'deadline' => $review ? $review->review_deadline : null,
-                    'hours_remaining' => $review && $review->isReviewPeriodActive() ? 
-                        now()->diffInHours($review->review_deadline, false) : 0,
-                    'is_completed' => $completionStatus['is_completed']
-                ]
+                'status' => "success",
+                'data' => $reviews
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'status' => "error",
                 'message' => $e->getMessage()
             ], 500);
         }
-    }
+    } 
 }

@@ -37,4 +37,9 @@ class Service extends Model
     {
         return $this->hasOne(Location::class, 'service_id');
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
 }
