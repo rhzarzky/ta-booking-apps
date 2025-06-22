@@ -50,6 +50,13 @@ class ServiceController extends Controller
     {
         $service = Service::findOrFail($id);
 
+        if (!$service) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Service not found',
+            ], 404);
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => 'Service retrieved successfully',
