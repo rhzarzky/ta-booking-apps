@@ -72,6 +72,8 @@ class Service {
   final List<String> days;
   final String startDate;
   final String endDate;
+  final double latitude;
+  final double longitude;
   final String? notes;
   final List<String> time;
   final List<Map<String, String>> dates;
@@ -86,6 +88,8 @@ class Service {
     required this.days,
     required this.startDate,
     required this.endDate,
+    required this.latitude,
+    required this.longitude,
     this.notes,
     required this.time,
     required this.dates,
@@ -161,6 +165,12 @@ class Service {
       title: json['title']?.toString() ?? "",
       description: json['description']?.toString() ?? "",
       location: json['location']?.toString() ?? "",
+      latitude: json['latitude'] is double
+          ? json['latitude']
+          : double.tryParse(json['latitude'].toString()) ?? 0,
+      longitude: json['longitude'] is double
+          ? json['longitude']
+          : double.tryParse(json['longitude'].toString()) ?? 0,
       option: parseOption(),
       days: parseDays(),
       startDate: json['start_date']?.toString() ?? "",

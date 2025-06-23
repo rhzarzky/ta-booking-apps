@@ -148,7 +148,7 @@ class _AuthOtpState extends State<AuthOtp> {
                     height: 4.0,
                   ),
                   Text(
-                    'We\'ve sent OTP to your email at ${_maskEmail(widget.email)}. Please enter 4 digits code you received.',
+                    'We\'ve sent OTP to your email at ${_maskEmail(widget.email)}. Please enter 6 digits code you received.',
                     style: GoogleFonts.ubuntu(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
