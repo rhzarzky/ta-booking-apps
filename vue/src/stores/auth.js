@@ -3,18 +3,27 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from 'axios'
 import { authServices } from '@/services/auth-services'
-import { fetchProfile, sendOtp, verifyOtp, resetPassword, resendOtp } from '@/api/auth-api'
+import {
+  fetchProfile,
+  sendOtp,
+  verifyOtp,
+  resetPassword,
+  resendOtp
+} from '@/api/auth-api'
 
 export const useAuthStore = defineStore('auth', () => {
+  // State
   const user = ref(null)
   const errors = ref({})
   const loading = ref(false)
-  
 
+  // Getters
   const isLoggedIn = computed(() => authServices.isAuthenticated())
   const userName = computed(() => user.value?.name || '')
-  const userRole = computed(() => user.value?.role || [])
+  const userRole = computed(() => user.value?.role || '')
+  const userId = computed(() => user.value?.id || null) // Digunakan di fitur lain seperti review
 
+  // Actions
   const handleLogin = async (credentials) => {
     loading.value = true
     try {
@@ -107,6 +116,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // OTP & Password Reset
   const handleSendOtp = async (email) => {
     loading.value = true
     try {
@@ -114,7 +124,6 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await sendOtp(email)
       return response
     } catch (error) {
-      // error sudah dikelola di auth-api.js
       throw error
     } finally {
       loading.value = false
@@ -135,12 +144,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const handleResetPassword = async (data) => {
-    errors.value = {}
     loading.value = true
     try {
+      errors.value = {}
       await resetPassword(data)
     } catch (error) {
-      // Error sudah disimpan di `auth-api.js`
+      throw error
     } finally {
       loading.value = false
     }
@@ -166,6 +175,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoggedIn,
     userName,
     userRole,
+    userId, // ← penting untuk fitur-fitur yang butuh ID user
     handleLogin,
     handleRegister,
     handleLogout,

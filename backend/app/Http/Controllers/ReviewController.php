@@ -90,7 +90,7 @@ class ReviewController extends Controller
                 return response()->json([
                     'status' => "success",
                     'message' => 'No reviews found for this service.'
-                ], 404);
+                ], 200);
             }
 
             return response()->json([
@@ -130,7 +130,7 @@ class ReviewController extends Controller
                 return response()->json([
                     'status' => "success",
                     'message' => 'No reviews found for this user.'
-                ], 404);
+                ], 200);
             }
 
             return response()->json([

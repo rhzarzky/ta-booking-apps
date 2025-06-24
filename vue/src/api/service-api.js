@@ -35,14 +35,5 @@ export const serviceApi = {
     }
   },
 
-  async getServiceReviews(serviceId) {
-    try {
-      const response = await api.get(`/service/${serviceId}/reviews`)
-      return response.data.data
-    } catch (error) {
-      console.error(`Failed to fetch reviews for service (id: ${serviceId}):`, error)
-      throw error
-    }
-  }
 }
 

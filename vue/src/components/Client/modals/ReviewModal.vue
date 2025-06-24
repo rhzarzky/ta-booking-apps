@@ -1,21 +1,24 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useBookingStore } from '@/stores/booking';
+// Anda mungkin juga perlu mengimpor useAuthStore jika userId diambil dari sana
+// import { useAuthStore } from '@/stores/auth'; 
 
 const props = defineProps({
-  show: { // Prop untuk mengontrol visibilitas modal
+  show: {
     type: Boolean,
     default: false,
   },
-  bookingId: { // ID booking yang akan direview
+  serviceId: { // ID layanan yang akan direview (bukan bookingId lagi)
     type: Number,
-    required: null,
+    required: null, // Ubah menjadi null atau 0 jika serviceId bisa kosong
   },
 });
 
 const emit = defineEmits(['close', 'review-submitted']); // Event yang dipancarkan
 
 const bookingStore = useBookingStore();
+// const authStore = useAuthStore(); // Contoh: inisialisasi auth store
 
 const rating = ref(0);
 const comment = ref('');
@@ -37,8 +40,8 @@ const submitReview = async () => {
     errorMessage.value = 'Mohon berikan rating (minimal 1 bintang).';
     return;
   }
-    if (!props.bookingId) {
-    errorMessage.value = 'ID Booking tidak ditemukan. Tidak dapat mengirim review.';
+  if (!props.serviceId) { // Menggunakan serviceId
+    errorMessage.value = 'ID Layanan tidak ditemukan. Tidak dapat mengirim review.';
     return;
   }
 
@@ -48,7 +51,8 @@ const submitReview = async () => {
       rating: rating.value,
       comment: comment.value,
     };
-    await bookingStore.submitReview(props.bookingId, reviewData);
+    // Menggunakan serviceId untuk submit review
+    await bookingStore.submitReview(props.serviceId, reviewData);
     emit('review-submitted');
     emit('close');
   } catch (error) {

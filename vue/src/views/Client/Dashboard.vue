@@ -4,20 +4,17 @@ import { storeToRefs } from 'pinia'
 import { useDashboardStore } from '@/stores/dashboard'
 import SummaryCards from '@/components/Client/card/SummaryCards.vue'
 import AnalyticsChart from '@/components/Client/AnalyticsChart.vue'
-// import DashboardSkeleton from '@/components/Client/skeleton/DashboardSkeleton.vue';
 
+// Ambil data dari store dashboard
 const dashboardStore = useDashboardStore()
 const { summary, latestBookings, loading, error } = storeToRefs(dashboardStore)
 
+// Fetch data saat komponen dimount
 onMounted(() => {
   dashboardStore.fetchDashboardData()
 })
 
-// function formatDate(dateStr) {
-//   const options = { year: 'numeric', month: 'long', day: 'numeric' };
-//   return new Date(dateStr).toLocaleDateString('id-ID', options);
-// }
-
+// Fungsi untuk memberi warna status
 function statusClass(status) {
   const base = 'px-2 py-1 rounded text-xs font-medium'
   switch ((status || '').toLowerCase()) {
@@ -28,7 +25,7 @@ function statusClass(status) {
     case 'declined':
       return `${base} bg-red-100 text-red-700`
     case 'completed':
-      return 'bg-blue-100 text-blue-700'
+      return `${base} bg-blue-100 text-blue-700`
     default:
       return `${base} bg-gray-100 text-gray-700`
   }
@@ -51,7 +48,7 @@ function statusClass(status) {
       </router-link>
     </div>
 
-    <!-- main Konten recent activity -->
+    <!-- Main Konten recent activity -->
     <div class="bg-white shadow rounded-lg p-4">
       <div v-if="loading" class="text-gray-500">Loading data...</div>
       <div v-else-if="error" class="text-red-500">{{ error }}</div>

@@ -4,12 +4,14 @@ export const bookingApi = {
   async getUserBookings() {
     try {
       const response = await api.get('/user/booking')
-      return response.data.services
+      return response.data || {} // ⬅️ Ambil seluruh objek, karena services ada di dalam response.data
     } catch (error) {
       console.error('Failed to fetch user bookings:', error)
       throw error
     }
   },
+
+  
 
   async getBookingDetail(id) {
     try {
@@ -21,68 +23,43 @@ export const bookingApi = {
     }
   },
 
-  async completeBooking(id) {
+  async markBookingAsCompleted(id) {
     try {
       const response = await api.post(`/booking/${id}/complete`)
-      return response.data.data
+      return response.data
     } catch (error) {
-      console.error(`bookingApi: Failed to complete booking (id: ${id}):`, error.response || error.message || error); // Log error lebih detail
+      console.error(`bookingApi: Failed to mark booking ${id} as completed:`, error.response || error.message || error)
       throw error
     }
   },
 
-  async submitReview(id, reviewData) {
+  async submitReview(serviceId, payload) {
     try {
-      const response = await api.post(`/booking/${id}/review`, reviewData)
-      return response.data.data
+      const response = await api.post(`/service/${serviceId}/review`, payload)
+      return response.data
     } catch (error) {
-      console.error(`Failed to submit review for booking (id: ${id}):`, error)
+      console.error(`bookingApi: Failed to submit review for service ${serviceId}:`, error.response || error.message || error)
       throw error
     }
   },
 
-  // Cek apakah booking bisa direview
-  async canReview(id) {
+  async getServiceReviews(serviceId) {
     try {
-      const response = await api.get(`/booking/${id}/can-review`)
-      return response.data.data
+      const response = await api.get(`/service/${serviceId}/reviews`)
+      return response.data.reviews
     } catch (error) {
-      console.error(`Failed to check review permission (id: ${id}):`, error)
+      console.error(`bookingApi: Failed to fetch reviews for service ${serviceId}:`, error.response || error.message || error)
       throw error
     }
   },
 
-  // Ambil review dari booking tertentu
-  async getReview(id) {
-    try {
-      const response = await api.get(`/booking/${id}/review`)
-      return response.data.data
-    } catch (error) {
-      console.error(`Failed to get review for booking (id: ${id}):`, error)
-      throw error
-    }
-  },
-
-  // Cek status selesai dari booking
-  async getCompletionStatus(id) {
-    try {
-      const response = await api.get(`/booking/${id}/completion-status`)
-      return response.data.data
-    } catch (error) {
-      console.error(`Failed to get completion status for booking (id: ${id}):`, error)
-      throw error
-    }
-  },
-
-
-  // Ambil semua review milik user login
   async getUserReviews() {
     try {
-      const response = await api.get(`/user/reviews`)
-      return response.data.data
+      const response = await api.get('/user/reviews')
+      return response.data.reviews
     } catch (error) {
-      console.error(`Failed to get user reviews:`, error)
+      console.error('bookingApi: Failed to fetch user reviews:', error.response || error.message || error)
       throw error
     }
-  },
+  }
 }

@@ -1,20 +1,17 @@
 // src/stores/booking.js
-
 import { defineStore } from 'pinia';
 import { bookingApi } from '@/api/booking-api';
 
 export const useBookingStore = defineStore('booking', {
   state: () => ({
-    bookingsByStatus: {}, // Akan menyimpan booking dikelompokkan berdasarkan status
+    bookingsByStatus: {}, // ex: { Pending: [...], Completed: [...] }
     bookingDetail: null,
     loading: false,
     error: null,
-
-    // State terkait review dan completion
-    canReview: false,
-    review: null, // Akan menyimpan objek review spesifik untuk bookingDetail
-    completionStatus: null, // Akan menyimpan status completion untuk bookingDetail
-    userReviews: [], // Akan menyimpan semua review yang dibuat user
+    userReviews: [],
+    serviceReviews: [],
+    completionStatus: null,
+    canSubmitReview: false,
   }),
 
   actions: {
@@ -22,138 +19,130 @@ export const useBookingStore = defineStore('booking', {
       this.loading = true;
       this.error = null;
       try {
-        const services = await bookingApi.getUserBookings();
-        // ✅ `services` sudah berbentuk objek yang dikelompokkan berdasarkan status
-        this.bookingsByStatus = services || {}; 
+        const response = await bookingApi.getUserBookings()
+        // ✅ Ambil seluruh objek, karena services ada di dalam response.data
+        // Perhatikan bahwa response.data adalah { status: "success", services: {...} }
+        // Jadi, akses langsung response.data
+        this.bookingsByStatus = response.services || {}
       } catch (err) {
-        this.error = 'Gagal memuat data booking.';
-        this.bookingsByStatus = {};
-        console.error(err);
+        this.error = 'Gagal memuat data booking.'
+        this.bookingsByStatus = {}
+        console.error(err)
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     async fetchBookingDetail(id) {
-      this.loading = true;
-      this.error = null;
+      this.loading = true
+      this.error = null
       try {
-        // ✅ Ini harusnya sesuai dengan return `bookingApi.getBookingDetail`
-        // Jika bookingApi.getBookingDetail mengembalikan response.data.service, maka `detail` sudah objek service
-        const detail = await bookingApi.getBookingDetail(id); 
-        this.bookingDetail = detail || null; // Simpan objek service langsung
-        
-        // 🔥 Perhatian: Anda perlu juga memuat status completion dan review di sini
-        // agar data lengkap saat detail booking dibuka
-        await this.fetchCompletionStatus(id);
-        await this.checkCanReview(id);
-        await this.fetchBookingReview(id);
+        const detail = await bookingApi.getBookingDetail(id)
+        this.bookingDetail = detail
+        this.canSubmitReview = detail?.status === 'Completed'
 
-        if (!this.bookingDetail) {
-          this.error = 'Detail booking tidak ditemukan.';
+        if (detail?.service?.id) {
+          await this.fetchServiceReviews(detail.service.id)
         }
       } catch (err) {
-        this.error = 'Gagal memuat detail booking.';
-        this.bookingDetail = null;
-        console.error(err);
+        this.error = 'Gagal memuat detail booking.'
+        this.bookingDetail = null
+        console.error(err)
       } finally {
-        this.loading = false;
+        this.loading = false
       }
-    },
-
-    clearBookingDetail() {
-      this.bookingDetail = null;
-      this.review = null;
-      this.completionStatus = null;
-      this.canReview = false;
     },
 
     async completeBooking(id) {
+      this.loading = true
+      this.error = null
+      this.completionStatus = null
       try {
-        const response = await bookingApi.completeBooking(id);
+        const response = await bookingApi.markBookingAsCompleted(id)
+        this.completionStatus = 'success'
+        await this.fetchUserBookings()
 
-        this.completionStatus = response.completion_status; // Update state global jika diperlukan
-
-        // 🎉 Penting: Refresh semua booking agar ActivityCard terupdate
-        await this.fetchUserBookings(); 
-
-        // Optional: Refresh detail jika sedang melihat halaman detail
-        if (this.bookingDetail && this.bookingDetail.id_booking === id) {
-             await this.fetchBookingDetail(id);
+        if (this.bookingDetail?.id_booking === id) {
+          await this.fetchBookingDetail(id)
         }
 
+        return response
       } catch (error) {
-        this.error = 'Gagal menyelesaikan booking.';
-        console.error('Pinia Store: Error completing booking:', error); // Log error
-        throw error; // Re-throw agar komponen yang memanggil bisa menangani
+        this.error = 'Gagal menyelesaikan booking.'
+        this.completionStatus = 'error'
+        console.error('Pinia Store: Error completing booking:', error)
+        throw error
+      } finally {
+        this.loading = false
       }
     },
 
-    async fetchCompletionStatus(id) {
+    async submitReview(serviceId, payload) {
+      this.loading = true
+      this.error = null
       try {
-        const data = await bookingApi.getCompletionStatus(id);
-        // ✅ Controller mengembalikan data di properti 'data', contoh: `{ booking_id: 1, completion_status: 'completed' }`
-        this.completionStatus = data?.completion_status || 'Pending'; // Set status completion
+        const response = await bookingApi.submitReview(serviceId, payload)
+        await this.fetchServiceReviews(serviceId)
+        await this.fetchUserReviews() // Pastikan user reviews diperbarui
+        this.canSubmitReview = false
+        return response
       } catch (error) {
-        this.error = 'Gagal memuat status penyelesaian booking.';
-        this.completionStatus = null;
-        console.error(error);
+        this.error = 'Gagal mengirimkan review.'
+        console.error('Pinia Store: Error submitting review:', error)
+        throw error
+      } finally {
+        this.loading = false
       }
     },
 
-    async checkCanReview(id) {
+    async fetchServiceReviews(serviceId) {
+      this.loading = true
+      this.error = null
       try {
-        const data = await bookingApi.canReview(id);
-        // ✅ Controller mengembalikan data di properti 'data', contoh: `{ can_review: true, review_status: 'pending' }`
-        this.canReview = data?.can_review || false;
+        const reviews = await bookingApi.getServiceReviews(serviceId)
+        this.serviceReviews = reviews || []
       } catch (error) {
-        this.error = 'Gagal memeriksa izin review.';
-        this.canReview = false;
-        console.error(error);
-      }
-    },
-
-    async fetchBookingReview(id) {
-      try {
-        const data = await bookingApi.getReview(id);
-        // ✅ Controller mengembalikan data di properti 'data', contoh: `{ review: {...}, booking: {...}, can_review: true }`
-        this.review = data?.review || null;
-      } catch (error) {
-        this.error = 'Gagal memuat review.';
-        this.review = null;
-        console.error(error);
-      }
-    },
-
-    async submitReview(id, reviewData) {
-      try {
-        const response = await bookingApi.submitReview(id, reviewData);
-        // ✅ Controller mengembalikan objek review yang baru dibuat di properti `data`
-        this.review = response || null; // response adalah objek review yang baru dibuat
-        
-        // Setelah submit review, refresh data booking dan status review
-        await this.fetchUserBookings(); 
-        await this.checkCanReview(id);
-        await this.fetchBookingReview(id);
-
-        return response;
-      } catch (error) {
-        this.error = 'Gagal mengirim review.';
-        console.error(error);
-        throw error; // Penting: lempar error kembali agar bisa ditangkap di komponen
+        this.error = 'Gagal memuat review layanan.'
+        this.serviceReviews = []
+        console.error(error)
+      } finally {
+        this.loading = false
       }
     },
 
     async fetchUserReviews() {
+      this.loading = true
+      this.error = null
       try {
-        const data = await bookingApi.getUserReviews();
-        // ✅ Controller mengembalikan data di properti 'data', contoh: `{ reviews: [...] }`
-        this.userReviews = data?.reviews || []; // Sesuaikan jika backend langsung mengirim array
+        const response = await bookingApi.getUserReviews()
+        // Pastikan Anda mengakses properti 'reviews' dari respons API
+        this.userReviews = response || [] // Respons API Anda sudah langsung berupa array reviews
       } catch (error) {
-        this.error = 'Gagal memuat semua review user.';
-        this.userReviews = [];
-        console.error(error);
+        this.error = 'Gagal memuat review pengguna.'
+        this.userReviews = []
+        console.error(error)
+      } finally {
+        this.loading = false
       }
+    },
+  },
+
+  getters: {
+    getBookingById: (state) => (id) => {
+      for (const status in state.bookingsByStatus) {
+        const found = state.bookingsByStatus[status].find(b => b.id_booking === id)
+        if (found) return found
+      }
+      return null
+    },
+
+    getReviewsForService: (state) => (serviceId) => {
+      return state.serviceReviews.filter(review => review.service_id === serviceId)
+    },
+
+    hasUserReviewedService: (state) => (serviceId) => {
+      // Perbaikan di sini: Akses review.service?.id sesuai struktur JSON review
+      return state.userReviews.some(review => review.service?.id === serviceId)
     }
   }
-});
+})

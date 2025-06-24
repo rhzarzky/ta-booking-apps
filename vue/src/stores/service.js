@@ -8,11 +8,6 @@ export const useServiceStore = defineStore('service', () => {
   const service = ref(null)
   const loading = ref(false)
 
-  const serviceReviews = ref([]) // ✅ Tambahkan ini
-  const averageRating = ref(0)
-  const totalReviews = ref(0)
-  const loadingReviews = ref(false)
-  const reviewError = ref(null)
 
   const fetchServices = async () => {
     loading.value = true
@@ -45,24 +40,6 @@ export const useServiceStore = defineStore('service', () => {
     }
   }
 
-  const fetchServiceReviews = async (serviceId) => {
-    loadingReviews.value = true
-    reviewError.value = null
-    try {
-      const data = await serviceApi.getServiceReviews(serviceId)
-      serviceReviews.value = data.reviews || []
-      averageRating.value = data.average_rating || 0
-      totalReviews.value = data.total_reviews || 0
-    } catch (error) {
-      console.error(`Failed to fetch reviews for service (id: ${serviceId}):`, error)
-      reviewError.value = 'Gagal memuat ulasan layanan.'
-      serviceReviews.value = []
-      averageRating.value = 0
-      totalReviews.value = 0
-    } finally {
-      loadingReviews.value = false
-    }
-  }
 
   return {
     services,
@@ -71,12 +48,5 @@ export const useServiceStore = defineStore('service', () => {
     fetchServices,
     fetchServiceById,
     bookService,
-
-    serviceReviews,
-    loadingReviews,
-    reviewError,
-    averageRating,
-    totalReviews,
-    fetchServiceReviews
   }
 })

@@ -16,45 +16,56 @@ export const useDashboardStore = defineStore('dashboard', {
   }),
 
   actions: {
-    async fetchDashboardData() {
-      this.loading = true
-      this.error = null
+async fetchDashboardData() {
+  this.loading = true
+  this.error = null
 
-      try {
-        const services = await bookingApi.getUserBookings()
+  try {
+    const response = await bookingApi.getUserBookings()
 
-        const approved = services.Approved || []
-        const pending = services.Pending || []
-        const declined = services.Declined || []
-        const completed = services.Completed || []
+    console.log('[Dashboard] Full API response from getUserBookings:', response)
 
-        // Simpan jumlah status
-        this.summary = {
-          approved: approved.length,
-          pending: pending.length,
-          declined: declined.length,
-          completed: completed.length,
-        }
+    const services = response.services || {}
 
-        // Gabungkan semua bookings
-        const allBookings = [...approved, ...pending, ...declined, ...completed]
-        this.allBookings = allBookings
+    console.log('[Dashboard] Parsed services:', services)
 
-        // Urutkan dari ID terbesar ke terkecil
-        const sorted = allBookings.sort((a, b) => b.id_booking - a.id_booking)
+    const approved = services.Approved || []
+    const pending = services.Pending || []
+    const declined = services.Declined || []
+    const completed = services.Completed || []
 
-        // Ambil 5 booking terbaru
-        this.latestBookings = sorted.slice(0, 5).map((booking, index) => ({
-          ...booking,
-          displayNo: index + 1,
-          displayDateTime: `${booking.date} ${booking.time}`,
-        }))
-      } catch (error) {
-        this.error = 'Gagal memuat data dashboard.'
-        console.error('Error fetching dashboard data:', error)
-      } finally {
-        this.loading = false
-      }
-    },
+    console.log('[Dashboard] Counts →',
+      'Pending:', pending.length,
+      'Approved:', approved.length,
+      'Declined:', declined.length,
+      'Completed:', completed.length
+    )
+
+    this.summary = {
+      approved: approved.length,
+      pending: pending.length,
+      declined: declined.length,
+      completed: completed.length,
+    }
+
+    this.allBookings = [...approved, ...pending, ...declined, ...completed]
+
+    const sorted = this.allBookings.sort((a, b) => b.id_booking - a.id_booking)
+
+    this.latestBookings = sorted.slice(0, 5).map((booking, index) => ({
+      ...booking,
+      displayNo: index + 1,
+      displayDateTime: `${booking.date} ${booking.time}`,
+    }))
+
+    console.log('[Dashboard] Latest bookings to display:', this.latestBookings)
+  } catch (error) {
+    this.error = 'Gagal memuat data dashboard.'
+    console.error('[Dashboard] Error fetching dashboard data:', error)
+  } finally {
+    this.loading = false
+  }
+}
+
   },
 })
