@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 class ReviewsModel {
   final int? id;
   final int bookingId;
+  final int serviceId; // Add separate serviceId field
   final int userId;
+  final String? userName;
+  final String? userEmail;
   final int? rating;
   final String? comment;
   final ReviewStatus status;
@@ -15,7 +18,10 @@ class ReviewsModel {
   ReviewsModel({
     this.id,
     required this.bookingId,
+    required this.serviceId, // Add serviceId to constructor
     required this.userId,
+    this.userName,
+    this.userEmail,
     this.rating,
     this.comment,
     this.status = ReviewStatus.pending,
@@ -27,29 +33,80 @@ class ReviewsModel {
 
   // Factory constructor untuk membuat Review dari JSON
   factory ReviewsModel.fromJson(Map<String, dynamic> json) {
-    return ReviewsModel(
-      id: json['id'] != null
-          ? (json['id'] is int
-              ? json['id']
-              : int.tryParse(json['id'].toString()))
-          : null,
-      bookingId: json['booking_id'] != null
-          ? (json['booking_id'] is int
-              ? json['booking_id']
-              : int.tryParse(json['booking_id'].toString()) ?? 0)
-          : 0,
-      userId: json['user_id'] != null
+    // Extract user information from nested user object
+    String? userName;
+    String? userEmail;
+    int userId = 0;
+
+    if (json.containsKey('user') && json['user'] is Map<String, dynamic>) {
+      final user = json['user'] as Map<String, dynamic>;
+      userName = user['name']?.toString();
+      userEmail = user['email']?.toString();
+      userId = user['user_id'] != null
+          ? (user['user_id'] is int
+              ? user['user_id']
+              : int.tryParse(user['user_id'].toString()) ?? 0)
+          : 0;
+    } else {
+      userId = json['user_id'] != null
           ? (json['user_id'] is int
               ? json['user_id']
               : int.tryParse(json['user_id'].toString()) ?? 0)
-          : 0,
+          : 0;
+    } // Extract service ID from nested service object or direct service_id field
+    int serviceId = 0;
+    if (json.containsKey('service') &&
+        json['service'] is Map<String, dynamic>) {
+      final service = json['service'] as Map<String, dynamic>;
+      serviceId = service['id'] != null
+          ? (service['id'] is int
+              ? service['id']
+              : int.tryParse(service['id'].toString()) ?? 0)
+          : 0;
+    } else if (json['service_id'] != null) {
+      // Handle direct service_id field
+      serviceId = json['service_id'] is int
+          ? json['service_id']
+          : int.tryParse(json['service_id'].toString()) ?? 0;
+    }
+
+    // Extract booking ID - prioritize actual booking_id if available
+    int bookingId = 0;
+    if (json['booking_id'] != null) {
+      bookingId = json['booking_id'] is int
+          ? json['booking_id']
+          : int.tryParse(json['booking_id'].toString()) ?? 0;
+    } else if (serviceId > 0) {
+      // Fallback to service ID if booking_id is not available
+      bookingId = serviceId;
+    }
+
+    // Extract review ID
+    final reviewId = json['review_id'] != null
+        ? (json['review_id'] is int
+            ? json['review_id']
+            : int.tryParse(json['review_id'].toString()) ?? 0)
+        : (json['id'] != null
+            ? (json['id'] is int
+                ? json['id']
+                : int.tryParse(json['id'].toString()) ?? 0)
+            : 0);
+
+    return ReviewsModel(
+      id: reviewId,
+      bookingId: bookingId, // Use actual booking_id or fallback to serviceId
+      serviceId: serviceId, // Store the actual service ID separately
+      userId: userId,
+      userName: userName,
+      userEmail: userEmail,
       rating: json['rating'] != null
           ? (json['rating'] is int
               ? json['rating']
               : int.tryParse(json['rating'].toString()))
           : null,
       comment: json['comment']?.toString(),
-      status: ReviewStatus.fromString(json['status']?.toString() ?? 'pending'),
+      status:
+          ReviewStatus.fromString(json['status']?.toString() ?? 'completed'),
       completedAt: json['completed_at'] != null
           ? DateTime.tryParse(json['completed_at'].toString())
           : null,
@@ -63,14 +120,15 @@ class ReviewsModel {
           ? DateTime.tryParse(json['updated_at'].toString())
           : null,
     );
-  }
-
-  // Method untuk convert Review ke JSON
+  } // Method untuk convert Review ke JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'booking_id': bookingId,
+      'service_id': serviceId, // Add service_id to JSON
       'user_id': userId,
+      'user_name': userName,
+      'user_email': userEmail,
       'rating': rating,
       'comment': comment,
       'status': status.value,
@@ -85,7 +143,10 @@ class ReviewsModel {
   ReviewsModel copyWith({
     int? id,
     int? bookingId,
+    int? serviceId, // Add serviceId parameter
     int? userId,
+    String? userName,
+    String? userEmail,
     int? rating,
     String? comment,
     ReviewStatus? status,
@@ -97,7 +158,10 @@ class ReviewsModel {
     return ReviewsModel(
       id: id ?? this.id,
       bookingId: bookingId ?? this.bookingId,
+      serviceId: serviceId ?? this.serviceId, // Add serviceId to copyWith
       userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      userEmail: userEmail ?? this.userEmail,
       rating: rating ?? this.rating,
       comment: comment ?? this.comment,
       status: status ?? this.status,
@@ -115,6 +179,15 @@ class ReviewsModel {
   bool get isPending => status == ReviewStatus.pending;
   bool get isDeclined => status == ReviewStatus.declined;
 
+  // User display helpers
+  String get displayName => userName ?? 'User #$userId';
+  String get userInitial {
+    if (userName != null && userName!.isNotEmpty) {
+      return userName![0].toUpperCase();
+    }
+    return 'U';
+  }
+
   // Check if review deadline has passed
   bool get isDeadlinePassed {
     if (reviewDeadline == null) return false;
@@ -130,7 +203,7 @@ class ReviewsModel {
 
   @override
   String toString() {
-    return 'Review{id: $id, bookingId: $bookingId, userId: $userId, rating: $rating, status: ${status.value},}';
+    return 'Review{id: $id, bookingId: $bookingId, serviceId: $serviceId, userId: $userId, rating: $rating, status: ${status.value},}';
   }
 
   @override

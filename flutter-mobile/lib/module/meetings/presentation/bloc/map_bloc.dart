@@ -1,6 +1,7 @@
 import 'package:Appointly/module/meetings/presentation/bloc/map_event.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/map_state.dart';
 import 'package:Appointly/module/meetings/repository/map_repository.dart';
+import 'package:Appointly/module/meetings/model/location_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
@@ -15,8 +16,43 @@ class MapBloc extends Bloc<MapEvent, MapState> {
       : _mapRepository = mapRepository,
         super(MapInitial()) {
     on<LoadMapEvent>(_onLoadMap);
+    on<LoadMapWithLocationEvent>(_onLoadMapWithLocation);
     on<GetCurrentLocationEvent>(_onGetCurrentLocation);
     on<CalculateRouteEvent>(_onCalculateRoute);
+  }
+
+  Future<void> _onLoadMapWithLocation(
+    LoadMapWithLocationEvent event,
+    Emitter<MapState> emit,
+  ) async {
+    emit(MapLoading());
+    try {
+      debugPrint('[MapBloc] Memproses lokasi: ${event.location}');
+
+      final locationData =
+          await _mapRepository.getLocationCoordinates(event.location);
+
+      debugPrint(
+          '[MapBloc] Koordinat diterima: ${locationData['longitude']}, ${locationData['latitude']}');
+
+      final point = mapbox.Point(
+        coordinates: mapbox.Position(
+          locationData['longitude'],
+          locationData['latitude'],
+        ),
+      );
+
+      _destinationPoint = point;
+
+      debugPrint('[MapBloc] Emitting MapLoaded state');
+      emit(MapLoaded(
+        destinationCoordinates: point,
+        destinationName: locationData['place_name'],
+      ));
+    } catch (e) {
+      debugPrint('[MapBloc] Error saat memuat peta dengan location model: $e');
+      emit(MapError(message: e.toString()));
+    }
   }
 
   Future<void> _onLoadMap(
@@ -27,11 +63,15 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     try {
       debugPrint(
           '[MapBloc] Mendapatkan koordinat untuk alamat: ${event.locationAddress}');
+
+      // Convert string address to LocationModel for backward compatibility
+      final locationModel = LocationModel(address: event.locationAddress);
       final locationData =
-          await _mapRepository.getAddressCoordinates(event.locationAddress);
+          await _mapRepository.getLocationCoordinates(locationModel);
 
       debugPrint(
           '[MapBloc] Koordinat diterima: ${locationData['longitude']}, ${locationData['latitude']}');
+
       final point = mapbox.Point(
         coordinates: mapbox.Position(
           locationData['longitude'],

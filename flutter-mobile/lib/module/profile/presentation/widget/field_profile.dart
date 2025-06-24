@@ -8,6 +8,7 @@ class FieldProfile extends StatelessWidget {
   final String hintText;
   final bool isPassword;
   final bool isOptional;
+  final bool enabled;
   final TextEditingController controller;
   final String labelText;
   const FieldProfile(
@@ -16,7 +17,8 @@ class FieldProfile extends StatelessWidget {
       required this.controller,
       required this.labelText,
       this.isOptional = false,
-      this.isPassword = false});
+      this.isPassword = false,
+      this.enabled = true});
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,7 @@ class FieldProfile extends StatelessWidget {
         SizedBox(height: 8),
         StatefulBuilder(builder: (context, setState) {
           return TextFormField(
+            enabled: enabled,
             cursorColor: ColorPallete.primaryColor,
             controller: controller,
             obscureText: isPassword && !isPasswordVisible,

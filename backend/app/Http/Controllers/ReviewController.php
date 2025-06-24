@@ -19,7 +19,7 @@ class ReviewController extends Controller
             return response()->json([
                 'responseMessage' => 'The requested booking was not found in this user.'
             ], 404);
-        }   
+        }
 
         if ($booking->status !== 'Approved') {
             return response()->json([
@@ -105,26 +105,26 @@ class ReviewController extends Controller
             ], 500);
         }
     }
-    
+
     public function getUserReviews()
     {
         try {
             $userId = Auth::id();
             $reviews = Review::with('service')
-            ->where('user_id', $userId)
-            ->get()
-            ->map(function ($review) {
-                return [
-                    'review_id' => $review->id,
-                    'service' => [
-                        'id' => $review->service?->id,
-                        'title' => $review->service?->title,
-                    ],
-                    'rating' => $review->rating,
-                    'comment' => $review->comment,
-                    'created_at' => $review->created_at->format('d-m-Y H:i:s'),
-                ];
-            });
+                ->where('user_id', $userId)
+                ->get()
+                ->map(function ($review) {
+                    return [
+                        'review_id' => $review->id,
+                        'service' => [
+                            'id' => $review->service?->id,
+                            'title' => $review->service?->title,
+                        ],
+                        'rating' => $review->rating,
+                        'comment' => $review->comment,
+                        'created_at' => $review->created_at->format('d-m-Y H:i:s'),
+                    ];
+                });
 
             if ($reviews->isEmpty()) {
                 return response()->json([
@@ -144,5 +144,5 @@ class ReviewController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
-    } 
+    }
 }

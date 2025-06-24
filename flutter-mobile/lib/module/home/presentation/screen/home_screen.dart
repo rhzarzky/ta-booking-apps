@@ -1,6 +1,6 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/home/presentation/screen/bookmark_screen.dart';
-import 'package:Appointly/module/home/presentation/widget/chart_status.dart';
+import 'package:Appointly/module/home/presentation/widget/chart_status_with_filter.dart';
 import 'package:Appointly/module/home/presentation/widget/recently_pending_card.dart';
 import 'package:Appointly/module/home/presentation/widget/status_card.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
@@ -31,12 +31,16 @@ class _HomeScreenState extends State<HomeScreen> {
   final AuthRepository _authRepository = AuthRepository();
   String? userName;
   bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
     displayUserInfo();
-    context.read<BookingBloc>().add(GetBookingEvent());
+
+    // Load data with current month and year
+    final now = DateTime.now();
+    context
+        .read<BookingBloc>()
+        .add(GetBookingEvent(month: now.month, year: now.year));
 
     // Simulate loading state for 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
@@ -180,56 +184,66 @@ class _HomeScreenState extends State<HomeScreen> {
     if (state is BookingLoaded) {
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            StatusCard(
-              title: 'Approved Event',
-              count: state.stats['approved'] ?? 0,
-              timeRange: '30',
-              difference: calculateDifference(state.stats['approved'] ?? 0),
-              startColor: ColorPallete.primary400,
-              endColor: ColorPallete.primaryDark,
-              iconAsset: 'assets/icons/calendar-check-white.svg',
-            ),
-            StatusCard(
-              iconAsset: 'assets/icons/calendar-time-white.svg',
-              title: 'Under Review',
-              count: state.stats['pending'] ?? 0,
-              timeRange: '30',
-              difference: calculateDifference(state.stats['pending'] ?? 0),
-              startColor: ColorPallete.accent400,
-              endColor: ColorPallete.accentDark,
-            ),
-            StatusCard(
-              iconAsset: 'assets/icons/calendar-x-white.svg',
-              title: 'Declined Event',
-              count: state.stats['declined'] ?? 0,
-              timeRange: '30',
-              difference: calculateDifference(state.stats['declined'] ?? 0),
-              startColor: ColorPallete.greySilverChalice,
-              endColor: ColorPallete.greySilverChalice950,
-            ),
-          ],
+        physics: const BouncingScrollPhysics(),
+        clipBehavior: Clip.none,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: Row(
+            children: [
+              StatusCard(
+                title: 'Approved Event',
+                count: state.stats['approved'] ?? 0,
+                timeRange: '30',
+                difference: calculateDifference(state.stats['approved'] ?? 0),
+                startColor: ColorPallete.primary400,
+                endColor: ColorPallete.primaryDark,
+                iconAsset: 'assets/icons/calendar-check-white.svg',
+              ),
+              const SizedBox(width: 12),
+              StatusCard(
+                iconAsset: 'assets/icons/calendar-time-white.svg',
+                title: 'Under Review',
+                count: state.stats['pending'] ?? 0,
+                timeRange: '30',
+                difference: calculateDifference(state.stats['pending'] ?? 0),
+                startColor: ColorPallete.accent400,
+                endColor: ColorPallete.accentDark,
+              ),
+              const SizedBox(width: 12),
+              StatusCard(
+                iconAsset: 'assets/icons/calendar-x-white.svg',
+                title: 'Declined Event',
+                count: state.stats['declined'] ?? 0,
+                timeRange: '30',
+                difference: calculateDifference(state.stats['declined'] ?? 0),
+                startColor: ColorPallete.greySilverChalice,
+                endColor: ColorPallete.greySilverChalice950,
+              ),
+            ],
+          ),
         ),
       );
-    }
-
-    // Skeleton version of status cards
+    } // Skeleton version of status cards
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: Row(
-        children: List.generate(
-          3,
-          (index) => Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: StatusCard(
-              title: 'Loading',
-              count: 0,
-              timeRange: '30',
-              difference: 0,
-              startColor: ColorPallete.darkGreySilver,
-              endColor: ColorPallete.greySilverChalice,
-              iconAsset: 'assets/icons/calendar-check-white.svg',
+      physics: const BouncingScrollPhysics(),
+      clipBehavior: Clip.none,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16.0),
+        child: Row(
+          children: List.generate(
+            3,
+            (index) => Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: StatusCard(
+                title: 'Loading',
+                count: 0,
+                timeRange: '30',
+                difference: 0,
+                startColor: ColorPallete.darkGreySilver,
+                endColor: ColorPallete.greySilverChalice,
+                iconAsset: 'assets/icons/calendar-check-white.svg',
+              ),
             ),
           ),
         ),
@@ -239,27 +253,23 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAppointmentInsights() {
     return Container(
+      width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Appointment Insights',
-              style: GoogleFonts.ubuntu(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: ColorPallete.darkBlack,
-              ),
+        child: LayoutBuilder(builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: const ChartStatusWithFilter(),
             ),
-            const SizedBox(height: 16),
-            const ChartStatus(),
-          ],
-        ),
+          );
+        }),
       ),
     );
   }

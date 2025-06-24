@@ -51,21 +51,124 @@ class CardService extends StatelessWidget {
                   height: 240,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12.0),
-                    image: (imageService.isNotEmpty)
-                        ? DecorationImage(
-                            image: imageService.startsWith('http')
-                                ? NetworkImage(imageService)
-                                : AssetImage(imageService) as ImageProvider,
-                            fit: BoxFit.cover,
-                          )
-                        : null,
                   ),
-                  child: (imageService.isEmpty)
-                      ? Image.asset(
-                          'assets/image/404page.png',
-                          fit: BoxFit.contain,
-                        )
-                      : null,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: (imageService.isNotEmpty &&
+                            imageService.startsWith('http'))
+                        ? Image.network(
+                            imageService,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: 240,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) {
+                                return child;
+                              }
+                              return Container(
+                                width: double.infinity,
+                                height: 240,
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      ColorPallete.primaryColor,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              print('🚨 Image loading error: $error');
+                              print('🔗 Failed URL: $imageService');
+                              return Container(
+                                width: double.infinity,
+                                height: 240,
+                                color: Colors.grey[100],
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 48,
+                                      color: Colors.grey[400],
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Image not available',
+                                      style: GoogleFonts.ubuntu(
+                                        fontSize: 12,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          )
+                        : (imageService.isNotEmpty)
+                            ? Image.asset(
+                                imageService,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 240,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: double.infinity,
+                                    height: 240,
+                                    color: Colors.grey[100],
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.image_not_supported_outlined,
+                                          size: 48,
+                                          color: Colors.grey[400],
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Asset not found',
+                                          style: GoogleFonts.ubuntu(
+                                            fontSize: 12,
+                                            color: Colors.grey[500],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              )
+                            : Container(
+                                width: double.infinity,
+                                height: 240,
+                                color: Colors.grey[100],
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.image_outlined,
+                                      size: 48,
+                                      color: Colors.grey[400],
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'No image available',
+                                      style: GoogleFonts.ubuntu(
+                                        fontSize: 12,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                  ),
                 ),
                 Positioned(
                   top: 8,
@@ -248,54 +351,53 @@ class CardService extends StatelessWidget {
                       ),
                     if (provideService.contains('Offline') &&
                         provideService.contains('Online'))
-                      
-                    if (provideService.contains('Online'))
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              ColorPallete.primaryDark,
-                              ColorPallete.primary400,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(24.0),
-                        ),
-                        child: Container(
-                          margin: EdgeInsets.all(1.5),
+                      if (provideService.contains('Online'))
+                        Container(
                           decoration: BoxDecoration(
-                            gradient: ColorPallete.gradientAccent,
-                            borderRadius: BorderRadius.circular(22.0),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: 6.0,
-                              horizontal: 16.0,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.wifi_tethering_rounded,
-                                  color: ColorPallete.primaryDark,
-                                  size: 16,
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Online',
-                                  style: GoogleFonts.ubuntu(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: ColorPallete.primaryDark,
-                                  ),
-                                ),
+                            gradient: LinearGradient(
+                              colors: [
+                                ColorPallete.primaryDark,
+                                ColorPallete.primary400,
                               ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(24.0),
+                          ),
+                          child: Container(
+                            margin: EdgeInsets.all(1.5),
+                            decoration: BoxDecoration(
+                              gradient: ColorPallete.gradientAccent,
+                              borderRadius: BorderRadius.circular(22.0),
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: 6.0,
+                                horizontal: 16.0,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.wifi_tethering_rounded,
+                                    color: ColorPallete.primaryDark,
+                                    size: 16,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Online',
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: ColorPallete.primaryDark,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
                     SizedBox(width: 8),
                     // Rating Section with Stars
                     Tooltip(

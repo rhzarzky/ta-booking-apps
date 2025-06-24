@@ -60,9 +60,13 @@ class GetAllReviewSuccess extends ReviewState {
 
 class GetServiceReviewsSuccess extends ReviewState {
   final ServiceReviewsModel serviceReviews;
+  final int serviceId; // Tambahkan service ID untuk tracking
 
-  const GetServiceReviewsSuccess({required this.serviceReviews});
+  const GetServiceReviewsSuccess({
+    required this.serviceReviews,
+    required this.serviceId,
+  });
 
   @override
-  List<Object?> get props => [serviceReviews];
+  List<Object?> get props => [serviceReviews, serviceId];
 }

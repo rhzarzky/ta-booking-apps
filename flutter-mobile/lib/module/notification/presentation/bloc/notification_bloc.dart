@@ -13,20 +13,22 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   NotificationBloc() : super(NotificationInitial()) {
     print('🏃 Initializing NotificationBloc');
 
+    // Migrate old notifications on init
+    _migrateNotifications();
+
     on<AddNotification>((event, emit) async {
       print('📥 Adding new notification: ${event.title}');
-      final currentNotifications =
-          List<Map<String, dynamic>>.from(state.notifications);
       emit(NotificationLoading());
       try {
-        // Get current notifications from SharedPreferences
+        // Get current notifications for this specific user from SharedPreferences
         final prefs = await SharedPreferences.getInstance();
-        final String? existingData = prefs.getString('notifications');
-        List<Map<String, dynamic>> allNotifications = [];
+        final String notificationKey = 'notifications_${event.userId}';
+        final String? existingData = prefs.getString(notificationKey);
+        List<Map<String, dynamic>> userNotifications = [];
 
         if (existingData != null) {
           final List<dynamic> decoded = jsonDecode(existingData);
-          allNotifications =
+          userNotifications =
               decoded.map((item) => Map<String, dynamic>.from(item)).toList();
         }
 
@@ -41,16 +43,12 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         };
 
         // Add to beginning of list
-        allNotifications.insert(0, newNotification);
+        userNotifications.insert(0, newNotification);
 
-        // Save back to SharedPreferences
-        await prefs.setString('notifications', jsonEncode(allNotifications));
+        // Save back to SharedPreferences with user-specific key
+        await prefs.setString(notificationKey, jsonEncode(userNotifications));
         print('💾 Saved notification: ${event.title} for user ${event.userId}');
 
-        // Emit only notifications for this user
-        final userNotifications = allNotifications
-            .where((n) => n['userId'].toString() == event.userId)
-            .toList();
         emit(NotificationLoaded(userNotifications));
       } catch (e) {
         print('❌ Error adding notification: $e');
@@ -58,24 +56,24 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         emit(NotificationError(message: e.toString()));
       }
     });
-
     on<GetNotifications>((event, emit) async {
       emit(NotificationLoading());
       try {
         print('🔍 Getting notifications for user: ${event.userId}');
 
-        // Load from SharedPreferences
+        // Load from SharedPreferences using user-specific key
         final prefs = await SharedPreferences.getInstance();
-        final String? storedData = prefs.getString('notifications');
+        final String notificationKey = 'notifications_${event.userId}';
+        final String? storedData = prefs.getString(notificationKey);
 
         if (storedData != null) {
-          print('📦 Found stored notifications: $storedData');
+          print(
+              '📦 Found stored notifications for user ${event.userId}: $storedData');
           final List<dynamic> decodedList = jsonDecode(storedData);
 
-          // Convert to list of maps and filter by userId
+          // Convert to list of maps - no need to filter as these are already user-specific
           final notifications = decodedList
               .map((item) => Map<String, dynamic>.from(item))
-              .where((notif) => notif['userId'].toString() == event.userId)
               .toList();
 
           print(
@@ -87,7 +85,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
           emit(NotificationLoaded(notifications));
         } else {
-          print('❌ No notifications found in storage');
+          print('❌ No notifications found for user ${event.userId}');
           emit(NotificationLoaded([]));
         }
       } catch (e) {
@@ -95,29 +93,16 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         emit(NotificationError(message: e.toString()));
       }
     });
-
     on<ClearNotifications>((event, emit) async {
       try {
         final prefs = await SharedPreferences.getInstance();
-        final String? storedData = prefs.getString('notifications');
+        final String notificationKey = 'notifications_${event.userId}';
 
-        if (storedData != null) {
-          final List<dynamic> decodedList = jsonDecode(storedData);
-          final List<Map<String, dynamic>> allNotifications = decodedList
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList();
+        // Simply remove the user-specific notifications
+        await prefs.remove(notificationKey);
+        print('🧹 Cleared all notifications for user ${event.userId}');
 
-          // Remove notifications for this user
-          final filteredNotifications = allNotifications
-              .where((notif) => notif['userId'].toString() != event.userId)
-              .toList();
-
-          // Save back to SharedPreferences
-          await prefs.setString(
-              'notifications', jsonEncode(filteredNotifications));
-
-          emit(NotificationLoaded([]));
-        }
+        emit(NotificationLoaded([]));
       } catch (e) {
         _logger.e('Error clearing notifications: $e');
         emit(NotificationError(message: e.toString()));
@@ -125,17 +110,48 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     });
   }
 
-  Future<void> _saveNotifications(
-      List<Map<String, dynamic>> notifications) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final String notificationsJson = jsonEncode(notifications);
-      await prefs.setString('notifications', notificationsJson);
-      print('💾 Saved ${notifications.length} notifications to storage');
-      _logger.d('Successfully saved notifications');
-    } catch (e) {
-      print('❌ Error saving notifications: $e');
-      _logger.e('Error saving notifications: $e');
-    }
+  // This method will be called during initialization to migrate existing data
+  void _migrateNotifications() {
+    Future.delayed(Duration.zero, () async {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final String? oldStoredData = prefs.getString('notifications');
+
+        if (oldStoredData != null) {
+          print('🔄 Found old notification format, migrating data...');
+          final List<dynamic> decodedList = jsonDecode(oldStoredData);
+          final List<Map<String, dynamic>> allNotifications = decodedList
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList();
+
+          // Group notifications by userId
+          final Map<String, List<Map<String, dynamic>>> userNotifications = {};
+
+          for (var notification in allNotifications) {
+            final String userId = notification['userId'].toString();
+            if (!userNotifications.containsKey(userId)) {
+              userNotifications[userId] = [];
+            }
+            userNotifications[userId]!.add(notification);
+          }
+
+          // Save each user's notifications to their own key
+          for (var userId in userNotifications.keys) {
+            final String userKey = 'notifications_$userId';
+            await prefs.setString(
+                userKey, jsonEncode(userNotifications[userId]));
+            print(
+                '✅ Migrated ${userNotifications[userId]!.length} notifications for user $userId');
+          }
+
+          // Remove old global storage
+          await prefs.remove('notifications');
+          print('🗑️ Removed old notification storage');
+        }
+      } catch (e) {
+        print('❌ Error migrating notifications: $e');
+        _logger.e('Error migrating notifications: $e');
+      }
+    });
   }
 }

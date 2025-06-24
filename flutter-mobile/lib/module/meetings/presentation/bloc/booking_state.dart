@@ -13,6 +13,8 @@ final class BookingLoaded extends BookingState {
   final bool isFiltered;
   final DateTime? filterStartDate;
   final DateTime? filterEndDate;
+  final int? month;
+  final int? year;
 
   final BookingDetail? bookingDetail;
 
@@ -25,6 +27,8 @@ final class BookingLoaded extends BookingState {
     this.isFiltered = false,
     this.filterStartDate,
     this.filterEndDate,
+    this.month,
+    this.year,
   });
 }
 

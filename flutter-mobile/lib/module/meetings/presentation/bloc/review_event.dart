@@ -34,12 +34,13 @@ class SubmitReviewEvent extends ReviewEvent {
 }
 
 class GetReviewEvent extends ReviewEvent {
-  final int bookingId;
+  final int serviceId;
+  final int userId;
 
-  const GetReviewEvent({required this.bookingId});
+  const GetReviewEvent({required this.serviceId, required this.userId});
 
   @override
-  List<Object?> get props => [bookingId];
+  List<Object?> get props => [serviceId, userId];
 }
 
 class GetAllReviewEvent extends ReviewEvent {

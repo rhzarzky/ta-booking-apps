@@ -1,10 +1,97 @@
 import 'package:Appointly/utils/config.dart';
+import 'package:Appointly/module/meetings/model/location_model.dart';
 import 'package:dio/dio.dart';
-import 'dart:convert';
 
 class MapRepository {
   final String token = AppConfig.mapboxAccessToken;
   final Dio _dio = Dio();
+
+  /// Method untuk mendapatkan koordinat dari berbagai sumber data
+  Future<Map<String, dynamic>> getLocationCoordinates(
+      LocationModel location) async {
+    try {
+      // Priority 1: Jika sudah ada koordinat, gunakan langsung
+      if (location.hasCoordinates) {
+        print(
+            'Menggunakan koordinat yang sudah ada: ${location.latitude}, ${location.longitude}');
+
+        // Jika ada nama, gunakan nama tersebut, jika tidak, coba reverse geocoding untuk mendapatkan alamat
+        String placeName =
+            location.name ?? location.address ?? 'Unknown Location';
+
+        // Jika tidak ada nama/address, lakukan reverse geocoding
+        if (placeName == 'Unknown Location' || placeName.trim().isEmpty) {
+          try {
+            final reverseGeocodeResult =
+                await _reverseGeocode(location.latitude!, location.longitude!);
+            placeName =
+                reverseGeocodeResult['place_name'] ?? 'Unknown Location';
+          } catch (e) {
+            print('Reverse geocoding failed: $e');
+            placeName = 'Lat: ${location.latitude}, Lng: ${location.longitude}';
+          }
+        }
+
+        return {
+          'longitude': location.longitude,
+          'latitude': location.latitude,
+          'place_name': placeName,
+        };
+      }
+
+      // Priority 2: Jika ada alamat/nama, lakukan geocoding
+      if (location.hasAddress) {
+        print('Melakukan geocoding untuk alamat: ${location.address}');
+        return await getAddressCoordinates(location.address!);
+      }
+
+      // Priority 3: Jika hanya ada nama, coba geocoding dengan nama
+      if (location.hasName) {
+        print('Melakukan geocoding untuk nama: ${location.name}');
+        return await getAddressCoordinates(location.name!);
+      }
+
+      throw Exception(
+          'Tidak ada data lokasi yang valid (koordinat, alamat, atau nama)');
+    } catch (e) {
+      print('Error getting location coordinates: $e');
+      throw Exception('Error saat mendapatkan koordinat lokasi: $e');
+    }
+  }
+
+  /// Method untuk reverse geocoding (koordinat ke alamat)
+  Future<Map<String, dynamic>> _reverseGeocode(
+      double latitude, double longitude) async {
+    try {
+      print('Melakukan reverse geocoding untuk: $longitude, $latitude');
+
+      final response = await _dio.get(
+        'https://api.mapbox.com/geocoding/v5/mapbox.places/$longitude,$latitude.json',
+        queryParameters: {
+          'access_token': token,
+          'limit': 1,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data['features'].isNotEmpty) {
+        final feature = response.data['features'][0];
+        final placeName = feature['place_name'];
+
+        print('Reverse geocoding berhasil: $placeName');
+
+        return {
+          'longitude': longitude,
+          'latitude': latitude,
+          'place_name': placeName,
+        };
+      } else {
+        throw Exception('Tidak dapat melakukan reverse geocoding');
+      }
+    } catch (e) {
+      print('Error reverse geocoding: $e');
+      throw Exception('Error saat reverse geocoding: $e');
+    }
+  }
 
   ///Method ini digunakan untuk mengkonversi alamat menjadi koordinat (geocoding)
 

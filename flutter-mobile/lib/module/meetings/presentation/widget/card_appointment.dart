@@ -110,18 +110,18 @@ class CardAppointment extends StatelessWidget {
                   if (noteCard.isNotEmpty) _buildNoteSection(),
                   const SizedBox(height: 12),
                   _buildViewReviewLink(),
-                  const SizedBox(height: 12),
-                  // View Button
+                  const SizedBox(height: 12), // View Button
                   Row(
                     children: [
                       _buildViewButton(),
                       if (statusCard.toLowerCase() == 'approved') ...[
                         SizedBox(width: 12),
-                        // Show approve button if not yet approved, otherwise show review button
-                        if (isApproved == null || isApproved != 'true')
-                          _buildButtonApprove()
-                        else
-                          _buildReviewButton(),
+                        // Show approve button for approved status
+                        _buildButtonApprove(),
+                      ] else if (statusCard.toLowerCase() == 'completed') ...[
+                        SizedBox(width: 12),
+                        // Show review button for completed status
+                        _buildReviewButton(),
                       ],
                     ],
                   ),
@@ -163,6 +163,8 @@ class CardAppointment extends StatelessWidget {
     switch (statusCard.toLowerCase()) {
       case 'approved':
         return const Icon(Icons.check_circle, size: 14, color: Colors.white);
+      case 'completed':
+        return const Icon(Icons.star, size: 14, color: Colors.white);
       case 'pending':
         return const Icon(Icons.access_time, size: 14, color: Colors.white);
       case 'declined':
@@ -176,6 +178,8 @@ class CardAppointment extends StatelessWidget {
     switch (statusCard.toLowerCase()) {
       case 'approved':
         return ColorPallete.primaryColor;
+      case 'completed':
+        return ColorPallete.secondColor; // Use secondary color for completed
       case 'pending':
         return ColorPallete.accent400;
       case 'declined':
@@ -413,7 +417,8 @@ class CardAppointment extends StatelessWidget {
   }
 
   Widget _buildReviewButton() {
-    if (statusCard.toLowerCase() != 'approved' || reviewButton == null) {
+    // Show review button for completed status
+    if (statusCard.toLowerCase() != 'completed' || reviewButton == null) {
       return SizedBox.shrink();
     }
 

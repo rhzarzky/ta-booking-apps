@@ -17,7 +17,7 @@ class HistorybookingRepository {
     }
   }
 
-  Future<BookingModel> getAllBookings() async {
+  Future<BookingModel> getAllBookings({int? month, int? year}) async {
     try {
       if (!_dio.options.headers.containsKey('Authorization')) {
         final prefs = await SharedPreferences.getInstance();
@@ -27,7 +27,19 @@ class HistorybookingRepository {
         }
       }
 
-      final response = await _dio.get('/user/booking');
+      // Build query parameters if month or year are provided
+      Map<String, dynamic> queryParams = {};
+      if (month != null) {
+        queryParams['month'] = month.toString();
+      }
+      if (year != null) {
+        queryParams['year'] = year.toString();
+      }
+
+      final response = await _dio.get(
+        '/user/booking',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
 
       if (response.statusCode == 200 && response.data != null) {
         _logger.i('Booking data: ${response.data}');

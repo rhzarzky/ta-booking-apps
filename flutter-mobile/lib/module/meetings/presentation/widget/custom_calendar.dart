@@ -54,11 +54,13 @@ class _CustomCalendarState extends State<CustomCalendar> {
 
   // Implement calendar day selection with date validation
   void _onDaySelected(DateTime day, DateTime focusedDay) {
-    setState(() {
-      selectedDay = day;
-      this.focusedDay = focusedDay;
-    });
-    widget.onDateSelected(day);
+    if (highlightDates.any((d) => isSameDay(d, day))) {
+      setState(() {
+        selectedDay = day;
+        this.focusedDay = focusedDay;
+      });
+      widget.onDateSelected(day);
+    }
   }
 
   @override
@@ -121,6 +123,9 @@ class _CustomCalendarState extends State<CustomCalendar> {
                             const Duration(milliseconds: 300),
                         availableGestures: AvailableGestures.all,
                         calendarFormat: CalendarFormat.month,
+                        enabledDayPredicate: (day) {
+                          return highlightDates.any((d) => isSameDay(d, day));
+                        },
                         onPageChanged: (focusDay) {
                           setState(() {
                             focusedDay = focusDay;
@@ -220,6 +225,7 @@ class _CustomCalendarState extends State<CustomCalendar> {
                             final isHighlighted =
                                 highlightDates.any((d) => isSameDay(d, date));
                             final isSunday = date.weekday == DateTime.sunday;
+                            final isDisabled = !isHighlighted;
 
                             return Container(
                               decoration: BoxDecoration(
@@ -264,11 +270,14 @@ class _CustomCalendarState extends State<CustomCalendar> {
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-                                      color: isSunday
-                                          ? ColorPallete.redCinnabar
-                                          : (isHighlighted
-                                              ? Colors.white
-                                              : ColorPallete.darkBlack),
+                                      color: isDisabled
+                                          ? ColorPallete.darkGreySilver
+                                              .withOpacity(0.4)
+                                          : (isSunday
+                                              ? ColorPallete.redCinnabar
+                                              : (isHighlighted
+                                                  ? Colors.white
+                                                  : ColorPallete.darkBlack)),
                                     ),
                                   ),
                                 ],

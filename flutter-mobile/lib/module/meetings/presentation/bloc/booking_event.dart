@@ -3,7 +3,12 @@ part of 'booking_bloc.dart';
 @immutable
 sealed class BookingEvent {}
 
-class GetBookingEvent extends BookingEvent {}
+class GetBookingEvent extends BookingEvent {
+  final int? month;
+  final int? year;
+
+  GetBookingEvent({this.month, this.year});
+}
 
 class UpdateTokenEvent extends BookingEvent {
   final String? token;
@@ -51,9 +56,11 @@ class FilterBookingsByDateRangeEvent extends BookingEvent {
 
 class FilterBookAppointmentEvent extends BookingEvent {
   final String? filterType;
+  final String? searchQuery;
 
   FilterBookAppointmentEvent({
     this.filterType,
+    this.searchQuery,
   });
 }
 
