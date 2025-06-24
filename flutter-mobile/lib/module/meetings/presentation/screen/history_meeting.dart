@@ -4,12 +4,10 @@ import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/review_event.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/review_state.dart';
-import 'package:Appointly/module/meetings/presentation/screen/review_screen.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/meetings/presentation/widget/card_appointment.dart';
 import 'package:Appointly/module/meetings/presentation/widget/filter_bottomsheet.dart';
 import 'package:Appointly/module/meetings/repository/review_repository.dart';
-import 'package:Appointly/module/meetings/repository/historyBooking_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -44,56 +42,97 @@ class HistoryMeetingsWithProvider extends StatelessWidget {
 }
 
 class _HistoryMeetingsState extends State<HistoryMeetings> {
-  // Set untuk melacak booking yang sudah di-approve oleh user
-  Set<int> finishedBookings = {};
-  // Set untuk melacak booking yang sudah di-review oleh user
-  Set<int> reviewedBookings = {};
-
+  // Set untuk melacak service yang sudah di-review oleh user (berdasarkan service ID)
+  Set<int> reviewedServiceIds = {};
+  final ReviewRepository _reviewRepository = ReviewRepository();
+  bool _isLoadingReviewedBookings = true;
   @override
   void initState() {
     super.initState();
-    // Load saved states
-    _loadSavedStates();
+
     // Fetch bookings when screen loads
     context.read<BookingBloc>().add(GetBookingEvent());
     // Fetch reviews for the reviewed tab
     context.read<ReviewBloc>().add(GetAllReviewEvent());
+    // Load reviewed services data
+    _loadReviewedServicesFromServer();
   }
 
-  // Load saved states from SharedPreferences
+  // Load reviewed services from server based on reviews
+  Future<void> _loadReviewedServicesFromServer() async {
+    try {
+      final reviews = await _reviewRepository.getAllReview();
+
+      // Extract service IDs from reviews (since backend uses serviceId in bookingId field)
+      final reviewedServiceIds = <int>{};
+      for (final review in reviews) {
+        if (review.bookingId > 0) {
+          // bookingId now contains serviceId
+          reviewedServiceIds.add(review.bookingId);
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          this.reviewedServiceIds = reviewedServiceIds;
+          _isLoadingReviewedBookings = false;
+        });
+      }
+
+      // Also save to SharedPreferences for backup
+      final prefs = await SharedPreferences.getInstance();
+      final reviewedList =
+          reviewedServiceIds.map((id) => id.toString()).toList();
+      await prefs.setStringList('reviewed_services', reviewedList);
+    } catch (e) {
+      // Fallback to SharedPreferences if server fails      await _loadSavedStates();
+      if (mounted) {
+        setState(() {
+          _isLoadingReviewedBookings = false;
+        });
+      }
+    }
+  }
+
+  // Load saved states from SharedPreferences (fallback only)
   Future<void> _loadSavedStates() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Load finished bookings
-    final finishedList = prefs.getStringList('finished_bookings') ?? [];
-    setState(() {
-      finishedBookings = finishedList.map((id) => int.parse(id)).toSet();
-    });
+    // Load reviewed services (updated to use service IDs)
+    final reviewedList = prefs.getStringList('reviewed_services') ?? [];
 
-    // Load reviewed bookings
-    final reviewedList = prefs.getStringList('reviewed_bookings') ?? [];
-    setState(() {
-      reviewedBookings = reviewedList.map((id) => int.parse(id)).toSet();
-    });
+    final parsedIds = <int>{};
+    for (final idStr in reviewedList) {
+      try {
+        final id = int.parse(idStr);
+        if (id > 0) {
+          // Only add valid IDs
+          parsedIds.add(id);
+        } else {
+          print('DEBUG: Skipping invalid ID: $idStr');
+        }
+      } catch (e) {
+        print(
+            'DEBUG: Failed to parse ID from SharedPreferences: $idStr, error: $e');
+      }
+    }
 
-    print('Loaded finished bookings: $finishedBookings');
-    print('Loaded reviewed bookings: $reviewedBookings');
+    if (mounted) {
+      setState(() {
+        reviewedServiceIds = parsedIds;
+      });
+    }
+
+    print(
+        'DEBUG: Loaded reviewed services from SharedPreferences: $reviewedServiceIds');
   }
 
-  // Save finished bookings to SharedPreferences
-  Future<void> _saveFinishedBookings() async {
+  // Save reviewed services to SharedPreferences
+  Future<void> _saveReviewedServices() async {
     final prefs = await SharedPreferences.getInstance();
-    final finishedList = finishedBookings.map((id) => id.toString()).toList();
-    await prefs.setStringList('finished_bookings', finishedList);
-    print('Saved finished bookings: $finishedBookings');
-  }
-
-  // Save reviewed bookings to SharedPreferences
-  Future<void> _saveReviewedBookings() async {
-    final prefs = await SharedPreferences.getInstance();
-    final reviewedList = reviewedBookings.map((id) => id.toString()).toList();
-    await prefs.setStringList('reviewed_bookings', reviewedList);
-    print('Saved reviewed bookings: $reviewedBookings');
+    final reviewedList = reviewedServiceIds.map((id) => id.toString()).toList();
+    await prefs.setStringList('reviewed_services', reviewedList);
+    print('Saved reviewed services: $reviewedServiceIds');
   }
 
   @override
@@ -206,6 +245,11 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
       itemCount: appointments.length,
       itemBuilder: (context, index) {
         final booking = appointments[index];
+
+        // Debug logging for booking status
+        print(
+            'DEBUG: Booking ${booking.idBooking} status: "${booking.status}"');
+
         final DateTime bookingDate = DateTime.parse(booking.date);
 
         String formattedDate;
@@ -215,6 +259,22 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
           // Fallback format if localization isn't initialized
           formattedDate = DateFormat('yyyy-MM-dd').format(bookingDate);
         }
+
+        // Check if the service has already been reviewed (using service ID instead of booking ID)
+        final isReviewed = reviewedServiceIds.contains(booking.service.id);
+
+        // Debug logging
+        print(
+            'DEBUG: Checking booking ${booking.idBooking} with service ID ${booking.service.id}');
+        print('DEBUG: Current reviewedServiceIds set: $reviewedServiceIds');
+        print('DEBUG: Is service ${booking.service.id} reviewed? $isReviewed');
+        print('DEBUG: Booking status: ${booking.status}');
+        print(
+            'DEBUG: Is loading reviewed bookings? $_isLoadingReviewedBookings');
+
+        // Check if booking status is completed (case-insensitive)
+        final bool isCompleted = booking.status.toLowerCase() == 'completed';
+        print('DEBUG: Is booking completed? $isCompleted');
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
@@ -236,16 +296,17 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             },
             noteCard: booking.note ?? '',
             statusCard: booking.status,
-            isApproved:
-                finishedBookings.contains(booking.idBooking) ? 'true' : 'false',
-            reviewButton: booking.status.toLowerCase() == 'approved' &&
-                    finishedBookings.contains(booking.idBooking)
-                ? () {
-                    _bottomSheetReview(context, booking);
-                  }
-                : null,
-            approveButton: booking.status.toLowerCase() == 'approved' &&
-                    !finishedBookings.contains(booking.idBooking)
+            // Button "Review Now" - hanya muncul jika status "Completed", belum di-review, dan data sudah loaded
+            reviewButton:
+                !_isLoadingReviewedBookings && isCompleted && !isReviewed
+                    ? () {
+                        print(
+                            'DEBUG: Opening review sheet for booking ${booking.idBooking}');
+                        _bottomSheetReview(context, booking);
+                      }
+                    : null,
+            // Button "Finished" - hanya muncul jika status "Approved"
+            approveButton: booking.status.toLowerCase() == 'approved'
                 ? () {
                     _showModalApprove(context, booking);
                   }
@@ -357,15 +418,30 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
       builder: (BuildContext context) {
         return ReviewBottomSheet(
           booking: booking,
-          onReviewSubmitted: (rating) {
-            // Tambahkan booking ke set reviewed bookings
-            setState(() {
-              reviewedBookings.add(booking.idBooking);
-            });
-            // Save to SharedPreferences
-            _saveReviewedBookings();
+          onReviewSubmitted: (rating) async {
             print(
-                'Review submitted for booking ${booking.idBooking} with rating: $rating');
+                'DEBUG: Review submitted callback triggered for booking ${booking.idBooking} with service ID ${booking.service.id}');
+
+            // Add service to reviewed services set immediately for UI responsiveness
+            setState(() {
+              reviewedServiceIds.add(booking.service.id);
+            });
+
+            // Save to SharedPreferences
+            await _saveReviewedServices();
+
+            // Refresh reviewed services from server to ensure synchronization
+            await _loadReviewedServicesFromServer();
+
+            // Refresh reviews in the reviewed tab
+            context.read<ReviewBloc>().add(GetAllReviewEvent());
+
+            // Refresh booking list to update UI
+            context.read<BookingBloc>().add(GetBookingEvent());
+
+            print(
+                'DEBUG: Review submitted for booking ${booking.idBooking} with service ID ${booking.service.id} and rating: $rating');
+            print('DEBUG: Updated reviewedServiceIds set: $reviewedServiceIds');
           },
         );
       },
@@ -381,12 +457,12 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
         return BlocListener<ReviewBloc, ReviewState>(
           listener: (context, state) {
             if (state is CompleteMeetingSuccess) {
-              // Tambahkan booking ke set finished bookings
-              setState(() {
-                finishedBookings.add(booking.idBooking);
-              });
-              // Save to SharedPreferences
-              _saveFinishedBookings();
+              // Refresh booking list untuk menampilkan status terbaru dari server
+              context.read<BookingBloc>().add(GetBookingEvent());
+
+              // Load reviewed services to update the UI
+              _loadReviewedServicesFromServer();
+
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -579,116 +655,116 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
 
   Widget _buildReviewCard(dynamic review) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12.0),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header dengan rating dan tanggal
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.star,
-                      color: ColorPallete.secondColor,
-                      size: 20,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      '${review.rating ?? 0}',
-                      style: GoogleFonts.ubuntu(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: ColorPallete.darkBlack,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  review.createdAt?.toString().split(' ')[0] ?? '',
-                  style: GoogleFonts.ubuntu(
-                    fontSize: 12,
-                    color: ColorPallete.darkGreySilver,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12),
-            // Booking info
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: ColorPallete.backgroundBody,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
+        margin: const EdgeInsets.only(bottom: 12.0),
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header dengan rating dan tanggal
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
-                    Icons.event,
-                    color: ColorPallete.primaryColor,
-                    size: 20,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Booking #${review.bookingId}',
-                    style: GoogleFonts.ubuntu(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: ColorPallete.darkBlack,
-                    ),
-                  ),
-                  Spacer(),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: review.status?.color ?? ColorPallete.primaryColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      review.status?.displayName ?? 'Submitted',
-                      style: GoogleFonts.ubuntu(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.star,
+                        color: ColorPallete.secondColor,
+                        size: 20,
                       ),
+                      SizedBox(width: 4),
+                      Text(
+                        '${review.rating ?? 0}',
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: ColorPallete.darkBlack,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    review.createdAt?.toString().split(' ')[0] ?? '',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 12,
+                      color: ColorPallete.darkGreySilver,
                     ),
                   ),
                 ],
               ),
-            ),
-            // Comment jika ada
-            if (review.comment != null && review.comment!.isNotEmpty) ...[
               SizedBox(height: 12),
-              Text(
-                'Review:',
-                style: GoogleFonts.ubuntu(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: ColorPallete.darkBlack,
+              // Booking info
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: ColorPallete.backgroundBody,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.event,
+                      color: ColorPallete.primaryColor,
+                      size: 20,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Booking #${review.bookingId}',
+                      style: GoogleFonts.ubuntu(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: ColorPallete.darkBlack,
+                      ),
+                    ),
+                    Spacer(),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color:
+                            review.status?.color ?? ColorPallete.primaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        review.status?.displayName ?? 'Submitted',
+                        style: GoogleFonts.ubuntu(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 4),
-              Text(
-                review.comment!,
-                style: GoogleFonts.ubuntu(
-                  fontSize: 14,
-                  color: ColorPallete.darkGreySilver,
+              // Comment jika ada
+              if (review.comment != null && review.comment!.isNotEmpty) ...[
+                SizedBox(height: 12),
+                Text(
+                  'Review:',
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: ColorPallete.darkBlack,
+                  ),
                 ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
+                SizedBox(height: 4),
+                Text(
+                  review.comment!,
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 14,
+                    color: ColorPallete.darkGreySilver,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ],
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 }
 
@@ -719,6 +795,8 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
   void _submitReview() async {
     print(
         '_submitReview called with rating: $selectedRating, comment: ${reviewController.text}');
+    print(
+        'Booking details: ID=${widget.booking.idBooking}, Service ID=${widget.booking.service.id}');
 
     try {
       // Get user ID from AuthRepository instead of SharedPreferences directly
@@ -740,16 +818,20 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
 
       print('User ID: ${user.id}');
       print('Triggering SubmitReviewEvent...');
-      // Trigger submit review event
+
+      // Important: Use service.id instead of booking.idBooking
+      // The API uses service ID for the review, not booking ID
       context.read<ReviewBloc>().add(
             SubmitReviewEvent(
-              bookingId: widget.booking.idBooking,
+              // Use service ID instead of booking ID
+              bookingId: widget.booking.service.id,
               rating: selectedRating,
               comment: reviewController.text,
               userId: user.id,
             ),
           );
-      print('SubmitReviewEvent triggered successfully');
+      print(
+          'SubmitReviewEvent triggered successfully with service ID=${widget.booking.service.id}');
     } catch (e) {
       print('Error in _submitReview: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -793,7 +875,7 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.only(
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),

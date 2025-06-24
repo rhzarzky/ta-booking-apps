@@ -76,6 +76,23 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
   bool _isBookingInProgress = false;
   bool _enableCalendarSync = true;
 
+  // Helper method to get consistent avatar color based on user ID
+  Color getUserColor(int userId) {
+    final colors = [
+      Color(0xFF1976D2), // Blue
+      Color(0xFF388E3C), // Green
+      Color(0xFFE64A19), // Orange
+      Color(0xFF7B1FA2), // Purple
+      Color(0xFF00796B), // Teal
+      Color(0xFFC2185B), // Pink
+      Color(0xFF303F9F), // Indigo
+      Color(0xFFFFA000), // Amber
+      Color(0xFF0097A7), // Cyan
+      Color(0xFFD32F2F), // Red
+    ];
+    return colors[userId % colors.length];
+  }
+
   // Menyimpan index waktu yang dipilih alih-alih menyimpan string waktu
   // Getter untuk mendapatkan waktu yang dipilih dari service
   String get selectedTime {
@@ -1133,263 +1150,415 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
               final serviceReviews = state.serviceReviews;
 
               return Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: ColorPallete.concrete50,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Rating Summary Section
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          // Average Rating Display
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.amber.shade50,
-                                  Colors.amber.shade100,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.amber.shade300,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.star,
-                                      color: Colors.amber.shade600,
-                                      size: 20,
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      serviceReviews.averageRating
-                                          .toStringAsFixed(1),
-                                      style: GoogleFonts.ubuntu(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.amber.shade800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'out of 5',
-                                  style: GoogleFonts.ubuntu(
-                                    fontSize: 11,
-                                    color: Colors.amber.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          // Total Reviews
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${serviceReviews.totalReviews} Reviews',
-                                  style: GoogleFonts.ubuntu(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: ColorPallete.darkBlack,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  serviceReviews.totalReviews > 0
-                                      ? 'Based on customer experiences'
-                                      : 'Be the first to review!',
-                                  style: GoogleFonts.ubuntu(
-                                    fontSize: 12,
-                                    color: ColorPallete.darkGreySilver,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Reviews List
-                    if (serviceReviews.reviews.isNotEmpty) ...[
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: ColorPallete.concrete50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Rating Summary Section
                       Container(
                         width: double.infinity,
-                        constraints: BoxConstraints(
-                          maxHeight: 400, // Limit height for scrolling
-                        ),
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          physics: ClampingScrollPhysics(),
-                          itemCount: serviceReviews.reviews.length,
-                          separatorBuilder: (context, index) => Divider(
-                            color: ColorPallete.concrete50,
-                            height: 1,
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12),
                           ),
-                          itemBuilder: (context, index) {
-                            final review = serviceReviews.reviews[index];
-                            return Container(
-                              padding: EdgeInsets.all(16),
-                              color: Colors.white,
+                        ),
+                        child: Row(
+                          children: [
+                            // Average Rating Display
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.amber.shade50,
+                                    Colors.amber.shade100,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.amber.shade300,
+                                  width: 1.5,
+                                ),
+                              ),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      // User Avatar
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        decoration: BoxDecoration(
-                                          color: ColorPallete.primaryColor
-                                              .withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: ColorPallete.primaryColor
-                                                .withOpacity(0.3),
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            'U', // TODO: Get from user data
-                                            style: GoogleFonts.ubuntu(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                              color: ColorPallete.primaryColor,
-                                            ),
-                                          ),
-                                        ),
+                                      Icon(
+                                        Icons.star,
+                                        color: Colors.amber.shade600,
+                                        size: 20,
                                       ),
-                                      SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  'User', // TODO: Get from user data
-                                                  style: GoogleFonts.ubuntu(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w600,
-                                                    color:
-                                                        ColorPallete.darkBlack,
-                                                  ),
-                                                ),
-                                                SizedBox(width: 8),
-                                                Container(
-                                                  padding: EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.amber.shade50,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                    border: Border.all(
-                                                      color:
-                                                          Colors.amber.shade200,
-                                                    ),
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.star,
-                                                        size: 12,
-                                                        color: Colors
-                                                            .amber.shade600,
-                                                      ),
-                                                      SizedBox(width: 2),
-                                                      Text(
-                                                        '${review.rating ?? 0}',
-                                                        style:
-                                                            GoogleFonts.ubuntu(
-                                                          fontSize: 11,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: Colors
-                                                              .amber.shade700,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            SizedBox(height: 2),
-                                            if (review.createdAt != null)
-                                              Text(
-                                                _formatDate(review.createdAt!),
-                                                style: GoogleFonts.ubuntu(
-                                                  fontSize: 11,
-                                                  color: ColorPallete
-                                                      .darkGreySilver,
-                                                ),
-                                              ),
-                                          ],
+                                      SizedBox(width: 4),
+                                      Text(
+                                        serviceReviews.averageRating
+                                            .toStringAsFixed(1),
+                                        style: GoogleFonts.ubuntu(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.amber.shade800,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  if (review.comment != null &&
-                                      review.comment!.isNotEmpty) ...[
-                                    SizedBox(height: 12),
-                                    Container(
-                                      width: double.infinity,
-                                      padding: EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: ColorPallete.concrete50
-                                            .withOpacity(0.5),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        review.comment!,
-                                        style: GoogleFonts.ubuntu(
-                                          fontSize: 13,
-                                          color: ColorPallete.darkBlack,
-                                          height: 1.4,
-                                        ),
-                                      ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'out of 5',
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 11,
+                                      color: Colors.amber.shade700,
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
-                            );
-                          },
+                            ),
+                            SizedBox(width: 16),
+                            // Total Reviews
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${serviceReviews.totalReviews} Reviews',
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: ColorPallete.darkBlack,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    serviceReviews.totalReviews > 0
+                                        ? 'Based on customer experiences'
+                                        : 'Be the first to review!',
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 12,
+                                      color: ColorPallete.darkGreySilver,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ] else ...[
+                      // Reviews List
+                      if (serviceReviews.reviews.isNotEmpty) ...[
+                        Container(
+                          width: double.infinity,
+                          constraints: BoxConstraints(
+                            maxHeight: 400, // Limit height for scrolling
+                          ),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            physics: ClampingScrollPhysics(),
+                            itemCount: serviceReviews.reviews.length,
+                            separatorBuilder: (context, index) => Divider(
+                              color: ColorPallete.concrete50,
+                              height: 1,
+                            ),
+                            itemBuilder: (context, index) {
+                              final review = serviceReviews.reviews[index];
+                              return Container(
+                                padding: EdgeInsets.all(16),
+                                color: Colors.white,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        // User Avatar
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: ColorPallete.primaryColor
+                                                .withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                              color: ColorPallete.primaryColor
+                                                  .withOpacity(0.3),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              review.userInitial,
+                                              style: GoogleFonts.ubuntu(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color:
+                                                    ColorPallete.primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    review.displayName,
+                                                    style: GoogleFonts.ubuntu(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: ColorPallete
+                                                          .darkBlack,
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  Container(
+                                                    padding:
+                                                        EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          Colors.amber.shade50,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                      border: Border.all(
+                                                        color: Colors
+                                                            .amber.shade200,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.star,
+                                                          size: 12,
+                                                          color: Colors
+                                                              .amber.shade600,
+                                                        ),
+                                                        SizedBox(width: 2),
+                                                        Text(
+                                                          '${review.rating ?? 0}',
+                                                          style: GoogleFonts
+                                                              .ubuntu(
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: Colors
+                                                                .amber.shade700,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              SizedBox(height: 2),
+                                              if (review.createdAt != null)
+                                                Text(
+                                                  _formatDate(
+                                                      review.createdAt!),
+                                                  style: GoogleFonts.ubuntu(
+                                                    fontSize: 11,
+                                                    color: ColorPallete
+                                                        .darkGreySilver,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (review.comment != null &&
+                                        review.comment!.isNotEmpty) ...[
+                                      SizedBox(height: 12),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: ColorPallete.concrete50
+                                              .withOpacity(0.5),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          review.comment!,
+                                          style: GoogleFonts.ubuntu(
+                                            fontSize: 13,
+                                            color: ColorPallete.darkBlack,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ] else ...[
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(12),
+                              bottomRight: Radius.circular(12),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.rate_review_outlined,
+                                size: 48,
+                                color: ColorPallete.darkGreySilver,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'No reviews yet',
+                                style: GoogleFonts.ubuntu(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: ColorPallete.darkGreySilver,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Be the first to review this service!',
+                                style: GoogleFonts.ubuntu(
+                                  fontSize: 12,
+                                  color: ColorPallete.darkGreySilver,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ));
+            } else if (state is ReviewFailure) {
+              // Check if the error is about no reviews found and show empty state instead
+              if (state.error.toLowerCase().contains('not found') ||
+                  state.error.toLowerCase().contains('no reviews')) {
+                return Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: ColorPallete.concrete50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Rating Summary Section for empty reviews
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            topRight: Radius.circular(12),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Empty Rating Display
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.grey.shade50,
+                                    Colors.grey.shade100,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.star_outline,
+                                        color: Colors.grey.shade600,
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        '0.0',
+                                        style: GoogleFonts.ubuntu(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.grey.shade700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'out of 5',
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            // No Reviews Text
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '0 Reviews',
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: ColorPallete.darkBlack,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    'Be the first to review!',
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 12,
+                                      color: ColorPallete.darkGreySilver,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Empty state message
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.all(20),
@@ -1428,10 +1597,11 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                         ),
                       ),
                     ],
-                  ],
-                ),
-              );
-            } else if (state is ReviewFailure) {
+                  ),
+                );
+              }
+
+              // Show error for actual errors (not "not found")
               return Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(16),
@@ -1452,7 +1622,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Failed to load reviews: ${state.error}',
+                        'Unable to load reviews. Please try again.',
                         style: GoogleFonts.ubuntu(
                           fontSize: 14,
                           color: Colors.red.shade700,

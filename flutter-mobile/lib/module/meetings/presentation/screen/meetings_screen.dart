@@ -1,5 +1,4 @@
 import 'package:Appointly/core/theme/color_pallete.dart';
-import 'package:Appointly/module/meetings/presentation/bloc/booking_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/service_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_screen.dart';
 import 'package:Appointly/module/meetings/presentation/screen/history_meeting.dart';
@@ -18,7 +17,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/review_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/review_event.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/review_state.dart';
-import 'package:Appointly/module/meetings/repository/review_repository.dart';
+import 'dart:async';
 // Repository is already imported above
 
 class MeetingsScreen extends StatefulWidget {
@@ -40,16 +39,20 @@ class _MeetingsScreenState extends State<MeetingsScreen>
   bool _isSearchBarVisible = true;
   String _searchQuery = '';
   List<dynamic> _filteredResults = [];
-  final _savedServiceRepository = SavedServiceRepository();
-
-  // Map untuk menyimpan service reviews berdasarkan serviceId
+  final _savedServiceRepository =
+      SavedServiceRepository(); // Map untuk menyimpan service reviews berdasarkan serviceId
   Map<int, Map<String, dynamic>> _serviceReviews = {};
 
   // Set untuk melacak serviceId yang sedang di-fetch untuk mencegah duplikasi
   Set<int> _fetchingServices = {};
 
-  // ServiceId yang sedang di-fetch (untuk melacak response)
-  int? _currentFetchingServiceId;
+  // Map untuk melacak multiple service requests dan responses
+  Map<int, bool> _serviceRequestMap = {};
+  // Timeout untuk request yang terlalu lama
+  Map<int, Timer?> _requestTimers = {};
+
+  // Set untuk melacak service yang sudah dijadwalkan untuk fetch
+  Set<int> _scheduledServices = {};
 
   @override
   void initState() {
@@ -65,6 +68,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
     WidgetsBinding.instance.removeObserver(this);
     _scrollController.removeListener(_scrollistener);
     _scrollController.dispose();
+    _cleanupTimers(); // Cleanup timers on dispose
     super.dispose();
   }
 
@@ -94,19 +98,70 @@ class _MeetingsScreenState extends State<MeetingsScreen>
   }
 
   Future<void> _refreshData() async {
+    print('🔄 Refreshing data - clearing all caches...');
+    _debugServiceState(); // Debug state sebelum clear    // Clear cache saat refresh untuk memastikan data fresh
+    setState(() {
+      _serviceReviews.clear();
+      _fetchingServices.clear();
+      _serviceRequestMap.clear();
+      _scheduledServices.clear(); // Clear scheduled services too
+    });
+
+    // Cleanup timers
+    _cleanupTimers();
+
+    print('✅ All caches cleared, fetching fresh service data...');
     context.read<ServiceBloc>().add(GetServiceEvent());
     return Future.value();
   }
 
   void _fetchServiceReviews(int serviceId) {
-    // Hanya fetch jika belum ada data dan tidak sedang di-fetch
-    if (!_serviceReviews.containsKey(serviceId) &&
+    // Hanya fetch jika belum ada data valid dan tidak sedang di-fetch
+    if (!_isValidReviewData(_serviceReviews[serviceId]) &&
         !_fetchingServices.contains(serviceId)) {
+      print('🔍 Fetching reviews for service $serviceId...');
+      // Don't use setState during build phase - just modify the collections directly
       _fetchingServices.add(serviceId);
-      _currentFetchingServiceId = serviceId;
+      _serviceRequestMap[serviceId] = true;
+
+      // Set timeout untuk request
+      _requestTimers[serviceId] = Timer(Duration(seconds: 10), () {
+        _handleRequestTimeout(serviceId);
+      });
+
       context
           .read<ReviewBloc>()
           .add(GetServiceReviewsEvent(serviceId: serviceId));
+    } else {
+      if (_isValidReviewData(_serviceReviews[serviceId])) {
+        final cached = _serviceReviews[serviceId];
+        print(
+            '📦 Using cached reviews for service $serviceId: ${cached?['averageRating']} avg, ${cached?['totalReviews']} total');
+      } else if (_fetchingServices.contains(serviceId)) {
+        print('⏳ Already fetching reviews for service $serviceId...');
+      }
+    }
+  }
+
+  // New method to schedule review fetching safely
+  void _scheduleServiceReviewFetch(int serviceId) {
+    // Only schedule if not already scheduled or fetching
+    if (!_scheduledServices.contains(serviceId) &&
+        !_fetchingServices.contains(serviceId) &&
+        !_isValidReviewData(_serviceReviews[serviceId])) {
+      print('📅 Scheduling review fetch for service $serviceId');
+      _scheduledServices.add(serviceId);
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          print('⚡ Executing scheduled fetch for service $serviceId');
+          _fetchServiceReviews(serviceId);
+          _scheduledServices.remove(serviceId);
+        }
+      });
+    } else {
+      print(
+          '⏭️ Skipping schedule for service $serviceId - already scheduled: ${_scheduledServices.contains(serviceId)}, fetching: ${_fetchingServices.contains(serviceId)}, has data: ${_isValidReviewData(_serviceReviews[serviceId])}');
     }
   }
 
@@ -135,6 +190,91 @@ class _MeetingsScreenState extends State<MeetingsScreen>
         backgroundColor: ColorPallete.primaryDark,
       ),
     );
+  }
+
+  // Method untuk memvalidasi data reviews
+  bool _isValidReviewData(Map<String, dynamic>? reviewData) {
+    if (reviewData == null) return false;
+    return reviewData.containsKey('averageRating') &&
+        reviewData.containsKey('totalReviews');
+  }
+
+  // Method untuk mendapatkan cached review atau default values
+  Map<String, dynamic> _getServiceReviewData(int serviceId) {
+    final cachedData = _serviceReviews[serviceId];
+    if (_isValidReviewData(cachedData)) {
+      return cachedData!;
+    }
+
+    // Return default values - ini akan tetap menampilkan service card
+    // meskipun belum ada review data
+    return {
+      'averageRating': 0.0,
+      'totalReviews': 0,
+    };
+  }
+
+  // Method untuk mengecek apakah service memiliki actual review data (bukan default)
+  bool _hasActualReviewData(int serviceId) {
+    final cachedData = _serviceReviews[serviceId];
+    if (!_isValidReviewData(cachedData)) return false;
+
+    // Check if it has actual rating/review data
+    final avgRating = cachedData!['averageRating'] as double;
+    final totalReviews = cachedData['totalReviews'] as int;
+
+    return avgRating > 0.0 || totalReviews > 0;
+  }
+
+  // Method untuk debug state
+  void _debugServiceState() {
+    print('🔍 Current Service Reviews State:');
+    print('   - Cached services: ${_serviceReviews.keys.toList()}');
+    print('   - Fetching services: ${_fetchingServices.toList()}');
+    print('   - Request map: ${_serviceRequestMap.keys.toList()}');
+    print('   - Scheduled services: ${_scheduledServices.toList()}');
+  }
+
+  // Method untuk memaksa fetch ulang reviews
+  void _forceRefreshServiceReviews(List<int> serviceIds) {
+    print('🔄 Force refreshing reviews for services: $serviceIds');
+    for (int serviceId in serviceIds) {
+      // Clear existing data for this service
+      _serviceReviews.remove(serviceId);
+      _fetchingServices.remove(serviceId);
+      _serviceRequestMap.remove(serviceId);
+      _scheduledServices.remove(serviceId);
+
+      // Schedule fresh fetch
+      _scheduleServiceReviewFetch(serviceId);
+    }
+  }
+
+  // Method untuk handle timeout
+  void _handleRequestTimeout(int serviceId) {
+    print('⏰ Request timeout for service $serviceId');
+    if (mounted) {
+      setState(() {
+        _fetchingServices.remove(serviceId);
+        _serviceRequestMap.remove(serviceId);
+        _requestTimers.remove(serviceId);
+      });
+    } else {
+      // Handle case when widget is not mounted
+      _fetchingServices.remove(serviceId);
+      _serviceRequestMap.remove(serviceId);
+      _requestTimers.remove(serviceId);
+    }
+
+    // Reschedule this specific service for retry
+    print('🔄 Rescheduling service $serviceId after timeout');
+    _scheduleServiceReviewFetch(serviceId);
+  }
+
+  // Method untuk cleanup timers
+  void _cleanupTimers() {
+    _requestTimers.values.forEach((timer) => timer?.cancel());
+    _requestTimers.clear();
   }
 
   @override
@@ -198,27 +338,78 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                 listeners: [
                   BlocListener<ReviewBloc, ReviewState>(
                     listener: (context, state) {
-                      if (state is GetServiceReviewsSuccess) {
-                        // Update service reviews map dengan data baru
-                        if (_currentFetchingServiceId != null) {
-                          setState(() {
-                            _serviceReviews[_currentFetchingServiceId!] = {
-                              'averageRating':
-                                  state.serviceReviews.averageRating,
-                              'totalReviews': state.serviceReviews.totalReviews,
-                            };
-                            _fetchingServices.remove(_currentFetchingServiceId);
-                            _currentFetchingServiceId = null;
-                          });
+                      print(
+                          '🎭 ReviewBloc state changed: ${state.runtimeType}');
+
+                      if (state is ReviewLoading) {
+                        print('🔄 Review loading state detected');
+                      } else if (state is GetServiceReviewsSuccess) {
+                        // Gunakan service ID dari state untuk mapping yang tepat
+                        final serviceId = state.serviceId;
+                        final serviceReviews = state.serviceReviews;
+
+                        // Validasi data yang masuk
+                        if (serviceId > 0) {
+                          print(
+                              '🎯 Successfully fetched reviews for service $serviceId:');
+                          print(
+                              '   - Average Rating: ${serviceReviews.averageRating}');
+                          print(
+                              '   - Total Reviews: ${serviceReviews.totalReviews}');
+                          print(
+                              '   - Reviews Count: ${serviceReviews.reviews.length}');
+
+                          if (mounted) {
+                            setState(() {
+                              _serviceReviews[serviceId] = {
+                                'averageRating': serviceReviews.averageRating,
+                                'totalReviews': serviceReviews.totalReviews,
+                              };
+                              _fetchingServices.remove(serviceId);
+                              _serviceRequestMap.remove(serviceId);
+
+                              // Cancel timeout timer
+                              _requestTimers[serviceId]?.cancel();
+                              _requestTimers.remove(serviceId);
+                            });
+
+                            print(
+                                '✅ Successfully cached reviews for service $serviceId');
+                            print(
+                                '🔄 Current cached data: ${_serviceReviews[serviceId]}');
+                          }
+                        } else {
+                          print('❌ Invalid service ID received: $serviceId');
                         }
                       } else if (state is ReviewFailure) {
-                        // Handle error case
-                        if (_currentFetchingServiceId != null) {
+                        // Handle error case - remove all pending requests
+                        print('❌ Failed to fetch reviews: ${state.error}');
+                        print('🔍 Error details: ${state.toString()}');
+
+                        // Try to get service ID from error if available
+                        // If ReviewFailure has serviceId property, use it
+                        // Otherwise, clear all pending requests
+                        if (mounted) {
                           setState(() {
-                            _fetchingServices.remove(_currentFetchingServiceId);
-                            _currentFetchingServiceId = null;
+                            // For now, clear all pending requests
+                            // TODO: Improve this to only clear specific failed service
+                            _fetchingServices.clear();
+                            _serviceRequestMap.clear();
                           });
                         }
+
+                        // Optionally, you can implement retry logic here
+                        print('🔄 Will retry failed services in 5 seconds...');
+                        Timer(Duration(seconds: 5), () {
+                          if (mounted) {
+                            final allServiceIds = _fetchingServices.toList();
+                            if (allServiceIds.isNotEmpty) {
+                              print(
+                                  '🔄 Retrying failed services: $allServiceIds');
+                              _forceRefreshServiceReviews(allServiceIds);
+                            }
+                          }
+                        });
                       }
                     },
                   ),
@@ -279,7 +470,25 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                                       service.option.any((option) => option
                                           .toLowerCase()
                                           .contains(searchLower));
-                                }).toList();
+                                }).toList(); // Schedule a delayed check untuk services yang belum mendapat data
+                      Timer(Duration(seconds: 3), () {
+                        if (mounted) {
+                          final servicesWithoutData = filteredServices
+                              .where((service) =>
+                                  !_isValidReviewData(
+                                      _serviceReviews[service.id]) &&
+                                  !_fetchingServices.contains(service.id) &&
+                                  !_scheduledServices.contains(service.id))
+                              .map((service) => service.id as int)
+                              .toList();
+
+                          if (servicesWithoutData.isNotEmpty) {
+                            print(
+                                '🔄 Retrying fetch for services without data: $servicesWithoutData');
+                            _forceRefreshServiceReviews(servicesWithoutData);
+                          }
+                        }
+                      });
 
                       if (filteredServices.isEmpty) {
                         return Center(
@@ -298,30 +507,43 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                           ),
                         );
                       }
-
                       return RefreshIndicator(
                         onRefresh: _refreshData,
                         child: ListView.builder(
                           controller: _scrollController,
                           itemCount: filteredServices.length,
                           itemBuilder: (context, index) {
-                            final service = filteredServices[index];
+                            final service = filteredServices[
+                                index]; // Schedule fetching after the build is complete safely
+                            _scheduleServiceReviewFetch(service.id);
 
-                            // Fetch service reviews jika belum ada
-                            _fetchServiceReviews(service.id);
-
-                            // Dapatkan review data untuk service ini
-                            final reviewData = _serviceReviews[service.id];
+                            // Gunakan method helper untuk mendapatkan data review yang konsisten
+                            final reviewData =
+                                _getServiceReviewData(service.id);
                             final averageRating =
-                                reviewData?['averageRating']?.toDouble() ?? 0.0;
+                                reviewData['averageRating'].toDouble();
                             final totalReviews =
-                                reviewData?['totalReviews'] ?? 0;
+                                reviewData['totalReviews'] as int;
+
+                            // Check jika ini adalah data asli atau default
+                            final hasActualData =
+                                _hasActualReviewData(service.id);
+
+                            // Debug info dengan service ID yang spesifik
+                            print(
+                                '📊 Service ${service.id} (${service.title}): ${averageRating.toStringAsFixed(1)} stars, $totalReviews reviews${hasActualData ? ' (actual data)' : ' (default/loading)'}');
+                            print(
+                                '🔍 Has cached data: ${_isValidReviewData(_serviceReviews[service.id])}');
+                            print(
+                                '🔄 Is fetching: ${_fetchingServices.contains(service.id)}');
+                            print(
+                                '📅 Is scheduled: ${_scheduledServices.contains(service.id)}');
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12.0),
                               child: CardService(
                                 headService: service.title,
-                                descService: service.description,
+                                descService: service.description, 
                                 imageService: service.image,
                                 timeService: service.days,
                                 locationService: service.location,
@@ -343,6 +565,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                                       ));
                                 },
                                 onSave: () => _onSaveService(service),
+                                // Pastikan rating dan review menggunakan data yang konsisten
                                 rating: averageRating.round(),
                                 review: totalReviews,
                               ),

@@ -41,11 +41,13 @@ class Bookings {
   final List<Booking> pending;
   final List<Booking> approved;
   final List<Booking> declined;
+  final List<Booking> completed;
 
   Bookings({
     required this.pending,
     required this.approved,
     required this.declined,
+    required this.completed,
   });
 
   factory Bookings.fromJson(Map<String, dynamic> json) => Bookings(
@@ -58,6 +60,10 @@ class Bookings {
                 .toList() ??
             [],
         declined: (json['Declined'] as List<dynamic>?)
+                ?.map((e) => Booking.fromJson(e))
+                .toList() ??
+            [],
+        completed: (json['Completed'] as List<dynamic>?)
                 ?.map((e) => Booking.fromJson(e))
                 .toList() ??
             [],

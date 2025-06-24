@@ -37,7 +37,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     print('🚀 Initializing NotificationScreen');
     print('👤 User ID: ${widget.userId}');
     print('📦 Booking ID: ${widget.bookingId}');
-    
+
     _initFirebaseMessaging();
     _loadNotifications();
   }
@@ -100,7 +100,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     print('📝 Title: $title');
     print('📝 Body: $body');
     print('📝 BookingId: $bookingId');
-    
+
     final payload = jsonEncode({
       'bookingId': bookingId,
       'type': 'booking',
@@ -190,7 +190,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             );
           } else {
             final filteredNotifications = state.notifications
-                .where((notif) => notif['userId'] == widget.userId)
+                .where((notif) => notif['userId'].toString() == widget.userId)
                 .toList();
 
             _logger

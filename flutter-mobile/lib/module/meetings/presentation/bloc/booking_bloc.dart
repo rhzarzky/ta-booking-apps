@@ -21,9 +21,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     // Handle token update
     on<UpdateTokenEvent>((event, emit) {
       historybookingRepository.updateToken(event.token);
-    });
-
-    // Get all bookings
+    }); // Get all bookings
     on<GetBookingEvent>((event, emit) async {
       emit(BookingLoading());
       try {
@@ -33,7 +31,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           historybookingRepository.updateToken(token);
         }
 
-        final result = await historybookingRepository.getAllBookings();
+        final result = await historybookingRepository.getAllBookings(
+            month: event.month, year: event.year);
         final currentUser = await _authRepository.getUserData();
 
         // Categorize bookings by status
@@ -47,6 +46,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           if (currentUser != null && booking.service.id != 0) {
             switch (booking.status.toLowerCase()) {
               case 'approved':
+              case 'completed': // Booking yang completed tetap di tab approved untuk bisa di-review
                 approved.add(booking);
                 break;
               case 'pending':
@@ -61,6 +61,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
         // Process approved bookings
         for (var booking in result.services.approved) {
+          if (currentUser != null && booking.service.id != 0) {
+            approved.add(booking);
+          }
+        }
+
+        // Process completed bookings - tambahkan ke approved agar tetap di tab approved
+        for (var booking in result.services.completed) {
           if (currentUser != null && booking.service.id != 0) {
             approved.add(booking);
           }
@@ -181,9 +188,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           bookingDetail: currentState.bookingDetail,
         ));
       }
-    });
-
-    // Filter bookings by type
+    }); // Filter bookings by type
     on<FilterBookAppointmentEvent>((event, emit) async {
       if (state is BookingLoaded) {
         // Load all bookings first
@@ -191,6 +196,66 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
         if (event.filterType != null && state is BookingLoaded) {
           final currentState = state as BookingLoaded;
+
+          // For search functionality
+          if (event.filterType == 'search' && event.searchQuery != null) {
+            final searchQuery = event.searchQuery!.toLowerCase();
+
+            // Search in all booking lists
+            final filteredApproved = currentState.approved
+                .where((booking) =>
+                    booking.service.title.toLowerCase().contains(searchQuery) ||
+                    booking.service.description
+                        .toLowerCase()
+                        .contains(searchQuery) ||
+                    booking.service.location
+                        .toLowerCase()
+                        .contains(searchQuery) ||
+                    booking.date.toLowerCase().contains(searchQuery) ||
+                    booking.time.toLowerCase().contains(searchQuery) ||
+                    (booking.note?.toLowerCase().contains(searchQuery) ??
+                        false))
+                .toList();
+
+            final filteredPending = currentState.pending
+                .where((booking) =>
+                    booking.service.title.toLowerCase().contains(searchQuery) ||
+                    booking.service.description
+                        .toLowerCase()
+                        .contains(searchQuery) ||
+                    booking.service.location
+                        .toLowerCase()
+                        .contains(searchQuery) ||
+                    booking.date.toLowerCase().contains(searchQuery) ||
+                    booking.time.toLowerCase().contains(searchQuery) ||
+                    (booking.note?.toLowerCase().contains(searchQuery) ??
+                        false))
+                .toList();
+
+            final filteredDeclined = currentState.declined
+                .where((booking) =>
+                    booking.service.title.toLowerCase().contains(searchQuery) ||
+                    booking.service.description
+                        .toLowerCase()
+                        .contains(searchQuery) ||
+                    booking.service.location
+                        .toLowerCase()
+                        .contains(searchQuery) ||
+                    booking.date.toLowerCase().contains(searchQuery) ||
+                    booking.time.toLowerCase().contains(searchQuery) ||
+                    (booking.note?.toLowerCase().contains(searchQuery) ??
+                        false))
+                .toList();
+
+            emit(BookingLoaded(
+              approved: filteredApproved,
+              pending: filteredPending,
+              declined: filteredDeclined,
+              stats: currentState.stats,
+              bookingDetail: currentState.bookingDetail,
+            ));
+            return;
+          }
 
           // Apply filter based on type
           switch (event.filterType!.toLowerCase()) {
@@ -292,6 +357,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         if (currentUser != null && booking.service.id != 0) {
           switch (booking.status.toLowerCase()) {
             case 'approved':
+            case 'completed': // Booking yang completed tetap di tab approved untuk bisa di-review
               approved.add(booking);
               break;
             case 'pending':
@@ -306,6 +372,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
       // Process approved bookings
       for (var booking in result.services.approved) {
+        if (currentUser != null && booking.service.id != 0) {
+          approved.add(booking);
+        }
+      }
+
+      // Process completed bookings - tambahkan ke approved agar tetap di tab approved
+      for (var booking in result.services.completed) {
         if (currentUser != null && booking.service.id != 0) {
           approved.add(booking);
         }

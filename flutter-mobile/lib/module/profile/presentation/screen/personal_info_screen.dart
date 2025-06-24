@@ -366,6 +366,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
             height: 24.0,
           ),
           FieldProfile(
+            enabled: false,
             labelText: 'Email Address',
             hintText: 'JohnDoe@gmail.com',
             controller: emailController,

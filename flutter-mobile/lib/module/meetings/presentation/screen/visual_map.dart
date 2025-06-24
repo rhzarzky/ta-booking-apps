@@ -3,6 +3,7 @@ import 'package:Appointly/module/meetings/presentation/bloc/map_bloc.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/map_event.dart';
 import 'package:Appointly/module/meetings/presentation/bloc/map_state.dart';
 import 'package:Appointly/module/meetings/model/booking_model.dart';
+import 'package:Appointly/module/meetings/model/location_model.dart';
 import 'package:Appointly/module/meetings/repository/map_repository.dart';
 import 'package:Appointly/utils/config.dart';
 import 'package:flutter/material.dart';
@@ -44,27 +45,27 @@ class _VisualMapState extends State<VisualMap> {
       debugPrint('Mapbox access token set successfully.');
     } else {
       debugPrint('Mapbox access token is not set or empty.');
-    }
-
-    // Tunggu sejenak untuk memastikan widget telah dibangun sepenuhnya
+    } // Tunggu sejenak untuk memastikan widget telah dibangun sepenuhnya
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.booking.services.approved.isNotEmpty &&
           widget.booking.services.approved[0].option == 'Offline') {
-        // Pastikan lokasi tidak kosong dan menangani lokasi yang tidak valid
-        final location = widget.booking.services.approved[0].service.location;
+        // Ekstrak data lokasi dengan berbagai format yang didukung
+        final locationModel = _extractLocationFromService();
 
-        debugPrint('Lokasi asli: "$location"');
+        debugPrint('LocationModel yang diekstrak: $locationModel');
 
-        if (location.trim().isNotEmpty) {
-          _mapBloc.add(LoadMapEvent(location.trim()));
-          debugPrint('LoadMapEvent triggered with location: "$location"');
+        // Validasi apakah ada data lokasi yang valid
+        if (locationModel.hasCoordinates ||
+            locationModel.hasAddress ||
+            locationModel.hasName) {
+          _mapBloc.add(LoadMapWithLocationEvent(locationModel));
+          debugPrint(
+              'LoadMapWithLocationEvent triggered with locationModel: $locationModel');
         } else {
-          debugPrint('Lokasi kosong, tidak dapat memuat peta');
-
-          // Tampilkan error toast atau snackbar
+          debugPrint('Tidak ada data lokasi yang valid');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Lokasi tidak ditemukan'),
+              content: Text('Data lokasi tidak valid'),
               backgroundColor: Colors.red,
             ),
           );
@@ -210,7 +211,8 @@ class _VisualMapState extends State<VisualMap> {
                         child: FloatingActionButton(
                           mini: true,
                           backgroundColor: Colors.white,
-                          child: Icon(Icons.my_location, color: ColorPallete.primaryColor),
+                          child: Icon(Icons.my_location,
+                              color: ColorPallete.primaryColor),
                           onPressed: () {
                             setState(() {
                               _currentMarkerAdded = false;
@@ -828,7 +830,6 @@ class _VisualMapState extends State<VisualMap> {
     );
   }
 
-
   // Menambahkan marker untuk titik tengah rute
   Future<void> _addMidpointMarker(mapbox.Point midPoint) async {
     if (_mapboxMap == null) {
@@ -846,11 +847,10 @@ class _VisualMapState extends State<VisualMap> {
 
       mapbox.PointAnnotationOptions options = mapbox.PointAnnotationOptions(
           geometry: midPoint,
-          iconSize: 0.8, 
+          iconSize: 0.8,
           iconOffset: [0, 0],
-          textField:
-              "😎", 
-          textColor: 0xFF00CCAA, 
+          textField: "😎",
+          textColor: 0xFF00CCAA,
           textSize: 12.0,
           iconImage: "😁");
 
@@ -859,5 +859,46 @@ class _VisualMapState extends State<VisualMap> {
     } catch (e) {
       debugPrint('Error adding midpoint marker: $e');
     }
+  }
+
+  // Helper method untuk mengkonversi service data ke LocationModel
+  LocationModel _extractLocationFromService() {
+    if (widget.booking.services.approved.isEmpty) {
+      return LocationModel(address: 'Default Location');
+    }
+
+    final service = widget.booking.services.approved[0].service;
+
+    // Coba ekstrak berbagai format data lokasi dari service
+    // Priority 1: Cek jika ada field latitude/longitude terpisah
+    double? lat;
+    double? lng;
+
+    // Asumsi service memiliki field seperti service.latitude, service.longitude
+    // Anda perlu menyesuaikan dengan struktur model Service yang sebenarnya
+    try {
+      // Contoh: service.latitude dan service.longitude (sesuaikan dengan model Anda)
+      if (service.toString().contains('latitude') &&
+          service.toString().contains('longitude')) {
+        // Implementasi untuk mengekstrak lat/lng jika ada di model service
+        // lat = service.latitude;
+        // lng = service.longitude;
+      }
+    } catch (e) {
+      debugPrint('Error extracting coordinates from service: $e');
+    }
+
+    // Priority 2: Gunakan alamat yang ada
+    String address = service.location.trim();
+
+    // Priority 3: Gunakan nama service sebagai fallback
+    String name = service.title;
+
+    return LocationModel(
+      name: name.isNotEmpty ? name : null,
+      latitude: lat,
+      longitude: lng,
+      address: address.isNotEmpty ? address : null,
+    );
   }
 }

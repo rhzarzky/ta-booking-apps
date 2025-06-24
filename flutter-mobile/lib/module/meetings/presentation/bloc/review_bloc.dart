@@ -7,7 +7,6 @@ import 'package:logger/logger.dart';
 class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
   final ReviewRepository _reviewRepository;
   final Logger _logger = Logger();
-
   ReviewBloc({required ReviewRepository reviewRepository})
       : _reviewRepository = reviewRepository,
         super(ReviewInitial()) {
@@ -66,10 +65,12 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
     try {
       emit(ReviewLoading());
 
-      final result = await _reviewRepository.getReview(event.bookingId);
+      final result =
+          await _reviewRepository.getReview(event.serviceId, event.userId);
 
       emit(GetReviewSuccess(review: result));
-      _logger.i('Review fetched successfully for booking ${event.bookingId}');
+      _logger.i(
+          'Review fetched successfully for service ${event.serviceId}, user ${event.userId}');
     } catch (e) {
       _logger.e('Error fetching review: $e');
       emit(ReviewFailure(error: e.toString()));
@@ -102,7 +103,10 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
 
       final result = await _reviewRepository.getServiceReviews(event.serviceId);
 
-      emit(GetServiceReviewsSuccess(serviceReviews: result));
+      emit(GetServiceReviewsSuccess(
+        serviceReviews: result,
+        serviceId: event.serviceId, // Sertakan service ID dalam response
+      ));
       _logger.i(
           'Service reviews fetched successfully for service ${event.serviceId}');
     } catch (e) {

@@ -67,15 +67,11 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
         });
         return;
       }
-
       context
           .read<BookingBloc>()
           .add(BookAppointmentByIdEvent(idBooking: widget.bookingId));
 
-      // Also fetch review for this booking
-      context
-          .read<ReviewBloc>()
-          .add(GetReviewEvent(bookingId: widget.bookingId));
+      // Review will be fetched after booking details are loaded
     });
   }
 
@@ -90,7 +86,15 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     return Scaffold(
       appBar: _buildAppBar(),
       backgroundColor: Colors.white,
-      body: BlocBuilder<BookingBloc, BookingState>(
+      body: BlocConsumer<BookingBloc, BookingState>(
+        listener: (context, state) {
+          // When booking is loaded, fetch the review
+          if (state is BookingLoaded && state.bookingDetail != null) {
+            final booking = state.bookingDetail!;
+            // Get current user ID from shared preferences or auth repository
+            _fetchReviewForBooking(booking);
+          }
+        },
         builder: (context, state) {
           if (state is BookingLoading) {
             return _buildSkeletonLoader();
@@ -187,6 +191,19 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
         },
       ),
     );
+  }
+
+  void _fetchReviewForBooking(detail.BookingDetail booking) async {
+    try {
+      // Fetch all reviews for the service instead of just user's review
+      context.read<ReviewBloc>().add(
+            GetServiceReviewsEvent(
+              serviceId: booking.service.id,
+            ),
+          );
+    } catch (e) {
+      _logger.e('Error fetching service reviews: $e');
+    }
   }
 
   Widget _buildSkeletonLoader() {
@@ -655,7 +672,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Review',
+          'Reviews & Ratings',
           style: GoogleFonts.ubuntu(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -685,7 +702,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                     ),
                     SizedBox(width: 12),
                     Text(
-                      'Loading review...',
+                      'Loading reviews...',
                       style: GoogleFonts.ubuntu(
                         fontSize: 14,
                         color: ColorPallete.darkGreySilver,
@@ -694,94 +711,284 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                   ],
                 ),
               );
-            } else if (state is GetReviewSuccess) {
-              _logger.d(state.review.toString());
-              final review = state.review;
-              return Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: ColorPallete.concrete50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Rating stars
-                    Row(
-                      children: [
-                        Row(
-                          children: List.generate(5, (index) {
-                            return Icon(
-                              Icons.star,
-                              size: 20,
-                              color: index < (review.rating ?? 0)
-                                  ? ColorPallete.secondColor
-                                  : ColorPallete.greySilverChalice,
-                            );
-                          }),
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          '${review.rating ?? 0}/5',
-                          style: GoogleFonts.ubuntu(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: ColorPallete.darkBlack,
-                          ),
-                        ),
-                        Spacer(),
-                        Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: review.status?.color ??
-                                ColorPallete.primaryColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            review.status?.displayName ?? 'Submitted',
-                            style: GoogleFonts.ubuntu(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Review comment
-                    if (review.comment != null &&
-                        review.comment!.isNotEmpty) ...[
-                      SizedBox(height: 12),
+            } else if (state is GetServiceReviewsSuccess) {
+              final serviceReviews = state.serviceReviews;
+
+              if (serviceReviews.reviews.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: ColorPallete.concrete50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.rate_review_outlined,
+                        color: ColorPallete.greySilverChalice,
+                        size: 32,
+                      ),
+                      SizedBox(height: 8),
                       Text(
-                        'Your Review:',
+                        'No reviews yet',
                         style: GoogleFonts.ubuntu(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: ColorPallete.darkBlack,
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
-                        review.comment!,
-                        style: GoogleFonts.ubuntu(
-                          fontSize: 14,
-                          color: ColorPallete.darkGreySilver,
-                        ),
-                      ),
-                    ],
-                    // Review date
-                    if (review.createdAt != null) ...[
-                      SizedBox(height: 8),
-                      Text(
-                        'Reviewed on ${review.createdAt!.toString().split(' ')[0]}',
+                        'Be the first to review this service',
                         style: GoogleFonts.ubuntu(
                           fontSize: 12,
                           color: ColorPallete.darkGreySilver,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
+                  ),
+                );
+              }
+
+              return Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: ColorPallete.concrete50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
+                    // Rating Summary
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(8),
+                          topRight: Radius.circular(8),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          // Average Rating
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    serviceReviews.averageRating
+                                        .toStringAsFixed(1),
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.w700,
+                                      color: ColorPallete.darkBlack,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8),
+                                  Icon(
+                                    Icons.star,
+                                    color: ColorPallete.secondColor,
+                                    size: 24,
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                '${serviceReviews.totalReviews} review${serviceReviews.totalReviews > 1 ? 's' : ''}',
+                                style: GoogleFonts.ubuntu(
+                                  fontSize: 14,
+                                  color: ColorPallete.darkGreySilver,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Spacer(),
+                          // Star Rating Display
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                children: List.generate(5, (index) {
+                                  return Icon(
+                                    Icons.star,
+                                    size: 20,
+                                    color: index <
+                                            serviceReviews.averageRating.round()
+                                        ? ColorPallete.secondColor
+                                        : ColorPallete.greySilverChalice,
+                                  );
+                                }),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Average Rating',
+                                style: GoogleFonts.ubuntu(
+                                  fontSize: 12,
+                                  color: ColorPallete.darkGreySilver,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Reviews List
+                    Container(
+                      constraints: BoxConstraints(
+                        maxHeight: 300, // Limit height to prevent overflow
+                      ),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: ClampingScrollPhysics(),
+                        itemCount: serviceReviews.reviews.length > 3
+                            ? 3 // Show only first 3 reviews
+                            : serviceReviews.reviews.length,
+                        separatorBuilder: (context, index) => Divider(
+                          height: 1,
+                          color: ColorPallete.backgroundBody,
+                        ),
+                        itemBuilder: (context, index) {
+                          final review = serviceReviews.reviews[index];
+                          return Container(
+                            padding: EdgeInsets.all(16),
+                            color: Colors.white,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // User info and rating
+                                Row(
+                                  children: [
+                                    // User avatar (placeholder)
+                                    CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor:
+                                          ColorPallete.primaryColor,
+                                      child: Text(
+                                        review.userName?.isNotEmpty == true
+                                            ? review.userName!
+                                                .substring(0, 1)
+                                                .toUpperCase()
+                                            : 'U',
+                                        style: GoogleFonts.ubuntu(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            review.userName ?? 'Anonymous User',
+                                            style: GoogleFonts.ubuntu(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: ColorPallete.darkBlack,
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              // Rating stars
+                                              Row(
+                                                children: List.generate(5,
+                                                    (starIndex) {
+                                                  return Icon(
+                                                    Icons.star,
+                                                    size: 14,
+                                                    color: starIndex <
+                                                            (review.rating ?? 0)
+                                                        ? ColorPallete
+                                                            .secondColor
+                                                        : ColorPallete
+                                                            .greySilverChalice,
+                                                  );
+                                                }),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                '${review.rating ?? 0}/5',
+                                                style: GoogleFonts.ubuntu(
+                                                  fontSize: 12,
+                                                  color: ColorPallete
+                                                      .darkGreySilver,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Review date
+                                    if (review.createdAt != null)
+                                      Text(
+                                        _formatReviewDate(review.createdAt!),
+                                        style: GoogleFonts.ubuntu(
+                                          fontSize: 11,
+                                          color: ColorPallete.darkGreySilver,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+
+                                // Review comment
+                                if (review.comment != null &&
+                                    review.comment!.isNotEmpty) ...[
+                                  SizedBox(height: 8),
+                                  Text(
+                                    review.comment!,
+                                    style: GoogleFonts.ubuntu(
+                                      fontSize: 13,
+                                      color: ColorPallete.darkBlack,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    // Show more reviews button if there are more than 3 reviews
+                    if (serviceReviews.reviews.length > 3)
+                      Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(8),
+                            bottomRight: Radius.circular(8),
+                          ),
+                        ),
+                        child: TextButton(
+                          onPressed: () {
+                            // TODO: Navigate to all reviews page
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('All reviews page coming soon'),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            'View all ${serviceReviews.totalReviews} reviews',
+                            style: GoogleFonts.ubuntu(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: ColorPallete.primaryColor,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               );
@@ -802,7 +1009,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Failed to load review',
+                      'Failed to load reviews',
                       style: GoogleFonts.ubuntu(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -821,9 +1028,12 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                     SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
-                        context
-                            .read<ReviewBloc>()
-                            .add(GetReviewEvent(bookingId: widget.bookingId));
+                        // Retry fetching service reviews
+                        context.read<ReviewBloc>().add(
+                              GetServiceReviewsEvent(
+                                serviceId: booking.service.id,
+                              ),
+                            );
                       },
                       child: Text(
                         'Retry',
@@ -854,21 +1064,12 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'No review yet',
+                    'Loading reviews...',
                     style: GoogleFonts.ubuntu(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: ColorPallete.darkBlack,
                     ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Review will appear here after you submit one',
-                    style: GoogleFonts.ubuntu(
-                      fontSize: 12,
-                      color: ColorPallete.darkGreySilver,
-                    ),
-                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -962,7 +1163,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
                         note: booking.note,
                         status: booking.status,
                       )
-                    ], declined: [])),
+                    ], declined: [], completed: [])),
               ),
             ),
           );
@@ -998,5 +1199,22 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
         ),
       ),
     );
+  }
+
+  String _formatReviewDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 30) {
+      return DateFormat('MMM d, yyyy').format(date);
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+    } else {
+      return 'Just now';
+    }
   }
 }
