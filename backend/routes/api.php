@@ -15,6 +15,9 @@ Route::post('/resend-otp', [VerificationController::class, 'resendOtp']);
 
 Route::middleware([JwtMiddleware::class])->group(function () {
 
+    // Notifications - no special permission required, just authenticated
+    Route::get('/notifications/recent', [App\Http\Controllers\NotificationController::class, 'getRecentUpdates']);
+    
     Route::middleware(['permission:show user'])->group(function () {
         Route::get('/users', [UserController::class, 'showAllUser']);
         Route::get('/users/{id}', [UserController::class, 'getUserById']);

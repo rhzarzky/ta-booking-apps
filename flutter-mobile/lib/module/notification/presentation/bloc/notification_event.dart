@@ -36,3 +36,13 @@ class ClearNotifications extends NotificationEvent {
     required this.userId,
   });
 }
+
+class FetchNotificationsFromApi extends NotificationEvent {
+  final String userId;
+  final String? lastCheck;
+
+  FetchNotificationsFromApi({
+    required this.userId,
+    this.lastCheck,
+  });
+}

@@ -78,23 +78,38 @@ class NotificationItem extends StatelessWidget {
 
   Widget _buildGetIndicator() {
     switch (indicatorStatus.toLowerCase()) {
-      case 'success':
-        return _successIndicator();
-      case 'pending':
-        return _pendingIndicator();
+      case 'approved':
+        return _approvedIndicator();
+      case 'completed':
+        return _completedIndicator();
       case 'declined':
         return _declinedIndicator();
+      case 'success':
+        return _approvedIndicator();
+      case 'pending':
+        return _pendingIndicator();
       default:
         return _pendingIndicator();
     }
   }
 
-  Widget _successIndicator() {
+  Widget _approvedIndicator() {
     return Container(
       padding: EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.0),
         color: ColorPallete.greenMalachite,
+      ),
+      child: SvgPicture.asset('assets/icons/calendar-check-white.svg'),
+    );
+  }
+
+  Widget _completedIndicator() {
+    return Container(
+      padding: EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24.0),
+        color: ColorPallete.secondColor, // Yellow color for completed bookings
       ),
       child: SvgPicture.asset('assets/icons/calendar-check-white.svg'),
     );
@@ -116,7 +131,8 @@ class NotificationItem extends StatelessWidget {
       padding: EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24.0),
-        color: ColorPallete.redCinnabar,
+        color:
+            ColorPallete.greySilverChalice, // Grey color for declined bookings
       ),
       child: SvgPicture.asset('assets/icons/calendar-x-white.svg'),
     );

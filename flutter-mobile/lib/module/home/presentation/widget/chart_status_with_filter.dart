@@ -29,9 +29,26 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
     super.initState();
     // Don't automatically refresh data on init to avoid multiple calls
     // The parent HomeScreen already calls GetBookingEvent
+
+    // Initialize with the current date
+    final now = DateTime.now();
+    _selectedMonth = now.month;
+    _selectedYear = now.year;
   }
 
   void _refreshData() {
+    // Get current state to check what's currently loaded
+    final currentState = context.read<BookingBloc>().state;
+
+    // Log for debugging
+    if (currentState is BookingLoaded) {
+      if (currentState.month == _selectedMonth &&
+          currentState.year == _selectedYear) {
+        return; // Tidak perlu refresh jika sudah menampilkan bulan/tahun yang sama
+      }
+    }
+
+    // Request fresh data from the API with the selected month/year
     context.read<BookingBloc>().add(GetBookingEvent(
           month: _selectedMonth,
           year: _selectedYear,
@@ -40,44 +57,47 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
 
   @override
   Widget build(BuildContext context) {
-    // Check if there's already a filtered state in the BLoC
-    final currentState = context.read<BookingBloc>().state;
-    if (currentState is BookingLoaded &&
-        currentState.month != null &&
-        currentState.year != null) {
-      // Update local state to match BLoC state without triggering a refresh
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted &&
-            (_selectedMonth != currentState.month ||
-                _selectedYear != currentState.year)) {
+    return BlocListener<BookingBloc, BookingState>(
+      listenWhen: (previous, current) {
+        // Only trigger listener when BookingLoaded states have different month/year
+        if (previous is BookingLoaded && current is BookingLoaded) {
+          return (previous.month != current.month ||
+              previous.year != current.year);
+        }
+        return previous.runtimeType != current.runtimeType;
+      },
+      listener: (context, state) {
+        if (state is BookingLoaded &&
+            state.month != null &&
+            state.year != null) {
+          // Always update local state to match BLoC state when data changes
           setState(() {
-            _selectedMonth = currentState.month!;
-            _selectedYear = currentState.year!;
+            _selectedMonth = state.month!;
+            _selectedYear = state.year!;
           });
         }
-      });
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Insights',
-              style: GoogleFonts.ubuntu(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: ColorPallete.darkBlack,
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Insights',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: ColorPallete.darkBlack,
+                ),
               ),
-            ),
-            _buildFilterBar(),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildChart(),
-      ],
+              _buildFilterBar(),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildChart(),
+        ],
+      ),
     );
   }
 
@@ -127,12 +147,19 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
                   );
                 }),
                 onChanged: (int? value) {
-                  if (value != null) {
+                  if (value != null && value != _selectedMonth) {
                     setState(() {
                       _selectedMonth = value;
                     });
-                    // Refresh data only when user explicitly changes the filter
-                    _refreshData();
+
+                    // Add a small delay to ensure setState completes
+                    Future.microtask(() {
+                      // Make sure we're still mounted
+                      if (mounted) {
+                        // Refresh data immediately when month changes
+                        _refreshData();
+                      }
+                    });
                   }
                 },
               ),
@@ -170,12 +197,18 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
                   );
                 }).toList(),
                 onChanged: (int? value) {
-                  if (value != null) {
+                  if (value != null && value != _selectedYear) {
                     setState(() {
                       _selectedYear = value;
                     });
-                    // Refresh data only when user explicitly changes the filter
-                    _refreshData();
+                    // Add a small delay to ensure setState completes
+                    Future.microtask(() {
+                      // Make sure we're still mounted
+                      if (mounted) {
+                        // Refresh data immediately when year changes
+                        _refreshData();
+                      }
+                    });
                   }
                 },
               ),
@@ -189,26 +222,71 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
   Widget _buildChart() {
     return BlocBuilder<BookingBloc, BookingState>(
       buildWhen: (previous, current) {
-        // Only rebuild when the state changes from something else to BookingLoaded
-        // or when changing between different BookingLoaded states
-        return current is BookingLoaded;
+        // Always rebuild when the state type changes (loading -> loaded)
+        if (previous.runtimeType != current.runtimeType) {
+          return true;
+        }
+
+        // Rebuild when BookingLoaded state changes relevant data
+        if (current is BookingLoaded && previous is BookingLoaded) {
+          final shouldRebuild = previous.month != current.month ||
+              previous.year != current.year ||
+              previous.approved.length != current.approved.length ||
+              previous.pending.length != current.pending.length ||
+              previous.declined.length != current.declined.length;
+
+          if (shouldRebuild) {
+            print('Data changed, rebuilding chart: '
+                'Month: ${previous.month} -> ${current.month}, '
+                'Year: ${previous.year} -> ${current.year}');
+          }
+
+          return shouldRebuild;
+        }
+        return false;
       },
       builder: (context, state) {
         if (state is BookingLoaded) {
+          // Selalu gunakan month/year dari state karena itu adalah sumber kebenaran data
+          final int displayMonth = state.month ?? _selectedMonth;
+          final int displayYear = state.year ?? _selectedYear;
+
+          // Pastikan nilai lokal selalu sinkron dengan state
+          // Ini dapat menyelesaikan masalah dropdown tidak berubah
+          if (displayMonth != _selectedMonth || displayYear != _selectedYear) {
+            // Gunakan Future.microtask agar setState tidak berjalan di tengah build
+            Future.microtask(() {
+              if (mounted) {
+                setState(() {
+                  _selectedMonth = displayMonth;
+                  _selectedYear = displayYear;
+                });
+              }
+            });
+          }
+
           // Extract the data from the state
           final approved = state.approved;
           final pending = state.pending;
           final declined = state.declined;
 
-          // Process data for chart
+          // Process data for chart using the month/year from state
           final chartData =
               _processDataForLastSevenDays(approved, pending, declined);
 
+          // Format the period label using the source of truth (state)
+          final String currentPeriod = DateFormat('MMMM yyyy').format(
+            DateTime(displayYear, displayMonth),
+          ); // Create a key that changes when either selected or state month/year changes, forcing a full rebuild
+          final String chartKey =
+              'chart-$displayMonth-$displayYear-selected-$_selectedMonth-$_selectedYear';
+
           return Padding(
-            padding: const EdgeInsets.all(8.0),
+            key: Key(chartKey),
+            padding: const EdgeInsets.all(0.0),
             child: Column(
               children: [
-                // Legend Row
+                // Current Month/Year Display
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                   child: Wrap(
@@ -238,7 +316,7 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
                         ? 400.0
                         : constraints.maxWidth;
                     return SizedBox(
-                      height: 360,
+                      height: 320,
                       width: constraints.maxWidth,
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
@@ -247,6 +325,7 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
                           width: chartWidth,
                           child: BarChart(
                             BarChartData(
+                              minY: 0,
                               alignment: BarChartAlignment.spaceAround,
                               barGroups: _getBarGroups(chartData),
                               titlesData: FlTitlesData(
@@ -259,20 +338,18 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
                                 leftTitles: AxisTitles(
                                   sideTitles: SideTitles(
                                     showTitles: true,
-                                    getTitlesWidget: (value, meta) {
-                                      return Padding(
-                                        padding:
-                                            const EdgeInsets.only(right: 8.0),
-                                        child: Text(
-                                          value.toInt().toString(),
-                                          style: const TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.grey,
-                                          ),
+                                    reservedSize: 40,
+                                    interval: 1,
+                                    getTitlesWidget:
+                                        (double value, TitleMeta meta) {
+                                      return Text(
+                                        value.toInt().toString(),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: ColorPallete.darkBlack,
                                         ),
                                       );
                                     },
-                                    reservedSize: 30,
                                   ),
                                 ),
                                 bottomTitles: AxisTitles(
@@ -284,7 +361,6 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
                                       if (index >= chartData.length) {
                                         return const SizedBox();
                                       }
-
                                       return Padding(
                                         padding:
                                             const EdgeInsets.only(top: 8.0),
@@ -373,17 +449,31 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
     List<Booking> pending,
     List<Booking> declined,
   ) {
+    // Get current state - ALWAYS use state data as source of truth
+    final currentState = context.read<BookingBloc>().state;
+    int monthToUse, yearToUse;
+
+    if (currentState is BookingLoaded &&
+        currentState.month != null &&
+        currentState.year != null) {
+      // Selalu gunakan month/year dari state karena data yang kita proses berasal dari state
+      monthToUse = currentState.month!;
+      yearToUse = currentState.year!;
+    } else {
+      // Fallback ke selected values (seharusnya tidak terjadi)
+      monthToUse = _selectedMonth;
+      yearToUse = _selectedYear;
+    }
+
     final Map<String, DailyAppointmentData> dailyData = {};
 
     // Calculate the first and last day of the selected month/year
-    final DateTime firstDayOfMonth = DateTime(_selectedYear, _selectedMonth, 1);
-    final DateTime lastDayOfMonth =
-        DateTime(_selectedYear, _selectedMonth + 1, 0);
-
-    // If it's the current month, only show until today
+    final DateTime firstDayOfMonth = DateTime(yearToUse, monthToUse, 1);
+    final DateTime lastDayOfMonth = DateTime(yearToUse, monthToUse + 1,
+        0); // If it's the current month, only show until today
     final DateTime now = DateTime.now();
     DateTime endDate = lastDayOfMonth;
-    if (_selectedYear == now.year && _selectedMonth == now.month) {
+    if (yearToUse == now.year && monthToUse == now.month) {
       endDate = now;
     }
 
@@ -411,32 +501,68 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
         pending: 0,
         declined: 0,
       );
+    } // Populate data - filter bookings to only include the selected month and year    // Debug all dates for troubleshooting
+
+    // Debug first few approved bookings
+    if (approved.isNotEmpty) {
+      final sampleBooking = approved.first;
+      try {
+        final date = DateTime.parse(sampleBooking.date);
+        print(
+            'Sample approved booking: Date=${sampleBooking.date}, parsed month=${date.month}, year=${date.year}');
+      } catch (e) {
+        print('Error parsing sample booking date: ${sampleBooking.date}');
+      }
     }
 
-    // Populate data
     for (var booking in approved) {
       final dateStr = booking.date;
-      if (dailyData.containsKey(dateStr)) {
-        dailyData[dateStr]!.approved++;
+      try {
+        final bookingDate = DateTime.parse(dateStr);
+        // Only count bookings from the selected month and year
+        if (bookingDate.month == monthToUse &&
+            bookingDate.year == yearToUse &&
+            dailyData.containsKey(dateStr)) {
+          dailyData[dateStr]!.approved++;
+        }
+      } catch (e) {
+        print('Error parsing approved booking date: $dateStr');
       }
     }
 
     for (var booking in pending) {
       final dateStr = booking.date;
-      if (dailyData.containsKey(dateStr)) {
-        dailyData[dateStr]!.pending++;
+      try {
+        final bookingDate = DateTime.parse(dateStr);
+        // Only count bookings from the selected month and year
+        if (bookingDate.month == monthToUse &&
+            bookingDate.year == yearToUse &&
+            dailyData.containsKey(dateStr)) {
+          dailyData[dateStr]!.pending++;
+        }
+      } catch (e) {
+        print('Error parsing pending booking date: $dateStr');
       }
     }
 
     for (var booking in declined) {
       final dateStr = booking.date;
-      if (dailyData.containsKey(dateStr)) {
-        dailyData[dateStr]!.declined++;
+      try {
+        final bookingDate = DateTime.parse(dateStr);
+        // Only count bookings from the selected month and year
+        if (bookingDate.month == monthToUse &&
+            bookingDate.year == yearToUse &&
+            dailyData.containsKey(dateStr)) {
+          dailyData[dateStr]!.declined++;
+        }
+      } catch (e) {
+        print('Error parsing declined booking date: $dateStr');
       }
     }
 
     return dayKeys.map((date) => dailyData[date]!).toList();
   }
+  // Helper method to filter bookings by the selected month and year
 }
 
 class DailyAppointmentData {

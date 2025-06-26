@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:Appointly/core/theme/color_pallete.dart';
 import 'package:Appointly/module/meetings/presentation/screen/detail_meeting_success.dart';
 import 'package:Appointly/module/notification/presentation/widget/empt_state.dart';
@@ -12,6 +11,7 @@ import 'package:logger/logger.dart';
 import 'package:Appointly/main.dart' show flutterLocalNotificationsPlugin;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationScreen extends StatefulWidget {
   final String userId;
@@ -30,6 +30,9 @@ class NotificationScreen extends StatefulWidget {
 class _NotificationScreenState extends State<NotificationScreen> {
   final Logger _logger = Logger();
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  bool _isInitialLoad = true;
+  bool _isRefreshing = false;
+  String? _lastCheck;
 
   @override
   void initState() {
@@ -40,13 +43,80 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     _initFirebaseMessaging();
     _loadNotifications();
+
+    // Set up a periodic refresh (every minute)
+    _setupPeriodicRefresh();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  void _setupPeriodicRefresh() {
+    // Load last check time
+    _loadLastCheckTime();
+
+    // Set up timer for periodic polling
+    Future.delayed(const Duration(minutes: 1), () {
+      if (mounted) {
+        _refreshNotifications();
+        _setupPeriodicRefresh();
+      }
+    });
+  }
+
+  Future<void> _loadLastCheckTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _lastCheck = prefs.getString('notifications_last_check_${widget.userId}');
+      print('🕒 Last check time loaded: $_lastCheck');
+    });
   }
 
   void _loadNotifications() {
-    _logger.d('Memuat notifikasi untuk user: ${widget.userId}');
+    _logger.d('Loading notifications for user: ${widget.userId}');
+
+    if (_isInitialLoad) {
+      // On initial load, get stored notifications first
+      context.read<NotificationBloc>().add(
+            GetNotifications(userId: widget.userId),
+          );
+
+      // Then fetch from API
+      _fetchFromApi();
+      _isInitialLoad = false;
+    } else {
+      // On subsequent loads, just fetch from API
+      _fetchFromApi();
+    }
+  }
+
+  void _fetchFromApi() {
+    _logger.d('Fetching notifications from API');
     context.read<NotificationBloc>().add(
-          GetNotifications(userId: widget.userId),
+          FetchNotificationsFromApi(
+            userId: widget.userId,
+            lastCheck: _lastCheck,
+          ),
         );
+  }
+
+  Future<void> _refreshNotifications() async {
+    if (_isRefreshing) return;
+
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      await Future.delayed(const Duration(milliseconds: 300));
+      _fetchFromApi();
+    } finally {
+      setState(() {
+        _isRefreshing = false;
+      });
+    }
   }
 
   void _initFirebaseMessaging() async {
@@ -69,9 +139,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
       // Refresh notifikasi setelah menerima pesan baru
       if (mounted) {
-        context.read<NotificationBloc>().add(
-              GetNotifications(userId: widget.userId),
-            );
+        _refreshNotifications();
       }
     });
 
@@ -99,204 +167,236 @@ class _NotificationScreenState extends State<NotificationScreen> {
     print('🔔 Showing local notification');
     print('📝 Title: $title');
     print('📝 Body: $body');
-    print('📝 BookingId: $bookingId');
+    print('📝 Booking ID: $bookingId');
 
-    final payload = jsonEncode({
-      'bookingId': bookingId,
-      'type': 'booking',
-    });
-
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'appointly_channel',
-      'Appointly Notifications',
+    // Persiapkan detail notifikasi
+    AndroidNotificationDetails androidDetails =
+        const AndroidNotificationDetails(
+      'appointly_notifications', // channel id
+      'Appointly Notifications', // channel name
       importance: Importance.max,
       priority: Priority.high,
-      showWhen: true,
-      enableVibration: true,
-      playSound: true,
+      showWhen: false,
     );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    DarwinNotificationDetails iosDetails = const DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
     await flutterLocalNotificationsPlugin.show(
-      bookingId, // Gunakan bookingId sebagai notification ID
+      bookingId > 0 ? bookingId : DateTime.now().millisecond,
       title,
       body,
-      platformChannelSpecifics,
-      payload: payload,
+      platformDetails,
+      payload: bookingId > 0 ? bookingId.toString() : '0',
     );
 
+    // Tambahkan notifikasi ke state lokal (widget)
     if (mounted) {
-      context.read<NotificationBloc>().add(AddNotification(
-            title: title,
-            body: body,
-            status: 'pending',
-            time: DateTime.now().toString(),
-            userId: widget.userId,
-            bookingId: bookingId,
-          ));
+      _logger.d('Adding notification to local state');
+      context.read<NotificationBloc>().add(
+            AddNotification(
+              title: title,
+              body: body,
+              status: '', // Status could be determined based on title/body
+              time: DateTime.now().toIso8601String(),
+              userId: widget.userId,
+              bookingId: bookingId,
+            ),
+          );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColorPallete.backgroundBody,
-      appBar: _buildAppBar(),
-      body: BlocBuilder<NotificationBloc, NotificationState>(
-        builder: (context, state) {
-          _logger.d(
-              'NotificationState: ${state.runtimeType}, userId: ${widget.userId}');
-          _logger
-              .d('Current notifications count: ${state.notifications.length}');
-
-          if (state is NotificationLoading) {
-            return Skeletonizer(
-              enabled: true,
-              child: ListView.builder(
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: EdgeInsets.only(bottom: 8.0),
-                    child: NotificationItem(
-                      title: 'Loading...',
-                      timeStamp: 'Loading...',
-                      indicatorStatus: 'Loading...',
-                      onTap: () {},
-                    ),
-                  );
-                },
-              ),
-            );
-          } else if (state is NotificationError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error: ${state.message}'),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _loadNotifications,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColorPallete.primaryColor,
-                    ),
-                    child: Text('Coba Lagi',
-                        style: TextStyle(color: Colors.white)),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: Text(
+          'Notifications',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        actions: [
+          BlocBuilder<NotificationBloc, NotificationState>(
+            builder: (context, state) {
+              // Show clear button only if there are notifications
+              if (state is NotificationLoaded &&
+                  state.notifications.isNotEmpty) {
+                return IconButton(
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.black,
                   ),
-                ],
-              ),
-            );
-          } else {
-            final filteredNotifications = state.notifications
-                .where((notif) => notif['userId'].toString() == widget.userId)
-                .toList();
-
-            _logger
-                .d('Filtered notifications: ${filteredNotifications.length}');
-
-            if (filteredNotifications.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    EmptyState(),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _loadNotifications,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorPallete.primaryColor,
-                      ),
-                      child: Text('Refresh',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-              );
+                  onPressed: () {
+                    context.read<NotificationBloc>().add(
+                          ClearNotifications(userId: widget.userId),
+                        );
+                  },
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: _refreshNotifications,
+        child: BlocBuilder<NotificationBloc, NotificationState>(
+          builder: (context, state) {
+            if (state is NotificationLoading && _isInitialLoad) {
+              return _buildLoadingState();
+            } else if (state is NotificationError) {
+              return _buildErrorState(state.message);
+            } else if (state is NotificationLoaded) {
+              if (state.notifications.isEmpty) {
+                return const EmptyState();
+              }
+              return _buildNotificationList(state.notifications);
             }
+            return _buildNotificationList(state.notifications);
+          },
+        ),
+      ),
+    );
+  }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                // Refresh data notifikasi
-                _logger.d('Refreshing notifications for user ${widget.userId}');
-                context.read<NotificationBloc>().add(
-                      GetNotifications(userId: widget.userId),
-                    );
-              },
-              child: ListView.builder(
-                cacheExtent: 500.0,
-                padding: EdgeInsets.only(
-                  bottom: 8.0,
-                  top: 16.0,
-                  left: 16.0,
-                  right: 16.0,
-                ),
-                itemCount: filteredNotifications.length,
-                itemBuilder: (context, index) {
-                  final item = filteredNotifications[index];
-
-                  // Gunakan bookingId dari notifikasi, atau default 0 jika tidak ada
-                  final int notifBookingId = item['bookingId'] != null
-                      ? (item['bookingId'] is int
-                          ? item['bookingId']
-                          : int.tryParse('${item['bookingId']}') ?? 0)
-                      : 0;
-
-                  _logger.d(
-                      'Item $index: title=${item['title']}, bookingId=$notifBookingId');
-
-                  return NotificationItem(
-                    title: item['title'] ?? '',
-                    indicatorStatus: item['status'] ?? 'pending',
-                    timeStamp: item['time'] ?? '',
-                    onTap: () {
-                      // Gunakan ID dari notifikasi, bukan dari widget global
-                      if (notifBookingId > 0) {
-                        _logger.d(
-                            'Opening booking detail with ID: $notifBookingId');
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DetailMeetingSuccess(
-                              bookingId: notifBookingId,
-                            ),
-                          ),
-                        );
-                      } else {
-                        // Tampilkan pesan error jika tidak ada booking ID yang valid
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Detail pemesanan tidak tersedia'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
-                  );
-                },
-              ),
-            );
-          }
+  Widget _buildLoadingState() {
+    return Skeletonizer(
+      enabled: true,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(
+          top: 10,
+        ),
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return const NotificationItem(
+            title: 'Loading notification...',
+            timeStamp: '2023-01-01 00:00:00',
+            indicatorStatus: 'pending',
+            onTap: null,
+          );
         },
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      automaticallyImplyLeading: false,
-      backgroundColor: Colors.white,
-      scrolledUnderElevation: 0,
-      elevation: 0.0,
-      title: Text(
-        'Your Notifications',
-        style: GoogleFonts.sourceSans3(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: ColorPallete.darkBlack,
-        ),
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 60,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error Loading Notifications',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.black54,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorPallete.primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: _loadNotifications,
+            child: Text(
+              'Try Again',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildNotificationList(List<Map<String, dynamic>> notifications) {
+    return ListView.builder(
+      padding: const EdgeInsets.only(
+        top: 10,
+      ),
+      itemCount: notifications.length,
+      itemBuilder: (context, index) {
+        final notification = notifications[index];
+        final int bookingId = notification['bookingId'] is int
+            ? notification['bookingId']
+            : int.tryParse('${notification['bookingId']}') ?? 0;
+        String status =
+            notification['status']?.toString().toLowerCase() ?? 'pending';
+
+        // Ensure status matches one of our expected values
+        if (!['approved', 'completed', 'declined', 'pending']
+            .contains(status)) {
+          // Default mapping based on title if available
+          if ((notification['title'] ?? '')
+              .toLowerCase()
+              .contains('approved')) {
+            status = 'approved';
+          } else if ((notification['title'] ?? '')
+              .toLowerCase()
+              .contains('completed')) {
+            status = 'completed';
+          } else if ((notification['title'] ?? '')
+              .toLowerCase()
+              .contains('declined')) {
+            status = 'declined';
+          }
+        }
+
+        return NotificationItem(
+          title: notification['title'] ?? '',
+          timeStamp: notification['time'] ?? '',
+          indicatorStatus: status,
+          onTap: bookingId > 0
+              ? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DetailMeetingSuccess(
+                        bookingId: bookingId,
+                      ),
+                    ),
+                  );
+                }
+              : null,
+        );
+      },
     );
   }
 }

@@ -2,13 +2,16 @@ import 'package:bloc/bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
 import 'dart:convert';
+import 'package:Appointly/module/auth/repository/auth_repository.dart';
 
 part 'notification_event.dart';
 part 'notification_state.dart';
 
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final Logger _logger = Logger();
+  final AuthRepository _authRepository = AuthRepository();
 
   NotificationBloc() : super(NotificationInitial()) {
     print('🏃 Initializing NotificationBloc');
@@ -105,6 +108,120 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         emit(NotificationLoaded([]));
       } catch (e) {
         _logger.e('Error clearing notifications: $e');
+        emit(NotificationError(message: e.toString()));
+      }
+    });
+
+    // Handler for the new event to fetch notifications from the API
+    on<FetchNotificationsFromApi>((event, emit) async {
+      emit(NotificationLoading());
+      try {
+        print('🌐 Fetching notifications from API for user: ${event.userId}');
+
+        // Get the authentication token
+        final token = await _authRepository.getToken();
+        if (token == null || token.isEmpty) {
+          throw Exception('Authentication token not found');
+        }
+
+        // Setup the API request with the token
+        final dio = Dio();
+        dio.options.headers['Authorization'] = 'Bearer $token';
+
+        // Last check timestamp for filtering (if provided)
+        final queryParams = <String, dynamic>{};
+        if (event.lastCheck != null) {
+          queryParams['last_check'] = event.lastCheck;
+        }
+
+        // Make the API request
+        final response = await dio.get(
+          'http://192.168.100.18:8000/v1/notifications/recent',
+          queryParameters: queryParams,
+        );
+
+        if (response.statusCode != 200) {
+          throw Exception(
+              'Failed to fetch notifications: ${response.statusMessage}');
+        }
+
+        final data = response.data;
+        if (!data['success']) {
+          throw Exception('API returned error: ${data['message']}');
+        }
+
+        // Get the notifications from the response
+        final List<dynamic> apiNotifications = data['notifications'];
+        final notificationsList = apiNotifications.map((item) {
+          // Map the API response to the format expected by the UI
+          return {
+            'title': 'Booking ${item['status']}',
+            'body': item['message'],
+            'status': item['status'],
+            'time': item['updated_at'],
+            'userId': event.userId,
+            'bookingId': item['id'],
+            'serviceName': item['service_name'],
+            'bookingDate': item['booking_date'],
+            'bookingTime': item['booking_time'],
+            'location': item['location'],
+          };
+        }).toList();
+
+        // Save these notifications to SharedPreferences
+        if (notificationsList.isNotEmpty) {
+          final prefs = await SharedPreferences.getInstance();
+          final String notificationKey = 'notifications_${event.userId}';
+
+          // Get existing notifications
+          List<Map<String, dynamic>> existingNotifications = [];
+          final String? existingData = prefs.getString(notificationKey);
+          if (existingData != null) {
+            final List<dynamic> decoded = jsonDecode(existingData);
+            existingNotifications =
+                decoded.map((item) => Map<String, dynamic>.from(item)).toList();
+          }
+
+          // Add new notifications to the beginning (to maintain chronology)
+          final allNotifications = [
+            ...notificationsList,
+            ...existingNotifications
+          ];
+
+          // Save back to SharedPreferences
+          await prefs.setString(notificationKey, jsonEncode(allNotifications));
+          print(
+              '💾 Saved ${notificationsList.length} new notifications from API');
+
+          emit(NotificationLoaded(allNotifications));
+        } else {
+          // If no new notifications, still return what we have
+          final prefs = await SharedPreferences.getInstance();
+          final String notificationKey = 'notifications_${event.userId}';
+          final String? existingData = prefs.getString(notificationKey);
+
+          if (existingData != null) {
+            final List<dynamic> decoded = jsonDecode(existingData);
+            final existingNotifications =
+                decoded.map((item) => Map<String, dynamic>.from(item)).toList();
+            emit(NotificationLoaded(existingNotifications));
+          } else {
+            emit(NotificationLoaded([]));
+          }
+
+          print('ℹ️ No new notifications found from API');
+        }
+
+        // Save the last check timestamp
+        final lastCheck = data['last_check'];
+        if (lastCheck != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+              'notifications_last_check_${event.userId}', lastCheck);
+        }
+      } catch (e) {
+        print('❌ Error fetching notifications from API: $e');
+        _logger.e('Error fetching notifications from API: $e');
         emit(NotificationError(message: e.toString()));
       }
     });

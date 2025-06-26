@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\Service;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Events\AppointmentStatusChanged;
 
 class BookingController extends Controller
 {
@@ -29,7 +30,7 @@ class BookingController extends Controller
                         'image' => $booking->service->image ? asset('storage/' . $booking->service->image) : null,
                         'title' => $booking->service->title,
                         'description' => $booking->service->description,
-                        'location'  => $booking->location,
+                        'location' => $booking->location,
                         'latitude' => $booking->service->location->latitude ?? null,
                         'longitude' => $booking->service->location->longitude ?? null,
                         'option' => $booking->option,
@@ -65,7 +66,7 @@ class BookingController extends Controller
                             'image' => $booking->service->image ? asset('storage/' . $booking->service->image) : null,
                             'title' => $booking->service->title,
                             'description' => $booking->service->description,
-                            'location'  => $booking->location,
+                            'location' => $booking->location,
                             'latitude' => $booking->service->location->latitude ?? null,
                             'longitude' => $booking->service->location->longitude ?? null,
                         ],
@@ -113,7 +114,7 @@ class BookingController extends Controller
                             'image' => $booking->service->image ? asset('storage/' . $booking->service->image) : null,
                             'title' => $booking->service->title,
                             'description' => $booking->service->description,
-                            'location'  => $booking->location,
+                            'location' => $booking->location,
                             'latitude' => $booking->service->location->latitude ?? null,
                             'longitude' => $booking->service->location->longitude ?? null,
                             'option' => $booking->option,
@@ -159,7 +160,7 @@ class BookingController extends Controller
                 'image' => $booking->service->image ? asset('storage/' . $booking->service->image) : null,
                 'title' => $booking->service->title,
                 'description' => $booking->service->description,
-                'location'  => $booking->location,
+                'location' => $booking->location,
                 'latitude' => $booking->service->location->latitude ?? null,
                 'longitude' => $booking->service->location->longitude ?? null,
                 'option' => $booking->option,
@@ -179,20 +180,20 @@ class BookingController extends Controller
         $availableTime = json_decode($service->schedule->time, true);
 
         $scheduleDates = json_decode($service->schedule->date, true);
-        $availableDate= collect($scheduleDates)->pluck('date')->toArray();
+        $availableDate = collect($scheduleDates)->pluck('date')->toArray();
 
         $validated = $request->validate([
-            'date' => 'required|date|in:'. implode(',', $availableDate),
-            'time' => 'required|date_format:H:i|in:'. implode(',', $availableTime),
+            'date' => 'required|date|in:' . implode(',', $availableDate),
+            'time' => 'required|date_format:H:i|in:' . implode(',', $availableTime),
             'note' => 'nullable|string|max:255',
             'option' => 'required|string|in:' . implode(',', $availableOption),
-        ]); 
+        ]);
 
         $alreadyBooked = Booking::where('service_id', $service->id)
-        ->where('user_id', $user->id)
-        ->where('date', $validated['date'])
-        ->where('time', $validated['time'])
-        ->exists();
+            ->where('user_id', $user->id)
+            ->where('date', $validated['date'])
+            ->where('time', $validated['time'])
+            ->exists();
 
         if ($alreadyBooked) {
             return response()->json([
@@ -202,9 +203,9 @@ class BookingController extends Controller
         }
 
         $otherBooked = Booking::where('service_id', $service->id)
-        ->where('date', $validated['date'])
-        ->where('time', $validated['time'])
-        ->exists();
+            ->where('date', $validated['date'])
+            ->where('time', $validated['time'])
+            ->exists();
 
         if ($otherBooked) {
             return response()->json([
@@ -221,8 +222,8 @@ class BookingController extends Controller
             'time' => $validated['time'],
             'note' => $validated['note'] ?? null,
             'status' => 'Pending',
-            'location' => $validated['option'] === 'Online' 
-                ? 'Waiting for video meeting URL' 
+            'location' => $validated['option'] === 'Online'
+                ? 'Waiting for video meeting URL'
                 : $service->location->location,
         ]);
 
@@ -230,17 +231,17 @@ class BookingController extends Controller
             'status' => 'success',
             'message' => 'Service booked successfully, awaiting approval.',
             'user' => [
-                    'id_user' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                ],
+                'id_user' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
             'booking' => [
                 'id_booking' => $booking->id,
                 'option' => $booking->option,
                 'date' => $booking->date,
                 'time' => $booking->time,
                 'note' => $booking->note,
-                'location'  => $booking->location,
+                'location' => $booking->location,
                 'latitude' => $booking->service->location->latitude ?? null,
                 'longitude' => $booking->service->location->longitude ?? null,
                 'status' => $booking->status,
@@ -271,6 +272,9 @@ class BookingController extends Controller
         }
 
         $booking->save();
+
+        // Status telah diubah, tidak perlu trigger event karena
+        // aplikasi mobile akan menggunakan polling untuk notifikasi
 
         return response()->json([
             'status' => 'success',

@@ -79,7 +79,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             declined.add(booking);
           }
         }
-
         final stats = {
           'approved': approved.length,
           'pending': pending.length,
@@ -90,7 +89,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             approved: approved,
             pending: pending,
             declined: declined,
-            stats: stats));
+            stats: stats,
+            month: event.month,
+            year: event.year));
       } catch (e) {
         _logger.e('Error fetching bookings: $e');
         emit(BookingFailure(failure: e.toString()));
@@ -128,13 +129,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           status: response.service.status,
         );
 
-        _logger.i('this info Booking detail: ${bookingDetail}');
-
-        // Make sure we have the full booking lists when viewing a specific booking
+        _logger.i(
+            'this info Booking detail: ${bookingDetail}'); // Make sure we have the full booking lists when viewing a specific booking
         if (state is! BookingLoaded) {
           await _loadAllBookings(emit);
+        } else {
+          final currentState = state as BookingLoaded;
+          await _loadAllBookings(emit,
+              month: currentState.month, year: currentState.year);
         }
-
         if (state is BookingLoaded) {
           final currentState = state as BookingLoaded;
           emit(BookingLoaded(
@@ -143,6 +146,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
             declined: currentState.declined,
             bookingDetail: bookingDetail,
             stats: currentState.stats,
+            month: currentState.month,
+            year: currentState.year,
           ));
         } else {
           emit(BookingLoaded(
@@ -176,7 +181,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           'pending': filteredPending.length,
           'declined': filteredDeclined.length,
         };
-
         emit(BookingLoaded(
           approved: filteredApproved,
           pending: filteredPending,
@@ -186,13 +190,17 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           filterStartDate: event.startDate,
           filterEndDate: event.endDate,
           bookingDetail: currentState.bookingDetail,
+          month: currentState.month,
+          year: currentState.year,
         ));
       }
     }); // Filter bookings by type
     on<FilterBookAppointmentEvent>((event, emit) async {
       if (state is BookingLoaded) {
-        // Load all bookings first
-        await _loadAllBookings(emit);
+        // Load all bookings first with the current month/year
+        final currentState = state as BookingLoaded;
+        await _loadAllBookings(emit,
+            month: currentState.month, year: currentState.year);
 
         if (event.filterType != null && state is BookingLoaded) {
           final currentState = state as BookingLoaded;
@@ -246,18 +254,17 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
                     (booking.note?.toLowerCase().contains(searchQuery) ??
                         false))
                 .toList();
-
             emit(BookingLoaded(
               approved: filteredApproved,
               pending: filteredPending,
               declined: filteredDeclined,
               stats: currentState.stats,
               bookingDetail: currentState.bookingDetail,
+              month: currentState.month,
+              year: currentState.year,
             ));
             return;
-          }
-
-          // Apply filter based on type
+          } // Apply filter based on type
           switch (event.filterType!.toLowerCase()) {
             case 'approved':
               emit(BookingLoaded(
@@ -266,6 +273,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
                 declined: [],
                 stats: currentState.stats,
                 bookingDetail: currentState.bookingDetail,
+                month: currentState.month,
+                year: currentState.year,
               ));
               break;
             case 'pending':
@@ -275,6 +284,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
                 declined: [],
                 stats: currentState.stats,
                 bookingDetail: currentState.bookingDetail,
+                month: currentState.month,
+                year: currentState.year,
               ));
               break;
             case 'declined':
@@ -284,6 +295,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
                 declined: currentState.declined,
                 stats: currentState.stats,
                 bookingDetail: currentState.bookingDetail,
+                month: currentState.month,
+                year: currentState.year,
               ));
               break;
             default:
@@ -294,6 +307,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
                 declined: currentState.declined,
                 stats: currentState.stats,
                 bookingDetail: currentState.bookingDetail,
+                month: currentState.month,
+                year: currentState.year,
               ));
           }
         }
@@ -333,9 +348,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       }
     });
   }
-
   // Helper method to load all bookings
-  Future<void> _loadAllBookings(Emitter<BookingState> emit) async {
+  Future<void> _loadAllBookings(Emitter<BookingState> emit,
+      {int? month, int? year}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -343,7 +358,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         historybookingRepository.updateToken(token);
       }
 
-      final result = await historybookingRepository.getAllBookings();
+      final result = await historybookingRepository.getAllBookings(
+          month: month, year: year);
       final currentUser = await _authRepository.getUserData();
 
       // Categorize bookings by status
@@ -396,12 +412,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         'pending': pending.length,
         'declined': declined.length,
       };
-
       emit(BookingLoaded(
           approved: approved,
           pending: pending,
           declined: declined,
-          stats: stats));
+          stats: stats,
+          month: month ??
+              (state is BookingLoaded ? (state as BookingLoaded).month : null),
+          year: year ??
+              (state is BookingLoaded ? (state as BookingLoaded).year : null)));
     } catch (e) {
       _logger.e('Error fetching bookings: $e');
       emit(BookingFailure(failure: e.toString()));

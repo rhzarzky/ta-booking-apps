@@ -138,7 +138,7 @@ class _AuthSigninState extends State<AuthSignin> {
                   },
                   builder: (context, state) {
                     return AuthButton(
-                      text: state is AuthLoading ? 'Loading' : 'Sign In',
+                      text: state is AuthLoading ? 'Loading...' : 'Sign In',
                       onTap: () {
                         if (formKey.currentState!.validate()) {
                           context.read<AuthBloc>().add(
