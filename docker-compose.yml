@@ -1,0 +1,50 @@
+services:
+  booking-backend:
+    image: rhzarzky/booking-backend
+    container_name: booking-backend
+    build: 
+      context: ./backend
+    ports:
+      - "8080:8080"
+    networks:
+      - booking-network
+    #   - mysql-network
+    #   - nginx-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/up"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
+
+  booking-frontend:
+    image: rhzarzky/booking-frontend
+    container_name: booking-frontend
+    build: 
+      context: ./vue-admin
+    ports:
+      - "8081:80"
+    networks:
+      - booking-network
+    #   - nginx-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
+
+networks:
+  booking-network:
+    name: booking-network
+    driver: bridge
+
+#   mysql-network:
+#     name: mysql-network
+#     external: true
+
+#   nginx-network:
+#     name: nginx-network
+#     external: true
