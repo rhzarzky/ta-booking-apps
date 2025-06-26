@@ -44,12 +44,12 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Tulis .env untuk backend
-          run: |
-            echo "${{ secrets.ENV_BACKEND }}" > .env.backend
+        run: |
+          echo "${{ secrets.ENV_BACKEND }}" > .env.backend
 
       - name: Tulis .env untuk frontend
-          run: |
-            echo "${{ secrets.ENV_FRONTEND }}" > .env.frontend
+        run: |
+          echo "${{ secrets.ENV_FRONTEND }}" > .env.frontend
 
       - name: Copy files to VPS
         uses: appleboy/scp-action@v1
