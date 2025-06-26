@@ -1,6 +1,6 @@
 services:
   booking-backend:
-    image: booking-backend:latest
+    image: rhzarzky/booking-backend
     container_name: booking-backend
     build: 
       context: ./backend
@@ -19,7 +19,7 @@ services:
       start_period: 5s
 
   booking-frontend:
-    image: booking-frontend:latest
+    image: rhzarzky/booking-frontend
     container_name: booking-frontend
     build: 
       context: ./vue-admin
