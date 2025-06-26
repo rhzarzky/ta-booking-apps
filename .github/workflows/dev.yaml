@@ -1,0 +1,74 @@
+name: Development Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+   build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push booking-backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: rhzarzky/booking-backend:dev
+
+      - name: Build and Push booking-frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./vue-admin
+          push: true
+          tags: rhzarzky/booking-frontend:dev
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy files to VPS
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "."
+          target: "/home/wawan/sahabatbk/tmp"
+
+      - name: Deploy to Prod Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /root/booking/tmp
+
+            # Stop dan hapus container lama
+            docker compose -p dev -f infra/docker-compose-dev.yml down
+
+            # Tarik image terbaru (jika belum otomatis)
+            # docker pull rhzarzky/booking-backend:dev
+            # docker pull rhzarzky/booking-frontend:dev
+
+            # Jalankan container dengan image yang baru
+            docker compose -p dev -f infra/docker-compose-dev.yml up -d
+
+            # Bersihkan temp folder
+            rm -rf /root/booking/tmp/*
