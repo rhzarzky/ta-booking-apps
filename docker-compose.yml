@@ -2,6 +2,8 @@ services:
   booking-backend:
     image: rhzarzky/booking-backend
     container_name: booking-backend
+    env_file:
+      - .env.backend
     build: 
       context: ./backend
     ports:
@@ -21,6 +23,8 @@ services:
   booking-frontend:
     image: rhzarzky/booking-frontend
     container_name: booking-frontend
+    env_file:
+      - .env.frontend
     build: 
       context: ./vue-admin
     ports:
