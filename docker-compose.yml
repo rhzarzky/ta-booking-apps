@@ -1,6 +1,6 @@
 services:
   booking-backend:
-    image: rhzarzky/booking-backend
+    image: rhzarzky/booking-backend:dev
     container_name: booking-backend
     env_file:
       - .env.backend
@@ -21,7 +21,7 @@ services:
       start_period: 5s
 
   booking-frontend:
-    image: rhzarzky/booking-frontend
+    image: rhzarzky/booking-frontend:dev
     container_name: booking-frontend
     env_file:
       - .env.frontend
