@@ -32,9 +32,6 @@ RUN echo "yes" | php artisan octane:install --server=frankenphp --no-interaction
 RUN chown -R www-data:www-data storage bootstrap/cache && \
     chmod -R 777 storage bootstrap/cache
 
-# Konfigurasi PHP upload limit (gunakan COPY untuk file custom)
-COPY custom-file.ini /usr/local/etc/php/conf.d/custom.ini
-
 # Expose port 8080
 EXPOSE 8080
 
