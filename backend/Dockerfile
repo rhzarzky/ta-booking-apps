@@ -15,8 +15,8 @@ FROM dunglas/frankenphp:latest
 
 # Install dependencies dengan cleanup agar image lebih kecil
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl ffmpeg \
-    && install-php-extensions pcntl zip bcmath pdo_mysql mysqli \
+    ca-certificates curl ffmpeg libpq-dev\
+    && install-php-extensions pcntl zip bcmath pdo_pgsql pgsql \
     && rm -rf /var/lib/apt/lists/*
     
 # Workdir aplikasi
