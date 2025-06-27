@@ -70,14 +70,14 @@ jobs:
             cd /root/booking/tmp
 
             # Stop dan hapus container lama
-            docker compose -p dev -f infra/docker-compose-dev.yml down
+            docker compose -p dev -f infra/docker-compose.yml down
 
             # Tarik image terbaru (jika belum otomatis)
-            # docker pull rhzarzky/booking-backend:dev
-            # docker pull rhzarzky/booking-frontend:dev
+            docker pull rhzarzky/booking-backend:dev
+            docker pull rhzarzky/booking-frontend:dev
 
             # Jalankan container dengan image yang baru
-            docker compose -p dev -f infra/docker-compose-dev.yml up -d
+            docker compose -p dev -f docker-compose.yml up -d
 
             # Bersihkan temp folder
             rm -rf /root/booking/tmp/*
