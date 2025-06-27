@@ -6,10 +6,13 @@ services:
       - .env.backend
     build: 
       context: ./backend
+    volumes:
+      - /root/booking-backend/storage/app/public:/app/storage/app/public
     ports:
       - "8080:8080"
     networks:
       - booking-network
+      - postgres-network
     #   - mysql-network
     #   - nginx-network
     restart: unless-stopped
@@ -44,6 +47,9 @@ networks:
   booking-network:
     name: booking-network
     driver: bridge
+  postgres-network:
+    name: postgres-network
+    external: true
 
 #   mysql-network:
 #     name: mysql-network
