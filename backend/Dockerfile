@@ -8,7 +8,8 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies aplikasi dengan composer
-RUN composer install --ignore-platform-reqs --no-dev -a
+RUN composer install --ignore-platform-reqs --no-dev -a && \
+    composer dump-autoload
 
 ## Stage 2: Main PHP Image dengan FrankenPHP
 FROM dunglas/frankenphp:latest
