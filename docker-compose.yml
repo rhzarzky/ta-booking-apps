@@ -6,6 +6,8 @@ services:
       - .env.backend
     build: 
       context: ./backend
+    volumes:
+      - /root/booking-backend/storage/app/public:/app/storage/app/public
     ports:
       - "8080:8080"
     networks:
