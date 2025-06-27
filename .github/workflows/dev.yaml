@@ -72,6 +72,9 @@ jobs:
             # Stop dan hapus container lama
             docker compose -p dev -f docker-compose.yml down
 
+            docker rmi rhzarzky/booking-backend:dev
+            docker rmi rhzarzky/booking-frontend:dev
+
             # Tarik image terbaru (jika belum otomatis)
             docker pull rhzarzky/booking-backend:dev
             docker pull rhzarzky/booking-frontend:dev
