@@ -6,8 +6,8 @@ import { serviceApi } from '@/api/service-api'
 export const useServiceStore = defineStore('service', () => {
   const services = ref([])
   const service = ref(null)
+  const reviews = ref([])
   const loading = ref(false)
-
 
   const fetchServices = async () => {
     loading.value = true
@@ -25,9 +25,18 @@ export const useServiceStore = defineStore('service', () => {
     try {
       service.value = await serviceApi.fetchServiceById(id)
     } catch (error) {
-      console.error(`Failed to fetch service by id:`, error)
+      console.error(`Failed to fetch service by id ${id}:`, error)
     } finally {
       loading.value = false
+    }
+  }
+
+  const fetchServiceReviews = async (id) => {
+    try {
+      reviews.value = await serviceApi.fetchServiceReviews(id)
+    } catch (error) {
+      console.error('Failed to fetch service reviews:', error)
+      reviews.value = []
     }
   }
 
@@ -40,13 +49,14 @@ export const useServiceStore = defineStore('service', () => {
     }
   }
 
-
   return {
     services,
     service,
+    reviews,
     loading,
     fetchServices,
     fetchServiceById,
+    fetchServiceReviews,
     bookService,
   }
 })

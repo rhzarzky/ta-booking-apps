@@ -38,7 +38,7 @@ onBeforeUnmount(() => {
 const items = [
   { name: "Dashboard", icon: LayoutDashboard, route: "/client/dashboard" },
   { name: "Service", icon: Users, route: "/client/service" },
-  { name: "Activity", icon: ActivitySquare, route: "/client/activity" },
+  { name: "History", icon: ActivitySquare, route: "/client/activity" },
   { name: "Profile", icon: UserCircle2, route: "/client/profile" },
 ];
 

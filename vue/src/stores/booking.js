@@ -20,10 +20,7 @@ export const useBookingStore = defineStore('booking', {
       this.error = null;
       try {
         const response = await bookingApi.getUserBookings()
-        // ✅ Ambil seluruh objek, karena services ada di dalam response.data
-        // Perhatikan bahwa response.data adalah { status: "success", services: {...} }
-        // Jadi, akses langsung response.data
-        this.bookingsByStatus = response.services || {}
+        this.bookingsByStatus = response.services || {} // ✅ Ambil key "services" dari API response
       } catch (err) {
         this.error = 'Gagal memuat data booking.'
         this.bookingsByStatus = {}
@@ -83,7 +80,7 @@ export const useBookingStore = defineStore('booking', {
       try {
         const response = await bookingApi.submitReview(serviceId, payload)
         await this.fetchServiceReviews(serviceId)
-        await this.fetchUserReviews() // Pastikan user reviews diperbarui
+        await this.fetchUserReviews()
         this.canSubmitReview = false
         return response
       } catch (error) {
@@ -114,9 +111,8 @@ export const useBookingStore = defineStore('booking', {
       this.loading = true
       this.error = null
       try {
-        const response = await bookingApi.getUserReviews()
-        // Pastikan Anda mengakses properti 'reviews' dari respons API
-        this.userReviews = response || [] // Respons API Anda sudah langsung berupa array reviews
+        const reviews = await bookingApi.getUserReviews()
+        this.userReviews = reviews || []
       } catch (error) {
         this.error = 'Gagal memuat review pengguna.'
         this.userReviews = []
@@ -141,7 +137,6 @@ export const useBookingStore = defineStore('booking', {
     },
 
     hasUserReviewedService: (state) => (serviceId) => {
-      // Perbaikan di sini: Akses review.service?.id sesuai struktur JSON review
       return state.userReviews.some(review => review.service?.id === serviceId)
     }
   }

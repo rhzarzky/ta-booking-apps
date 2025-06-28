@@ -67,6 +67,7 @@
         :time="item.time"
         :date="item.date"
         :endDate="item.endDate"
+        :averageRating="item.averageRating"
       />
     </div>
     <div v-else class="text-center py-10 text-gray-600 text-lg">
@@ -106,20 +107,35 @@ const selectedDay = ref('');
 // --- Data Fetching ---
 const fetchServicesData = async () => {
   const data = await serviceApi.fetchServices();
-  services.value = data.map(item => {
-    const firstDate = item.date?.[0]?.date || null;
-    return {
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      image: item.image,
-      option: item.option?.join(', ') || '-',
-      days: item.days?.join(', ') || '-',
-      time: item.time?.join(', ') || '-',
-      date: formatDisplayDate(firstDate),
-      endDate: formatDisplayDate(item.end_date)
-    };
-  });
+  services.value = await Promise.all(
+    data.map(async (item) => {
+      const firstDate = item.date?.[0]?.date || null;
+
+      let averageRating = 0;
+      try {
+        const reviews = await serviceApi.fetchServiceReviews(item.id);
+        if (reviews.length > 0) {
+          const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+          averageRating = (total / reviews.length).toFixed(1);
+        }
+      } catch (err) {
+        console.warn(`Gagal fetch review untuk service ID ${item.id}`, err);
+      }
+
+      return {
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        image: item.image,
+        option: item.option?.join(', ') || '-',
+        days: item.days?.join(', ') || '-',
+        time: item.time?.join(', ') || '-',
+        date: formatDisplayDate(firstDate),
+        endDate: formatDisplayDate(item.end_date),
+        averageRating,
+      };
+    })
+  );
 };
 
 // --- Helper Functions ---
