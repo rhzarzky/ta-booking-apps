@@ -33,7 +33,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
   bool _isInitialLoad = true;
   bool _isRefreshing = false;
   String? _lastCheck;
-
+  DateTime? _lastApiCall;
+  static const Duration _apiCooldown =
+      Duration(seconds: 30); // Prevent API calls within 30 seconds
   @override
   void initState() {
     super.initState();
@@ -46,6 +48,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     // Set up a periodic refresh (every minute)
     _setupPeriodicRefresh();
+
+    // Force a delayed refresh to ensure UI is updated
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        print('🔄 Delayed force refresh...');
+        _forceRefreshUI();
+      }
+    });
   }
 
   @override
@@ -87,17 +97,31 @@ class _NotificationScreenState extends State<NotificationScreen> {
       _fetchFromApi();
       _isInitialLoad = false;
     } else {
-      // On subsequent loads, just fetch from API
+      // On subsequent loads, reload stored notifications first to get updated data
+      context.read<NotificationBloc>().add(
+            GetNotifications(userId: widget.userId),
+          );
+      // Then fetch from API
       _fetchFromApi();
     }
   }
 
   void _fetchFromApi() {
+    // Check if we're within the cooldown period
+    if (_lastApiCall != null &&
+        DateTime.now().difference(_lastApiCall!) < _apiCooldown) {
+      print('⏰ API call within cooldown period, skipping...');
+      return;
+    }
+
     _logger.d('Fetching notifications from API');
+    _lastApiCall = DateTime.now();
+
     context.read<NotificationBloc>().add(
           FetchNotificationsFromApi(
             userId: widget.userId,
             lastCheck: _lastCheck,
+            context: context,
           ),
         );
   }
@@ -110,6 +134,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
 
     try {
+      // Force reload from SharedPreferences first to show updated data
+      context.read<NotificationBloc>().add(
+            GetNotifications(userId: widget.userId),
+          );
+
       await Future.delayed(const Duration(milliseconds: 300));
       _fetchFromApi();
     } finally {
@@ -117,6 +146,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
         _isRefreshing = false;
       });
     }
+  }
+
+  // Method to force UI update and reload all notifications
+  void _forceRefreshUI() {
+    print('🔄 Force refreshing UI...');
+    setState(() {
+      _isInitialLoad = true;
+    });
+    _loadNotifications();
   }
 
   void _initFirebaseMessaging() async {
@@ -230,6 +268,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ),
         actions: [
+          // Add refresh button
+          IconButton(
+            icon: const Icon(
+              Icons.refresh,
+              color: Colors.black,
+            ),
+            onPressed: _forceRefreshUI,
+          ),
           BlocBuilder<NotificationBloc, NotificationState>(
             builder: (context, state) {
               // Show clear button only if there are notifications
@@ -254,8 +300,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: _refreshNotifications,
-        child: BlocBuilder<NotificationBloc, NotificationState>(
+        child: BlocConsumer<NotificationBloc, NotificationState>(
+          listener: (context, state) {
+            // Listen to state changes and force UI update
+            if (state is NotificationLoaded) {
+              print(
+                  '🔄 UI: NotificationLoaded state detected with ${state.notifications.length} notifications');
+              // Force UI rebuild
+              if (mounted) {
+                setState(() {});
+              }
+            }
+          },
           builder: (context, state) {
+            print('🔍 UI: Building with state: ${state.runtimeType}');
+
             if (state is NotificationLoading && _isInitialLoad) {
               return _buildLoadingState();
             } else if (state is NotificationError) {
@@ -285,6 +344,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           return const NotificationItem(
             title: 'Loading notification...',
             timeStamp: '2023-01-01 00:00:00',
+            body: 'Loading appointment details...',
             indicatorStatus: 'pending',
             onTap: null,
           );
@@ -347,13 +407,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Widget _buildNotificationList(List<Map<String, dynamic>> notifications) {
+    print(
+        '🔍 UI: Building notification list with ${notifications.length} items');
+
     return ListView.builder(
+      key: ValueKey(
+          'notification_list_${notifications.length}_${DateTime.now().millisecondsSinceEpoch}'),
       padding: const EdgeInsets.only(
         top: 10,
       ),
       itemCount: notifications.length,
       itemBuilder: (context, index) {
         final notification = notifications[index];
+        print(
+            '🔍 NotificationScreen: Processing notification $index: ${notification['title']} - ${notification['body']}');
+
         final int bookingId = notification['bookingId'] is int
             ? notification['bookingId']
             : int.tryParse('${notification['bookingId']}') ?? 0;
@@ -379,9 +447,15 @@ class _NotificationScreenState extends State<NotificationScreen> {
           }
         }
 
+        print(
+            '🔍 NotificationScreen: Creating NotificationItem with body: ${notification['body']}');
         return NotificationItem(
+          key: ValueKey(
+              'notification_${notification['id'] ?? index}_${notification['time']}'),
           title: notification['title'] ?? '',
           timeStamp: notification['time'] ?? '',
+          body: _formatNotificationDescription(
+              notification), // Use formatted description
           indicatorStatus: status,
           onTap: bookingId > 0
               ? () {
@@ -398,5 +472,169 @@ class _NotificationScreenState extends State<NotificationScreen> {
         );
       },
     );
+  }
+
+  // Helper method to format notification description with service information
+  String _formatNotificationDescription(Map<String, dynamic> notification) {
+    final title = notification['title']?.toString() ?? '';
+    final body = notification['body']?.toString() ?? '';
+    final serviceName = notification['serviceName']?.toString() ?? '';
+    final bookingDate = notification['bookingDate']?.toString() ?? '';
+    final bookingTime = notification['bookingTime']?.toString() ?? '';
+    final location = notification['location']?.toString() ?? '';
+
+    print(
+        '🔍 Formatting description: title=$title, serviceName=$serviceName, date=$bookingDate, time=$bookingTime, location=$location');
+
+    // If we already have a well-formatted body from API, enhance it with service info
+    if (body.isNotEmpty && !body.contains('T') && body.length > 20) {
+      String enhancedBody = body;
+
+      // Add service information if not already included
+      if (serviceName.isNotEmpty &&
+          serviceName != 'null' &&
+          serviceName != 'undefined') {
+        if (!body.toLowerCase().contains(serviceName.toLowerCase())) {
+          enhancedBody += '\n📋 Service: $serviceName';
+        }
+      }
+
+      // Add date and time if not already included
+      if (bookingDate.isNotEmpty &&
+          bookingDate != 'null' &&
+          bookingDate != 'undefined' &&
+          bookingTime.isNotEmpty &&
+          bookingTime != 'null' &&
+          bookingTime != 'undefined') {
+        if (!body.toLowerCase().contains(bookingDate.toLowerCase())) {
+          String formattedTime = _formatTime(bookingTime);
+          enhancedBody += '\n📅 ${_formatDate(bookingDate)} at $formattedTime';
+        }
+      }
+
+      // Add location info for online meetings
+      if (location.isNotEmpty &&
+          location != 'null' &&
+          location != 'undefined') {
+        if (location.startsWith('https://')) {
+          if (!body.toLowerCase().contains('online')) {
+            enhancedBody += '\n🔗 Online Meeting';
+          }
+        } else if (!body.toLowerCase().contains('location')) {
+          enhancedBody += '\n📍 Location: $location';
+        }
+      }
+
+      return enhancedBody;
+    }
+
+    // Build comprehensive description from scratch
+    String description = '';
+
+    // Determine status message
+    if (title.toLowerCase().contains('confirmed')) {
+      description = 'Your booking has been confirmed ✅';
+    } else if (title.toLowerCase().contains('approved')) {
+      description = 'Your appointment has been approved ✅';
+    } else if (title.toLowerCase().contains('declined')) {
+      description = 'Your appointment has been declined ❌';
+    } else if (title.toLowerCase().contains('pending')) {
+      description = 'Your appointment is pending approval ⏳';
+    } else {
+      description = 'Booking status updated';
+    }
+
+    // Always add service information if available
+    if (serviceName.isNotEmpty &&
+        serviceName != 'null' &&
+        serviceName != 'undefined') {
+      description += '\n📋 Service: $serviceName';
+    }
+
+    // Add date and time information
+    if (bookingDate.isNotEmpty &&
+        bookingDate != 'null' &&
+        bookingDate != 'undefined' &&
+        bookingTime.isNotEmpty &&
+        bookingTime != 'null' &&
+        bookingTime != 'undefined') {
+      String formattedTime = _formatTime(bookingTime);
+      String formattedDate = _formatDate(bookingDate);
+      description += '\n📅 $formattedDate at $formattedTime';
+    }
+
+    // Add location information
+    if (location.isNotEmpty && location != 'null' && location != 'undefined') {
+      if (location.startsWith('https://')) {
+        description += '\n🔗 Online Meeting';
+      } else {
+        description += '\n📍 Location: $location';
+      }
+    }
+
+    print('🔍 Final formatted description: $description');
+    return description;
+  }
+
+  // Helper method to format time
+  String _formatTime(String time) {
+    try {
+      if (time.contains(':')) {
+        final timeParts = time.split(':');
+        if (timeParts.length >= 2) {
+          final hour = int.parse(timeParts[0]);
+          final minute = timeParts[1];
+          if (hour > 12) {
+            return '${hour - 12}:$minute PM';
+          } else if (hour == 12) {
+            return '12:$minute PM';
+          } else if (hour == 0) {
+            return '12:$minute AM';
+          } else {
+            return '$hour:$minute AM';
+          }
+        }
+      }
+    } catch (e) {
+      print('⚠️ Error formatting time: $e');
+    }
+    return time;
+  }
+
+  // Helper method to format date
+  String _formatDate(String date) {
+    try {
+      if (date.contains('-')) {
+        final dateParts = date.split('-');
+        if (dateParts.length >= 3) {
+          final year = dateParts[0];
+          final month = dateParts[1];
+          final day = dateParts[2];
+
+          // Convert month number to name
+          final monthNames = [
+            '',
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'May',
+            'Jun',
+            'Jul',
+            'Aug',
+            'Sep',
+            'Oct',
+            'Nov',
+            'Dec'
+          ];
+          final monthName = monthNames[int.parse(month)];
+
+          return '$day $monthName $year';
+        }
+      }
+    } catch (e) {
+      print('⚠️ Error formatting date: $e');
+    }
+    return date;
   }
 }
