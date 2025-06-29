@@ -33,8 +33,15 @@ RUN echo "yes" | php artisan octane:install --server=frankenphp --no-interaction
 RUN chown -R www-data:www-data storage bootstrap/cache && \
     chmod -R 777 storage bootstrap/cache
 
+# Copy start.sh and give execute permission
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Expose port 8080
 EXPOSE 8080
+
+# Command
+CMD ["sh", "/app/start.sh"]
 
 # Jalankan Laravel Octane dengan FrankenPHP
 ENTRYPOINT ["php", "artisan", "octane:frankenphp"]
