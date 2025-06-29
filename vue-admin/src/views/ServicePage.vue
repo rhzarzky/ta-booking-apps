@@ -68,19 +68,6 @@ watch([searchQuery, selectedOption], () => {
     currentPage.value = 1;
 });
 
-// Show date modal
-const isDateModalVisible = ref(false)
-const selectedDates = ref([])
-
-function openDateModal(dates) {
-    selectedDates.value = dates.map(d => d.date)
-    isDateModalVisible.value = true
-}
-
-function closeDateModal() {
-    isDateModalVisible.value = false
-}
-
 // Delete service Confirmation
 const confirmDelete = (id) => {
     serviceToDelete.value = id;
@@ -226,9 +213,6 @@ function closeLocationModal() {
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap">Assigned</th>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap w-56">Location</th>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap">Option</th>
-                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Day</th>
-                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Time</th>
-                                <th class="px-4 py-3 font-semibold whitespace-nowrap">Date</th>
                                 <th class="px-4 py-3 font-semibold whitespace-nowrap">Actions</th>
                             </tr>
                         </thead>
@@ -267,6 +251,17 @@ function closeLocationModal() {
                                         @click="openImageModal(service.image)" />
                                     <span v-else class="text-gray-400 italic">No Image</span>
                                 </td>
+                                <!-- Image Modal -->
+                                <div v-if="isImageModalVisible"
+                                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                                    <div
+                                        class="relative bg-white rounded-xl shadow-xl p-4 max-w-lg w-full flex flex-col items-center">
+                                        <button @click="closeImageModal"
+                                            class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+                                        <img :src="modalImageUrl" alt="Service Image"
+                                            class="max-h-[70vh] w-auto rounded-lg object-contain" />
+                                    </div>
+                                </div>
                                 <td class="px-4 py-4 font-medium max-w-xs break-words whitespace-pre-line">
                                     <div class="line-clamp-3" title="Click to show detail"
                                         @click="showDescription(service.description)" style="cursor:pointer;">
@@ -319,38 +314,21 @@ function closeLocationModal() {
                                 <td class="px-4 py-4 font-medium whitespace-nowrap">
                                     {{ Array.isArray(service.option) ? service.option.join(", ") : service.option }}
                                 </td>
-                                <td class="px-4 py-4 font-medium whitespace-nowrap">
-                                    {{ Array.isArray(service.days) ? service.days.join(", ") : service.days }}
-                                </td>
-                                <td class="px-4 py-4 font-medium whitespace-nowrap">
-                                    {{ Array.isArray(service.time) ? service.time.join(", ") : service.time }}
-                                </td>
-                                <td class="px-4 py-4 font-medium whitespace-nowrap">
-                                    <button class="text-cobalt-700 underline hover:text-cobalt-900"
-                                        @click="openDateModal(service.date)">
-                                        Show
-                                    </button>
-                                    <!-- Modal Calendar -->
-                                    <div v-if="isDateModalVisible"
-                                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                                        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-                                            <div class="flex justify-between items-center mb-4">
-                                                <h2 class="text-lg font-semibold text-cobalt-900">Available Date
-                                                </h2>
-                                                <button @click="closeDateModal"
-                                                    class="text-gray-500 hover:text-red-500 text-lg">&times;</button>
-                                            </div>
-                                            <div class="grid grid-cols-4 gap-2">
-                                                <div v-for="date in selectedDates" :key="date"
-                                                    class="border p-2 text-center rounded bg-cobalt-50 text-cobalt-900 text-sm">
-                                                    {{ new Date(date).toLocaleDateString() }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
                                 <td class="px-4 py-4 whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-6 h-full">
+                                        <RouterLink title="Show Detail" :to="`/detail-service/${service.id}`">
+                                            <!-- Show Detail Icon -->
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                viewBox="0 0 36 36">
+                                                <path fill="#0075ff"
+                                                    d="M33.62 17.53c-3.37-6.23-9.28-10-15.82-10S5.34 11.3 2 17.53l-.28.47l.26.48c3.37 6.23 9.28 10 15.82 10s12.46-3.72 15.82-10l.26-.48Zm-15.82 8.9C12.17 26.43 7 23.29 4 18c3-5.29 8.17-8.43 13.8-8.43S28.54 12.72 31.59 18c-3.05 5.29-8.17 8.43-13.79 8.43"
+                                                    class="clr-i-outline clr-i-outline-path-1" />
+                                                <path fill="#0075ff"
+                                                    d="M18.09 11.17A6.86 6.86 0 1 0 25 18a6.86 6.86 0 0 0-6.91-6.83m0 11.72A4.86 4.86 0 1 1 23 18a4.87 4.87 0 0 1-4.91 4.89"
+                                                    class="clr-i-outline clr-i-outline-path-2" />
+                                                <path fill="none" d="M0 0h36v36H0z" />
+                                            </svg>
+                                        </RouterLink>
                                         <button @click="confirmDelete(service.id)" title="Delete" class="text-red-500">
                                             <!-- Delete Icon -->
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -397,17 +375,6 @@ function closeLocationModal() {
                             </tr>
                         </tbody>
                     </table>
-                    <!-- Image Modal -->
-                    <div v-if="isImageModalVisible"
-                        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                        <div
-                            class="relative bg-white rounded-xl shadow-xl p-4 max-w-lg w-full flex flex-col items-center">
-                            <button @click="closeImageModal"
-                                class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-2xl">&times;</button>
-                            <img :src="modalImageUrl" alt="Service Image"
-                                class="max-h-[70vh] w-auto rounded-lg object-contain" />
-                        </div>
-                    </div>
                 </div>
                 <!-- Pagination Controls -->
                 <PaginationPage :current-page="currentPage" :total-pages="totalPages" :has-next-page="hasNextPage"
