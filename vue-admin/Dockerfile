@@ -26,13 +26,8 @@ RUN npm ci --no-audit --prefer-offline
 COPY . .
 
 # Build
-RUN VITE_BASE_URL=$VITE_BASE_URL \
-    VITE_API_PATH=$VITE_API_PATH \
-    FRONTEND_URL=$FRONTEND_URL \
-    VITE_MAPBOX_ACCESS_TOKEN=$VITE_MAPBOX_ACCESS_TOKEN \
-    VITE_JWT_SECRET=$VITE_JWT_SECRET \
-    npm run build
-    
+RUN npm run build
+
 # Stage 2: Production stage
 FROM nginx:alpine
 
