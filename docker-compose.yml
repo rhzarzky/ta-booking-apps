@@ -7,8 +7,7 @@ services:
     build: 
       context: ./backend
     volumes:
-      - /root/booking-backend/storage:/app/storage
-      - /root/booking-backend/public:/app/public
+      - /root/booking-backend/storage/app/public:/app/storage/app/public
     ports:
       - "8080:8080"
     networks:
