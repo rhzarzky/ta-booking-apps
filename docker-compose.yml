@@ -43,6 +43,25 @@ services:
       retries: 5
       start_period: 5s
 
+  client-frontend:
+      image: rhzarzky/client-frontend:dev
+      container_name: client-frontend
+      env_file:
+        - .env.frontend
+      build:
+        context: ./vue
+      ports:
+        - "8082:80"
+      networks:
+        - booking-network
+      restart: unless-stopped
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost/"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+        start_period: 5s
+
 networks:
   booking-network:
     name: booking-network
