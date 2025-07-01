@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\URL;
 use Exception;
 
@@ -43,7 +43,7 @@ class VerificationController extends Controller
         $user->email_verified_at = now();
         $user->save();
 
-        return redirect(env('APP_FRONTEND_URL') . '/email-verified');
+        return Redirect::away(env('FRONTEND_URL') . '/email-verified');
     }
 
     public function sendOtp(Request $request)
