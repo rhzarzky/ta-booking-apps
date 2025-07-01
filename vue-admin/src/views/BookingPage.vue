@@ -97,6 +97,9 @@ const handleConfirmation = async () => {
     closeConfirmationModal();
 };
 
+const isActionDisabled = (booking) => {
+    return ['Approved', 'Declined'].includes(booking.service.status);
+};
 </script>
 
 <template>
@@ -172,7 +175,8 @@ const handleConfirmation = async () => {
                                 <td class="px-6 py-4 font-medium">{{ booking.service.title }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.option }}</td>
                                 <td class="px-7 py-4 font-medium whitespace-nowrap">
-                                    {{ booking.service.date ? booking.service.date.split('-').reverse().join('-') : '' }}
+                                    {{ booking.service.date ? booking.service.date.split('-').reverse().join('-') : ''
+                                    }}
                                 </td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.time }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.note }}</td>
@@ -189,25 +193,32 @@ const handleConfirmation = async () => {
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-center gap-6 h-full">
+                                        <!-- Approved Button -->
                                         <button title="Approved" class="text-green-600 hover:text-green-800"
+                                            :class="{ 'opacity-50 cursor-not-allowed': isActionDisabled(booking) }"
+                                            :disabled="isActionDisabled(booking)"
                                             @click="handleAction(booking, 'Approved')">
-                                            <!-- Approved Icon -->
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                 viewBox="0 0 24 24">
                                                 <path fill="#109b06"
                                                     d="M18.577 6.183a1 1 0 0 1 .24 1.394l-5.666 8.02c-.36.508-.665.94-.94 1.269c-.287.34-.61.658-1.038.86a2.83 2.83 0 0 1-2.03.153c-.456-.137-.82-.406-1.149-.702c-.315-.285-.672-.668-1.09-1.116l-1.635-1.753a1 1 0 1 1 1.462-1.364l1.606 1.722c.455.487.754.806.998 1.027c.24.216.344.259.385.271c.196.06.405.045.598-.046c.046-.022.149-.085.36-.338c.216-.257.473-.62.863-1.171l5.642-7.986a1 1 0 0 1 1.394-.24" />
                                             </svg>
                                         </button>
-                                        <button title="Declined" class="text-green-600 hover:text-green-800"
+
+                                        <!-- Declined Button -->
+                                        <button title="Declined" class="text-red-600 hover:text-red-800"
+                                            :class="{ 'opacity-50 cursor-not-allowed': isActionDisabled(booking) }"
+                                            :disabled="isActionDisabled(booking)"
                                             @click="handleAction(booking, 'Declined')">
-                                            <!-- Declined Icon -->
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                 viewBox="0 0 24 24">
                                                 <path fill="none" stroke="#d60000" stroke-linecap="round"
-                                                    stroke-linejoin="round" stroke-width="1.5" d="M19 5L5 19M5 5l14 14"
-                                                    color="#d60000" />
+                                                    stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M19 5L5 19M5 5l14 14" />
                                             </svg>
                                         </button>
+
+                                        <!-- Modal for Confirmation -->
                                         <transition name="fade">
                                             <div v-if="showConfirmationModal"
                                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -230,13 +241,13 @@ const handleConfirmation = async () => {
                                                             Cancel
                                                         </button>
                                                         <button @click="handleConfirmation" :class="[
-                                                                'px-4 py-2 text-sm text-white rounded',
-                                                                actionType === 'Approved'
-                                                                    ? 'bg-green-600 hover:bg-green-700'
-                                                                    : actionType === 'Declined'
-                                                                        ? 'bg-red-600 hover:bg-red-700'
-                                                                        : 'bg-blue-600 hover:bg-blue-700'
-                                                            ]">
+                                                            'px-4 py-2 text-sm text-white rounded',
+                                                            actionType === 'Approved'
+                                                                ? 'bg-green-600 hover:bg-green-700'
+                                                                : actionType === 'Declined'
+                                                                    ? 'bg-red-600 hover:bg-red-700'
+                                                                    : 'bg-blue-600 hover:bg-blue-700'
+                                                        ]">
                                                             Confirm
                                                         </button>
                                                     </div>

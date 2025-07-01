@@ -255,12 +255,21 @@ class BookingController extends Controller
     public function confirm(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:Approved,Declined,Completed',
+            'status' => 'required|in:Approved,Declined',
         ]);
 
         $booking = Booking::with('service', 'user')->findOrFail($id);
+
+        if (in_array($booking->status, ['Approved', 'Declined'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This booking status has already been finalized and cannot be changed.',
+            ], 403);
+        }
+
         $booking->status = $request->status;
 
+        // generate Jitsi meeting link if the booking is approved and the option is online
         if (
             $request->status === 'Approved' &&
             $booking->option === 'Online'
@@ -272,9 +281,6 @@ class BookingController extends Controller
         }
 
         $booking->save();
-
-        // Status telah diubah, tidak perlu trigger event karena
-        // aplikasi mobile akan menggunakan polling untuk notifikasi
 
         return response()->json([
             'status' => 'success',
