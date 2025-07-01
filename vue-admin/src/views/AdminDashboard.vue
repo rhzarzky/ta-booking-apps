@@ -82,7 +82,7 @@ const latestUsers = computed(() =>
                     <thead class="bg-wildsand-100">
                         <tr>
                             <th class="px-4 py-2">Service</th>
-                            <th class="px-4 py-2">User</th>
+                            <th class="px-4 py-2">Booked by</th>
                             <th class="px-4 py-2">Status</th>
                             <th class="px-4 py-2">Date</th>
                         </tr>

@@ -82,6 +82,9 @@ const closeConfirmationModal = () => {
     actionType.value = null;
 };
 
+// Admin note for additional information
+const adminNote = ref("");
+
 const handleConfirmation = async () => {
     if (!bookingToConfirm.value || !actionType.value) return;
 
@@ -90,6 +93,7 @@ const handleConfirmation = async () => {
 
     const formData = new FormData();
     formData.append('status', status);
+    formData.append("note", adminNote.value);
 
     await bookingStore.confirmBooking(bookingToConfirm.value.id_booking, formData);
     await fetchData();
@@ -155,13 +159,13 @@ const isActionDisabled = (booking) => {
                         <thead class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
                             <tr>
                                 <th class="px-6 py-3 text-left font-semibold">No.</th>
-                                <th class="px-6 py-3 text-left font-semibold">Service Title</th>
+                                <th class="px-6 py-3 text-left font-semibold w-56">Service Title</th>
                                 <th class="px-6 py-3 text-left font-semibold">Option</th>
                                 <th class="px-7 py-3 text-left font-semibold">Date</th>
                                 <th class="px-6 py-3 text-left font-semibold">Time</th>
-                                <th class="px-6 py-3 text-left font-semibold">Note</th>
                                 <th class="px-6 py-3 text-left font-semibold">Booked by</th>
                                 <th class="px-6 py-3 text-left font-semibold">Location</th>
+                                <th class="px-6 py-3 text-left font-semibold">Note</th>
                                 <th class="px-6 py-3 text-left font-semibold">Status</th>
                                 <th class="px-6 py-3 text-left font-semibold">Actions</th>
                             </tr>
@@ -179,9 +183,9 @@ const isActionDisabled = (booking) => {
                                     }}
                                 </td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.time }}</td>
-                                <td class="px-6 py-4 font-medium">{{ booking.service.note }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.user.email }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.location }}</td>
+                                <td class="px-6 py-4 font-medium">{{ booking.service.note }}</td>
                                 <td class="px-6 py-4">
                                     <span :class="{
                                         'bg-yellow-100 text-yellow-800': booking.service.status === 'Pending',
@@ -235,6 +239,17 @@ const isActionDisabled = (booking) => {
                                                         <span v-else-if="actionType === 'Declined'">decline</span>
                                                         this booking?
                                                     </p>
+
+                                                    <!-- Note Input -->
+                                                    <div v-if="['Declined'].includes(actionType)" class="mt-4">
+                                                        <label for="admin-note" class="text-sm text-gray-600">Note
+                                                            (optional)</label>
+                                                        <textarea id="admin-note" v-model="adminNote"
+                                                            class="w-full mt-1 border rounded p-2 text-sm" rows="3"
+                                                            placeholder="Write a reason or note for this action...">
+                                                        </textarea>
+                                                    </div>
+
                                                     <div class="mt-4 flex justify-end gap-2">
                                                         <button @click="closeConfirmationModal"
                                                             class="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">

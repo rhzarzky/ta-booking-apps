@@ -8,7 +8,6 @@ use App\Models\Booking;
 use App\Models\Service;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use App\Events\AppointmentStatusChanged;
 
 class BookingController extends Controller
 {
@@ -185,7 +184,6 @@ class BookingController extends Controller
         $validated = $request->validate([
             'date' => 'required|date|in:' . implode(',', $availableDate),
             'time' => 'required|date_format:H:i|in:' . implode(',', $availableTime),
-            'note' => 'nullable|string|max:255',
             'option' => 'required|string|in:' . implode(',', $availableOption),
         ]);
 
@@ -256,6 +254,7 @@ class BookingController extends Controller
     {
         $request->validate([
             'status' => 'required|in:Approved,Declined',
+            'note' => 'nullable|string|max:1000',
         ]);
 
         $booking = Booking::with('service', 'user')->findOrFail($id);
@@ -268,6 +267,7 @@ class BookingController extends Controller
         }
 
         $booking->status = $request->status;
+        $booking->note = $request->note ?? null;
 
         // generate Jitsi meeting link if the booking is approved and the option is online
         if (
@@ -288,6 +288,7 @@ class BookingController extends Controller
             'booking' => [
                 'id_booking' => $booking->id,
                 'status' => $booking->status,
+                'note' => $booking->note,
                 'location' => $booking->location,
                 'latitude' => $booking->service->location->latitude ?? null,
                 'longitude' => $booking->service->location->longitude ?? null,
