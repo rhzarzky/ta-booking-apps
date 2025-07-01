@@ -88,7 +88,7 @@ const adminNote = ref("");
 const handleConfirmation = async () => {
     if (!bookingToConfirm.value || !actionType.value) return;
 
-    const validStatuses = ['Approved', 'Declined'];
+    const validStatuses = ['Approved', 'Declined', 'Completed'];
     const status = validStatuses.includes(actionType.value) ? actionType.value : 'Pending';
 
     const formData = new FormData();
@@ -102,7 +102,7 @@ const handleConfirmation = async () => {
 };
 
 const isActionDisabled = (booking) => {
-    return ['Approved', 'Declined'].includes(booking.service.status);
+    return ['Approved', 'Declined', 'Completed'].includes(booking.service.status);
 };
 </script>
 
@@ -133,6 +133,7 @@ const isActionDisabled = (booking) => {
                                 <option value="Pending">Pending</option>
                                 <option value="Approved">Approved</option>
                                 <option value="Declined">Declined</option>
+                                <option value="Completed">Completed</option>
                             </select>
                         </div>
                     </div>
@@ -191,6 +192,7 @@ const isActionDisabled = (booking) => {
                                         'bg-yellow-100 text-yellow-800': booking.service.status === 'Pending',
                                         'bg-green-100 text-green-800': booking.service.status === 'Approved',
                                         'bg-red-100 text-red-800': booking.service.status === 'Declined',
+                                        'bg-blue-100 text-blue-800': booking.service.status === 'Completed'
                                     }" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold">
                                         {{ booking.service.status }}
                                     </span>
