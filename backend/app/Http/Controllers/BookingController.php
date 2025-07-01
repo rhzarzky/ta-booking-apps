@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\ConfirmedBookingMail;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Service;
@@ -254,7 +255,7 @@ class BookingController extends Controller
     {
         $request->validate([
             'status' => 'required|in:Approved,Declined',
-            'note' => 'nullable|string|max:1000',
+            'note' => 'nullable|string|max:255',
         ]);
 
         $booking = Booking::with('service', 'user')->findOrFail($id);
@@ -281,6 +282,9 @@ class BookingController extends Controller
         }
 
         $booking->save();
+
+        // Notify the user about the booking confirmation 
+        $booking->user->notify(new ConfirmedBookingMail($booking));
 
         return response()->json([
             'status' => 'success',

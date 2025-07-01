@@ -124,7 +124,7 @@ class ServiceController extends Controller
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'title' => 'required|string|max:255',
-            'description' => 'required|string|max:max:1000',
+            'description' => 'required|string|max:1000',
             'location'  => 'required|string|max:255',
             'longitude' => 'nullable|numeric',
             'latitude' => 'nullable|numeric',
@@ -212,7 +212,7 @@ class ServiceController extends Controller
         $validator = Validator::make($request->all(), [
             'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
             'title' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string|max:max:1000',
+            'description' => 'sometimes|string|max:1000',
             'location' => 'sometimes|string|max:255',
             'longitude' => 'sometimes|numeric',
             'latitude' => 'sometimes|numeric',
