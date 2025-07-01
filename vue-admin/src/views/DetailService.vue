@@ -1,8 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useServicesStore } from '@/stores/service'
 import DefaultLayout from '@/layout/DefaultLayout.vue'
+import VueCal from 'vue-cal'
+import 'vue-cal/dist/vuecal.css'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,6 +23,19 @@ const fetchService = async () => {
         router.push('/service') // Redirect on error
     }
 }
+
+// VueCal configuration
+const events = computed(() => {
+    if (!service.value?.date) return []
+
+    return service.value.date.map(d => ({
+        start: d.date,
+        end: d.date,
+        title: d.day,
+        background: '#D6E4FF',
+        color: '#1858DD'
+    }))
+})
 
 onMounted(() => {
     fetchService()
@@ -49,15 +64,15 @@ const handleDeleteConfirmed = async () => {
         <div class="min-h-screen p-6 md:p-10 bg-white rounded-2xl shadow-md w-full mx-auto">
             <!-- Header with Back Button and Title -->
             <div class="flex items-center justify-between mt-6 mb-6">
-            <h1 class="text-2xl md:text-3xl font-bold text-cobalt-950">Service Detail</h1>
-            <RouterLink to="/service"
-                class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 text-cobalt-900 rounded hover:bg-gray-200">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Services
-            </RouterLink>
+                <h1 class="text-2xl md:text-3xl font-bold text-cobalt-950">Service Detail</h1>
+                <RouterLink to="/service"
+                    class="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 text-cobalt-900 rounded hover:bg-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Services
+                </RouterLink>
             </div>
             <div v-if="service" class="space-y-4">
                 <div class="flex items-center gap-4">
@@ -93,13 +108,9 @@ const handleDeleteConfirmed = async () => {
                         </p>
                     </div>
                     <div class="p-4 border rounded-lg col-span-full">
-                        <p class="text-sm text-gray-500">Available Dates</p>
-                        <div class="flex flex-wrap gap-2 mt-1">
-                            <span v-for="(d, index) in service.date" :key="index"
-                                class="text-xs bg-cobalt-100 text-cobalt-800 px-2 py-1 rounded">
-                                {{ new Date(d.date).toLocaleDateString() }} ({{ d.day }})
-                            </span>
-                        </div>
+                        <p class="text-sm text-gray-500 mb-2">Available Dates</p>
+                        <VueCal style="height: 400px" hide-view-selector default-view="month" :events="events"
+                            :disable-views="['week', 'day', 'year']" active-view="month" :time="false" readonly />
                     </div>
                 </div>
 
