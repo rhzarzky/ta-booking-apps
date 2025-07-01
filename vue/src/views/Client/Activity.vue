@@ -153,7 +153,7 @@ const handleReviewSubmitted = async () => {
   <div class="bg-gray-100 min-h-screen p-4">
     <div class="max-w-4xl mx-auto">
       <div class="mb-6 bg-white rounded-lg shadow p-6">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Your Booking Activity</h1>
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Your Booking History</h1>
         <div class="flex flex-wrap gap-4 text-sm">
           <div class="flex-grow">
             <input

@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert';
 import 'package:Appointly/module/auth/repository/auth_repository.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:Appointly/main.dart' show flutterLocalNotificationsPlugin;
 
 part 'notification_event.dart';
 part 'notification_state.dart';
@@ -12,6 +15,10 @@ part 'notification_state.dart';
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final Logger _logger = Logger();
   final AuthRepository _authRepository = AuthRepository();
+
+  // Add flags to prevent duplicate API calls
+  bool _isFetchingFromApi = false;
+  Set<String> _processedNotificationIds = <String>{};
 
   NotificationBloc() : super(NotificationInitial()) {
     print('🏃 Initializing NotificationBloc');
@@ -35,6 +42,20 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
               decoded.map((item) => Map<String, dynamic>.from(item)).toList();
         }
 
+        // Check for duplicates based on bookingId and title
+        final notificationId =
+            '${event.bookingId}_${event.title}_${event.userId}';
+        final isDuplicate = userNotifications.any((notification) =>
+            notification['bookingId'] == event.bookingId &&
+            notification['title'] == event.title &&
+            notification['userId'] == event.userId);
+
+        if (isDuplicate) {
+          print('⚠️ Duplicate notification detected, skipping: ${event.title}');
+          emit(NotificationLoaded(userNotifications));
+          return;
+        }
+
         // Create new notification
         final Map<String, dynamic> newNotification = {
           'title': event.title,
@@ -43,6 +64,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           'time': event.time,
           'userId': event.userId,
           'bookingId': event.bookingId,
+          'id': notificationId, // Add unique ID for tracking
         };
 
         // Add to beginning of list
@@ -74,16 +96,47 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
               '📦 Found stored notifications for user ${event.userId}: $storedData');
           final List<dynamic> decodedList = jsonDecode(storedData);
 
-          // Convert to list of maps - no need to filter as these are already user-specific
-          final notifications = decodedList
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList();
+          // Convert to list of maps and fix any notifications with missing body
+          final notifications = decodedList.map((item) {
+            final notification = Map<String, dynamic>.from(item);
+
+            // Fix notifications that don't have proper body
+            if (notification['body'] == null ||
+                notification['body'].toString().contains('T') &&
+                    notification['body'].toString().contains('Z')) {
+              // This looks like a timestamp, let's fix it
+              print(
+                  '🔧 Fixing notification with timestamp as body: ${notification['title']}');
+
+              final title = notification['title'] ?? '';
+              if (title.toLowerCase().contains('confirmed')) {
+                // This is from booking helper, keep it as is but ensure it has a proper body
+                if (notification['body'] == null) {
+                  notification['body'] = 'Your booking has been confirmed';
+                }
+              } else if (title.toLowerCase().contains('approved')) {
+                notification['body'] = 'Your appointment has been approved';
+              } else if (title.toLowerCase().contains('declined')) {
+                notification['body'] = 'Your appointment has been declined';
+              } else {
+                notification['body'] = 'Booking status updated';
+              }
+
+              print('🔧 Fixed body: ${notification['body']}');
+            }
+
+            return notification;
+          }).toList();
+
+          // Save the fixed notifications back
+          await prefs.setString(notificationKey, jsonEncode(notifications));
 
           print(
               '✅ Found ${notifications.length} notifications for user ${event.userId}');
           print('📝 Notifications:');
           for (var notif in notifications) {
-            print('  - ${notif['title']} (ID: ${notif['bookingId']})');
+            print(
+                '  - ${notif['title']} | Body: ${notif['body']} (ID: ${notif['bookingId']})');
           }
 
           emit(NotificationLoaded(notifications));
@@ -110,11 +163,17 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         _logger.e('Error clearing notifications: $e');
         emit(NotificationError(message: e.toString()));
       }
-    });
-
-    // Handler for the new event to fetch notifications from the API
+    }); // Handler for the new event to fetch notifications from the API
     on<FetchNotificationsFromApi>((event, emit) async {
+      // Prevent duplicate API calls
+      if (_isFetchingFromApi) {
+        print('⚠️ API fetch already in progress, skipping...');
+        return;
+      }
+
+      _isFetchingFromApi = true;
       emit(NotificationLoading());
+
       try {
         print('🌐 Fetching notifications from API for user: ${event.userId}');
 
@@ -150,13 +209,50 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           throw Exception('API returned error: ${data['message']}');
         }
 
+        // Get existing notifications first
+        final prefs = await SharedPreferences.getInstance();
+        final String notificationKey = 'notifications_${event.userId}';
+        List<Map<String, dynamic>> existingNotifications = [];
+        final String? existingData = prefs.getString(notificationKey);
+        if (existingData != null) {
+          final List<dynamic> decoded = jsonDecode(existingData);
+          existingNotifications =
+              decoded.map((item) => Map<String, dynamic>.from(item)).toList();
+        }
+
         // Get the notifications from the response
         final List<dynamic> apiNotifications = data['notifications'];
-        final notificationsList = apiNotifications.map((item) {
-          // Map the API response to the format expected by the UI
-          return {
+        List<Map<String, dynamic>> newNotifications = [];
+
+        for (var item in apiNotifications) {
+          final notificationId =
+              '${item['id']}_${item['status']}_${event.userId}';
+
+          // Check if this notification already exists to prevent duplicates
+          final isDuplicate = existingNotifications.any((existing) =>
+              existing['bookingId'] == item['id'] &&
+              existing['status'] == item['status'] &&
+              existing['userId'] == event.userId);
+
+          // Also check our processed IDs set
+          if (isDuplicate ||
+              _processedNotificationIds.contains(notificationId)) {
+            print(
+                '⚠️ Skipping duplicate notification: ${item['id']} - ${item['status']}');
+            continue;
+          }
+
+          // Mark as processed
+          _processedNotificationIds.add(
+              notificationId); // Map the API response to the format expected by the UI
+          final formattedBody = _formatNotificationDescription(item);
+          print('🔧 Formatting notification:');
+          print('   Original item: $item');
+          print('   Formatted body: $formattedBody');
+
+          final notification = {
             'title': 'Booking ${item['status']}',
-            'body': item['message'],
+            'body': formattedBody,
             'status': item['status'],
             'time': item['updated_at'],
             'userId': event.userId,
@@ -165,57 +261,43 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
             'bookingDate': item['booking_date'],
             'bookingTime': item['booking_time'],
             'location': item['location'],
+            'id': notificationId,
           };
-        }).toList();
 
-        // Save these notifications to SharedPreferences
-        if (notificationsList.isNotEmpty) {
-          final prefs = await SharedPreferences.getInstance();
-          final String notificationKey = 'notifications_${event.userId}';
+          newNotifications.add(notification);
 
-          // Get existing notifications
-          List<Map<String, dynamic>> existingNotifications = [];
-          final String? existingData = prefs.getString(notificationKey);
-          if (existingData != null) {
-            final List<dynamic> decoded = jsonDecode(existingData);
-            existingNotifications =
-                decoded.map((item) => Map<String, dynamic>.from(item)).toList();
-          }
+          // Show push notification for each new notification
+          await _showPushNotification(
+            title: notification['title'],
+            body: notification['body'],
+            bookingId: item['id'],
+            context: event.context,
+          );
+        }
 
+        // Save new notifications to SharedPreferences
+        if (newNotifications.isNotEmpty) {
           // Add new notifications to the beginning (to maintain chronology)
           final allNotifications = [
-            ...notificationsList,
+            ...newNotifications,
             ...existingNotifications
           ];
 
           // Save back to SharedPreferences
           await prefs.setString(notificationKey, jsonEncode(allNotifications));
           print(
-              '💾 Saved ${notificationsList.length} new notifications from API');
+              '💾 Saved ${newNotifications.length} new notifications from API');
 
           emit(NotificationLoaded(allNotifications));
         } else {
           // If no new notifications, still return what we have
-          final prefs = await SharedPreferences.getInstance();
-          final String notificationKey = 'notifications_${event.userId}';
-          final String? existingData = prefs.getString(notificationKey);
-
-          if (existingData != null) {
-            final List<dynamic> decoded = jsonDecode(existingData);
-            final existingNotifications =
-                decoded.map((item) => Map<String, dynamic>.from(item)).toList();
-            emit(NotificationLoaded(existingNotifications));
-          } else {
-            emit(NotificationLoaded([]));
-          }
-
+          emit(NotificationLoaded(existingNotifications));
           print('ℹ️ No new notifications found from API');
         }
 
         // Save the last check timestamp
         final lastCheck = data['last_check'];
         if (lastCheck != null) {
-          final prefs = await SharedPreferences.getInstance();
           await prefs.setString(
               'notifications_last_check_${event.userId}', lastCheck);
         }
@@ -223,10 +305,11 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         print('❌ Error fetching notifications from API: $e');
         _logger.e('Error fetching notifications from API: $e');
         emit(NotificationError(message: e.toString()));
+      } finally {
+        _isFetchingFromApi = false;
       }
     });
   }
-
   // This method will be called during initialization to migrate existing data
   void _migrateNotifications() {
     Future.delayed(Duration.zero, () async {
@@ -270,5 +353,84 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         _logger.e('Error migrating notifications: $e');
       }
     });
+  }
+
+  // Helper method to show push notifications
+  Future<void> _showPushNotification({
+    required String title,
+    required String body,
+    required int bookingId,
+    BuildContext? context,
+  }) async {
+    try {
+      print('🔔 Showing push notification: $title');
+
+      // Create payload for navigation
+      final payload = jsonEncode({
+        'bookingId': bookingId,
+        'type': 'booking',
+      });
+
+      // Show local notification
+      await flutterLocalNotificationsPlugin.show(
+        bookingId, // Use bookingId as notification ID
+        title,
+        body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'appointly_channel',
+            'Appointly Notifications',
+            importance: Importance.max,
+            priority: Priority.high,
+            showWhen: true,
+            enableVibration: true,
+            playSound: true,
+          ),
+        ),
+        payload: payload,
+      );
+      print('✅ Push notification sent successfully');
+    } catch (e) {
+      print('❌ Error showing push notification: $e');
+      _logger.e('Error showing push notification: $e');
+    }
+  }
+
+  // Helper method to format notification description
+  String _formatNotificationDescription(Map<String, dynamic> item) {
+    print('🔍 Formatting description for item: $item');
+
+    final serviceName = item['service_name']?.toString() ?? 'your service';
+    final bookingDate = item['booking_date']?.toString() ?? '';
+    final bookingTime = item['booking_time']?.toString() ?? '';
+    final status = item['status']?.toString().toLowerCase() ?? 'updated';
+    final location = item['location']?.toString() ?? '';
+    final message = item['message']?.toString() ?? '';
+
+    print(
+        '🔍 Extracted data: serviceName=$serviceName, date=$bookingDate, time=$bookingTime, status=$status, location=$location, message=$message');
+
+    String description;
+
+    // If there's a custom message from API, use it as base
+    if (message.isNotEmpty && message != 'null') {
+      description = message;
+    } else {
+      description = 'Your appointment for $serviceName has been $status';
+
+      if (bookingDate.isNotEmpty &&
+          bookingDate != 'null' &&
+          bookingTime.isNotEmpty &&
+          bookingTime != 'null') {
+        description += ' for $bookingDate at $bookingTime';
+      }
+
+      if (location.isNotEmpty && location != 'null') {
+        description += ' at $location';
+      }
+    }
+
+    print('🔍 Final description: $description');
+    return description;
   }
 }

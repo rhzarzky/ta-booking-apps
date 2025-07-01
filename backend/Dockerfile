@@ -1,41 +1,34 @@
 ## Stage 1: Composer untuk install dependencies
 FROM composer:2 as composer
 
-# Workdir aplikasi
 WORKDIR /app
-
-# Copy seluruh kode aplikasi terlebih dahulu
 COPY . .
-
-# Install dependencies aplikasi dengan composer
-RUN composer install --ignore-platform-reqs --no-dev -a && \
-    composer dump-autoload
+RUN composer install --ignore-platform-reqs --no-dev -a && composer dump-autoload
 
 ## Stage 2: Main PHP Image dengan FrankenPHP
 FROM dunglas/frankenphp:latest
 
-# Install dependencies dengan cleanup agar image lebih kecil
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl ffmpeg libpq-dev\
-    && install-php-extensions pcntl zip bcmath pdo_pgsql pgsql \
-    && rm -rf /var/lib/apt/lists/*
-    
-# Workdir aplikasi
-WORKDIR /app
+    ca-certificates curl ffmpeg libpq-dev \
+  && install-php-extensions pcntl zip bcmath pdo_pgsql pgsql \
+  && rm -rf /var/lib/apt/lists/*
 
-# Copy kode aplikasi dan hasil install dependencies dari stage sebelumnya
+WORKDIR /app
 COPY --from=composer /app /app
 
-# Install Octane dengan FrankenPHP tanpa interaksi
-RUN echo "yes" | php artisan octane:install --server=frankenphp --no-interaction
-
-# Set permission Laravel storage & cache dengan user www-data
+# Set permission Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache && \
-    chmod -R 777 storage bootstrap/cache
+    chmod -R 775 storage bootstrap/cache
 
-# Expose port 8080
+# Expose port
 EXPOSE 8080
 
-# Jalankan Laravel Octane dengan FrankenPHP
-ENTRYPOINT ["php", "artisan", "octane:frankenphp"]
-CMD ["--host=0.0.0.0", "--port=8080"]
+# Jalankan semua perintah saat container run
+CMD sh -c "\
+  echo '🔗 Checking storage link...' && \
+  [ -L public/storage ] || php artisan storage:link && \
+  echo '📦 Running migrations...' && \
+  php artisan migrate --force && \
+  echo '🚀 Starting Octane with FrankenPHP...' && \
+  php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8080 \
+"

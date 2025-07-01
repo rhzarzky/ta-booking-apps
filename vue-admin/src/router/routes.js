@@ -15,6 +15,7 @@ import BookingPage from "@/views/BookingPage.vue";
 import RolePage from "@/views/RolePage.vue";
 import ChangePasswordProfile from "@/views/ChangePasswordProfile.vue";
 import EditRole from "@/views/EditRole.vue";
+import DetailService from "@/views/DetailService.vue";
 
 const routes = [
     {
@@ -43,6 +44,17 @@ const routes = [
         meta: {
             title: "Service",
             breadcrumbs: "Service",
+            excludeRole: ["user"], 
+            requiresAuth: true,
+        },
+    },
+    {
+        path: "/detail-service/:id",
+        name: "Detail Service",
+        component: DetailService,
+        meta: {
+            title: "Detail Service",
+            breadcrumbs: "Detail Service",
             excludeRole: ["user"], 
             requiresAuth: true,
         },

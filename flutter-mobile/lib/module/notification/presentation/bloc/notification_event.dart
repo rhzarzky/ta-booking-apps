@@ -40,9 +40,11 @@ class ClearNotifications extends NotificationEvent {
 class FetchNotificationsFromApi extends NotificationEvent {
   final String userId;
   final String? lastCheck;
+  final BuildContext? context;
 
   FetchNotificationsFromApi({
     required this.userId,
     this.lastCheck,
+    this.context,
   });
 }

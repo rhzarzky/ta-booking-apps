@@ -118,7 +118,7 @@
     <section id="about" class="py-20 bg-indigo-50">
       <div class="container mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-12 px-6">
         <div class="flex justify-center relative animate-fade-in-left">
-          <img src="@/assets/images/landing2.png" alt="How It Works" class="max-w-md w-full rounded-xl shadow-xl transform -rotate-3 hover:rotate-0 transition-transform duration-500 ease-in-out">
+          <img src="@/assets/images/Landing2.png" alt="How It Works" class="max-w-md w-full rounded-xl shadow-xl transform -rotate-3 hover:rotate-0 transition-transform duration-500 ease-in-out">
           <div class="absolute -top-8 -right-8 bg-green-200 w-20 h-20 rounded-full opacity-70 animate-pulse-slow hidden md:block"></div>
         </div>
 

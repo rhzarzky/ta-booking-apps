@@ -1,9 +1,10 @@
+// api/service-api.js
 import api from './api'
 
 export const serviceApi = {
   async fetchServices() {
     try {
-      const response = await api.get('/service') 
+      const response = await api.get('/service')
       return response.data.services
     } catch (error) {
       console.error('Failed to fetch services:', error)
@@ -26,7 +27,6 @@ export const serviceApi = {
       const response = await api.post(`/service/${id}/book`, payload)
       return response.data.service
     } catch (error) {
-      // Tambahan debug penting
       if (error.response) {
         console.error('Validation errors:', error.response.data.errors)
       }
@@ -35,5 +35,13 @@ export const serviceApi = {
     }
   },
 
+  async fetchServiceReviews(id) {
+    try {
+      const response = await api.get(`/service/${id}/reviews`)
+      return response.data.reviews || []
+    } catch (error) {
+      console.error(`Failed to fetch reviews for service ${id}:`, error)
+      throw error
+    }
+  },
 }
-

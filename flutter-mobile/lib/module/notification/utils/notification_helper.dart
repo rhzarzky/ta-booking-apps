@@ -22,7 +22,6 @@ class NotificationHelper {
     print(
         '📝 Service: $serviceName, Date: $date, Time: $time, Option: $option');
     _logger.d('Creating notification for booking $bookingId, user $userId');
-
     final title = 'Booking Confirmed!';
     final body =
         'Your appointment for $serviceName has been scheduled for $date at $time ($option)';
@@ -34,7 +33,6 @@ class NotificationHelper {
     });
 
     _logger.d('Notification payload: $payload');
-
     try {
       // Tampilkan notifikasi lokal
       await flutterLocalNotificationsPlugin.show(
@@ -53,17 +51,19 @@ class NotificationHelper {
           ),
         ),
         payload: payload,
-      ); // Tambahkan notifikasi ke bloc
+      );
+      // Tambahkan notifikasi ke bloc
       if (context.mounted) {
         print('🔄 Adding notification to NotificationBloc');
         print(
             '📝 Notification: title=$title, userId=$userId, bookingId=$bookingId');
+
         BlocProvider.of<NotificationBloc>(context, listen: false).add(
           AddNotification(
             title: title,
             body: body,
             status: 'confirmed',
-            time: DateTime.now().toString(),
+            time: DateTime.now().toIso8601String(),
             userId: userId,
             bookingId: bookingId,
           ),
