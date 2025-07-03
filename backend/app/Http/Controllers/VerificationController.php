@@ -43,7 +43,7 @@ class VerificationController extends Controller
         $user->email_verified_at = now();
         $user->save();
 
-        // Redirect to the frontend URL after successful verification
+        // Redirect to the frontend URL after successful verification email
         return Redirect::away(env('FRONTEND_URL') . '/email-verified');
     }
 
