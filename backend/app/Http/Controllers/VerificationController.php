@@ -43,7 +43,8 @@ class VerificationController extends Controller
         $user->email_verified_at = now();
         $user->save();
 
-        return Redirect::away(env('FRONTEND_URL') . '/email-verified');
+        // Redirect to the frontend URL after successful verification email
+        return Redirect::away(env('FRONTEND_URL') . 'email-verified');
     }
 
     public function sendOtp(Request $request)
