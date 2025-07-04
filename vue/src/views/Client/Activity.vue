@@ -1,11 +1,11 @@
-// Activity.vue
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useBookingStore } from '@/stores/booking'
-import ActivityCard from '@/components/Client/card/ActivityCard.vue'
-import PaginationPage from '@/components/Client/Pagination/PaginationPage.vue'
-import ReviewModal from '@/components/Client/modals/ReviewModal.vue'
+import { useAuthStore } from '@/stores/auth' // Pastikan path ini benar
+import { useBookingStore } from '@/stores/booking' // Pastikan path ini benar
+import ActivityCard from '@/components/Client/card/ActivityCard.vue' // Pastikan path ini benar
+import PaginationPage from '@/components/Client/Pagination/PaginationPage.vue' // Pastikan path ini benar
+import ReviewModal from '@/components/Client/modals/ReviewModal.vue' // Pastikan path ini benar
+import AlertStatus from '@/components/Client/alert/AlertStatus.vue' // Pastikan path ini benar
 
 // Store
 const bookingStore = useBookingStore()
@@ -20,16 +20,26 @@ const selectedDate = ref('')
 const searchQuery = ref('')
 const showReviewModal = ref(false)
 const selectedServiceIdForReview = ref(null)
-// Mengubah bookingExtraStatusData menjadi Map untuk mapping yang lebih efisien
 const bookingExtraStatusData = ref(new Map())
 
-// Load data on mount
+// Alert State
+const showAlert = ref(false)
+const alertMessage = ref('')
+const alertType = ref('success')
+
+function triggerAlert(message, type = 'success') {
+  alertMessage.value = message
+  alertType.value = type
+  showAlert.value = true
+}
+
+// Load data
 onMounted(() => {
   bookingStore.fetchUserBookings()
   bookingStore.fetchUserReviews()
 })
 
-// Computed
+// Computed Properties
 const bookings = computed(() => {
   return Object.values(bookingStore.bookingsByStatus)
     .flat()
@@ -65,17 +75,11 @@ const paginatedBookings = computed(() => {
   return filteredBookings.value.slice(start, start + perPage)
 })
 
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredBookings.value.length / perPage))
-)
-
-const changePage = (page) => {
-  if (page >= 1 && page <= totalPages.value) currentPage.value = page
-}
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredBookings.value.length / perPage)))
 
 const globalLoading = computed(() => bookingStore.loading)
 
-// Review mapping - FUNGSI INI ADALAH KUNCI PERBAIKAN
+// Review mapping & data tambahan untuk ActivityCard
 const fetchAndProcessAllBookingExtraData = () => {
   const userReviews = bookingStore.userReviews
   const newStatusData = new Map()
@@ -84,53 +88,54 @@ const fetchAndProcessAllBookingExtraData = () => {
     let hasUserReviewed = false
     let review = null
 
-    // Hanya proses booking yang statusnya 'Completed'
-    if (booking.status === 'Completed' && booking.service?.id_service) {
-      // Cari review yang cocok dengan service ID dari booking saat ini
-      // Menggunakan find agar mengambil review pertama yang cocok (atau satu-satunya jika ada)
-      review = userReviews.find(
-        // Perbaikan di sini: Akses r.service.id sesuai struktur JSON review
-        (r) => r.service?.id === booking.service.id_service
-      )
+    const serviceId = booking.service?.id_service
+    const bookingDate = booking.date 
+
+    if (booking.status === 'Completed' && serviceId && bookingDate) {
+      review = userReviews.find((r) => {
+        const rawReviewDate = r.created_at?.split(' ')[0]
+        if (rawReviewDate) {
+            const [dd, mm, yyyy] = rawReviewDate.split('-')
+            const reviewDateFormatted = `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`
+            
+            return (
+                r.service?.id === serviceId &&
+                reviewDateFormatted === bookingDate
+            )
+        }
+        return false;
+      })
       hasUserReviewed = !!review
     }
-
-    // Console log untuk debugging, pastikan review yang ditemukan sesuai
-    console.log(`📌 Booking ID ${booking.id_booking} — Review:`, review)
 
     newStatusData.set(booking.id_booking, { hasUserReviewed, review })
   })
 
-  // Update nilai ref Map
   bookingExtraStatusData.value = newStatusData
 }
 
-
 // Watchers
-// Panggil fetchAndProcessAllBookingExtraData saat bookings atau userReviews berubah
-watch(bookings, fetchAndProcessAllBookingExtraData, { immediate: true }) // immediate: true untuk menjalankan di awal
+watch(bookings, fetchAndProcessAllBookingExtraData, { immediate: true })
 watch(() => bookingStore.userReviews, fetchAndProcessAllBookingExtraData, { deep: true })
 watch([selectedStatus, selectedDate, searchQuery], () => {
   currentPage.value = 1
 })
 
-// Aksi
+// Actions
+const changePage = (page) => {
+  if (page >= 1 && page <= totalPages.value) currentPage.value = page
+}
+
 const handleBookingStatusUpdated = async (bookingId) => {
   try {
     await bookingStore.completeBooking(bookingId)
-    alert('Booking berhasil diselesaikan!')
-
-    // Setelah booking diselesaikan, panggil ulang semua data
-    // fetchUserBookings akan memperbarui `bookings`, dan watcher akan memicu `fetchAndProcessAllBookingExtraData`
-    // fetchUserReviews juga harus dipanggil ulang untuk memastikan data review terbaru
+    triggerAlert('Booking berhasil diselesaikan!', 'success')
     await bookingStore.fetchUserBookings()
     await bookingStore.fetchUserReviews()
-    // fetchAndProcessAllBookingExtraData akan dipicu oleh watcher
   } catch (error) {
-    alert('Gagal menyelesaikan booking: ' + (error.response?.data?.message || error.message))
+    triggerAlert('Gagal menyelesaikan booking: ' + (error.response?.data?.message || error.message), 'error')
   }
 }
-
 
 const openReviewModalFromCard = (serviceId) => {
   selectedServiceIdForReview.value = serviceId
@@ -138,85 +143,98 @@ const openReviewModalFromCard = (serviceId) => {
 }
 
 const handleReviewSubmitted = async () => {
-  alert('Review berhasil dikirim!')
+  triggerAlert('Review berhasil dikirim!', 'success')
   showReviewModal.value = false
-
-  // Setelah review disubmit, panggil ulang semua data
-  // Ini akan memastikan `bookings` dan `userReviews` diperbarui,
-  // yang kemudian akan memicu `fetchAndProcessAllBookingExtraData` melalui watcher
   await bookingStore.fetchUserBookings()
   await bookingStore.fetchUserReviews()
 }
+
+// Clear Filter Actions
+const clearSearch = () => {
+  searchQuery.value = '';
+};
+
+const clearDate = () => {
+  selectedDate.value = '';
+};
+
 </script>
 
 <template>
   <div class="bg-gray-100 min-h-screen p-4">
+    <AlertStatus
+      :message="alertMessage"
+      :type="alertType"
+      :isVisible="showAlert"
+      @close="showAlert = false"
+    />
+
     <div class="max-w-4xl mx-auto">
       <div class="mb-6 bg-white rounded-lg shadow p-6">
         <h1 class="text-3xl font-bold text-gray-800 mb-6">Your Booking History</h1>
-        <div class="flex flex-wrap gap-4 text-sm">
-          <div class="flex-grow">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4 text-sm">
+          <div class="relative flex-grow sm:flex-grow-0 sm:w-96 order-1 sm:order-1">
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="Search title, option, note..."
+              class="border px-3 py-2 rounded-lg w-full pr-10 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <button
+              v-if="searchQuery"
+              @click="clearSearch"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+              aria-label="Clear search"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="relative flex-grow order-2 sm:order-2">
             <input
               type="date"
               v-model="selectedDate"
               class="border px-3 py-2 rounded-lg w-full focus:ring-blue-500 focus:border-blue-500"
             />
-          </div>
-          <div class="flex-grow sm:flex-grow-0 sm:w-64">
-            <input
-              type="text"
-              v-model="searchQuery"
-              placeholder="Search title, option, note..."
-              class="border px-3 py-2 rounded-lg w-full focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-          <div class="flex flex-wrap gap-3 mt-4 sm:mt-0">
             <button
-              v-for="status in ['All', 'Pending', 'Approved', 'Completed', 'Declined']"
-              :key="status"
-              :class="[
-                'border px-4 py-2 rounded-lg font-medium transition duration-200',
-                selectedStatus === status
-                  ? 'bg-blue-600 text-white shadow'
-                  : 'bg-white text-gray-700 hover:bg-gray-50',
-              ]"
-              @click="selectedStatus = status"
+              v-if="selectedDate"
+              @click="clearDate"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+              aria-label="Clear date"
             >
-              {{ status }} ({{ bookingCounts[status] || 0 }})
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
             </button>
+          </div>
+
+          <div class="order-3 sm:order-3">
+            <select
+              v-model="selectedStatus"
+              class="border px-3 py-2 rounded-lg w-full sm:w-auto focus:ring-blue-500 focus:border-blue-500 bg-white pr-8"
+            >
+              <option value="All">All ({{ bookingCounts['All'] || 0 }})</option>
+              <option value="Pending">Pending ({{ bookingCounts['Pending'] || 0 }})</option>
+              <option value="Approved">Approved ({{ bookingCounts['Approved'] || 0 }})</option>
+              <option value="Completed">Completed ({{ bookingCounts['Completed'] || 0 }})</option>
+              <option value="Declined">Declined ({{ bookingCounts['Declined'] || 0 }})</option>
+            </select>
           </div>
         </div>
       </div>
 
       <div>
         <div v-if="globalLoading" class="text-center py-10 text-gray-500 text-lg">
-          <svg
-            class="animate-spin h-8 w-8 text-blue-500 mx-auto mb-3"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              class="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              stroke-width="4"
-            ></circle>
-            <path
-              class="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            />
+          <svg class="animate-spin h-8 w-8 text-blue-500 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
           </svg>
           Loading booking activity...
         </div>
 
-        <div
-          v-else-if="filteredBookings.length === 0"
-          class="bg-white rounded-lg shadow p-6 text-center text-gray-600"
-        >
+        <div v-else-if="filteredBookings.length === 0" class="bg-white rounded-lg shadow p-6 text-center text-gray-600">
           <p class="text-lg">No booking activities available.</p>
           <p class="text-sm mt-2">Try changing filters or create a new booking.</p>
         </div>

@@ -1,106 +1,4 @@
-<template>
-  <div class="bg-slate-50 min-h-screen font-sans">
-    <div class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
-      <div v-if="loading" class="text-center text-slate-500 py-12">
-        <p class="text-lg mb-4">Memuat detail pemesanan...</p>
-        <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
-      </div>
-
-      <div v-else-if="error" class="text-center bg-red-100 border-l-4 border-red-500 text-red-700 p-6 rounded-r-lg shadow-md">
-        <h3 class="font-bold text-xl mb-2">Terjadi Kesalahan</h3>
-        <p>{{ error }}</p>
-      </div>
-
-      <div v-else-if="bookingDetail" class="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300">
-        <div class="w-full h-60 md:h-80 bg-slate-200 relative">
-          <img v-if="bookingDetail.service.image" :src="bookingDetail.service.image" :alt="bookingDetail.service.title" class="w-full h-full object-cover" />
-          <div v-else class="w-full h-full flex items-center justify-center">
-            <svg class="w-16 h-16 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6v-4.58l2.29 2.29l3.54-3.53l4.58 4.58V19zM17 10c-1.1 0-2-.9-2-2s.9-2 2-2s2 .9 2 2s-.9 2-2 2z"/></svg>
-          </div>
-          <div class="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-black/50 to-transparent"></div>
-        </div>
-
-        <div class="p-6 md:p-10">
-          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-3">
-            <h1 class="text-4xl font-bold text-slate-800 leading-tight">{{ bookingDetail.service.title }}</h1>
-            <span :class="['px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap shadow-sm', statusClass]">
-              {{ bookingDetail.service.status }}
-            </span>
-          </div>
-
-          <p class="text-slate-600 text-lg mb-10 border-l-4 border-slate-200 pl-4">
-            {{ bookingDetail.service.description }}
-          </p>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div class="info-card">
-              <h3 class="info-card-title">Jadwal</h3>
-              <div class="info-card-content">
-                <svg class="w-6 h-6 text-blue-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <p class="text-slate-800 font-medium">{{ formattedDate }}, {{ bookingDetail.service.time }} WIB</p>
-              </div>
-            </div>
-            <div class="info-card">
-              <h3 class="info-card-title">Opsi Layanan</h3>
-              <div class="info-card-content">
-                 <svg class="w-6 h-6 text-blue-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                <p class="text-slate-800 font-medium">{{ bookingDetail.service.option }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="mb-10">
-            <h3 class="text-2xl font-semibold text-slate-800 mb-4">Lokasi</h3>
-            <div class="bg-slate-50 border border-slate-200 p-5 rounded-lg shadow-sm">
-              <template v-if="isOnlineBooking">
-                <a :href="bookingDetail.service.location" target="_blank" rel="noopener noreferrer" class="online-link">
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                  Buka Tautan Meeting Online
-                </a>
-              </template>
-              
-              <template v-else>
-                <p class="text-slate-700 flex items-start mb-5 text-base">
-                  <svg class="w-7 h-7 mr-4 text-blue-500 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                  <span>{{ bookingDetail.service.location }}</span>
-                </p>
-
-                <div v-if="distance && duration" class="mb-5 p-3.5 bg-blue-50 rounded-lg text-blue-800 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium">
-                  <div class="flex items-center"><svg class="w-5 h-5 mr-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Jarak: <strong class="ml-1.5">{{ distance }} km</strong></div>
-                  <div class="flex items-center"><svg class="w-5 h-5 mr-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Estimasi: <strong class="ml-1.5">{{ duration }} menit</strong></div>
-                </div>
-
-                <div ref="mapContainer" class="mapbox-map-container rounded-lg border border-slate-200"></div>
-                
-                </template>
-            </div>
-          </div>
-          
-          <div class="mb-6">
-             <h3 class="text-2xl font-semibold text-slate-800 mb-4">Catatan Tambahan</h3>
-             <div class="bg-slate-50 border border-slate-200 p-5 rounded-lg shadow-sm">
-                 <p class="text-slate-600 italic leading-relaxed">{{ bookingDetail.service.note || 'Tidak ada catatan tambahan yang diberikan.' }}</p>
-             </div>
-          </div>
-
-          <div v-if="showCalendarButton" class="text-center mt-12">
-            <a :href="generateGoogleCalendarUrl" target="_blank" rel="noopener noreferrer" class="calendar-button">
-              <svg class="w-5 h-5 mr-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              Simpan ke Google Calendar
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
-// SCRIPT TETAP SAMA DENGAN SEBELUMNYA
-// Tidak ada perubahan yang diperlukan pada bagian <script> karena hanya tampilan yang diubah.
 import { ref, onMounted, computed, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBookingStore } from '@/stores/booking';
@@ -125,6 +23,7 @@ onMounted(async () => {
   const bookingId = route.params.id;
   await bookingStore.fetchBookingDetail(bookingId);
 
+  // Pastikan bookingDetail tersedia dan bukan booking online sebelum setup map
   if (bookingDetail.value && !isOnlineBooking.value) {
     await setupMapAndNavigation();
   }
@@ -135,6 +34,7 @@ const setupMapAndNavigation = async () => {
     const userCoords = await getUserLocation();
     userLocation.value = userCoords;
     
+    // Pastikan DOM sudah diperbarui sebelum menginisialisasi peta
     await nextTick();
     
     const destinationCoords = [
@@ -164,7 +64,7 @@ const getUserLocation = () => {
 
 const initializeMap = (centerCoords) => {
   if (!mapContainer.value || !Array.isArray(centerCoords) || centerCoords.length < 2) return;
-  if (mapInstance.value) mapInstance.value.remove();
+  if (mapInstance.value) mapInstance.value.remove(); // Hapus instance map yang lama jika ada
 
   mapInstance.value = new mapboxgl.Map({
     container: mapContainer.value,
@@ -179,7 +79,7 @@ const initializeMap = (centerCoords) => {
     .addTo(mapInstance.value);
 
   if (userLocation.value) {
-    new mapboxgl.Marker({ color: '#F97316' })
+    new mapboxgl.Marker({ color: '#F97316' }) // Warna oranye untuk lokasi user
       .setLngLat(userLocation.value)
       .setPopup(new mapboxgl.Popup().setHTML('<h6>Lokasi Anda</h6>'))
       .addTo(mapInstance.value);
@@ -195,16 +95,18 @@ const getDirections = async (startCoords, endCoords) => {
 
     if (data.routes && data.routes.length > 0) {
       const route = data.routes[0];
-      distance.value = (route.distance / 1000).toFixed(2);
-      duration.value = Math.round(route.duration / 60);
+      distance.value = (route.distance / 1000).toFixed(2); // Dalam kilometer
+      duration.value = Math.round(route.duration / 60); // Dalam menit
 
       const routeGeoJSON = { type: 'Feature', geometry: route.geometry };
       
+      // Pastikan peta sudah dimuat sebelum menambahkan rute
       mapInstance.value.on('load', () => drawRoute(routeGeoJSON));
+      // Jika peta sudah dimuat saat ini
       if (mapInstance.value.isStyleLoaded()) drawRoute(routeGeoJSON);
       
       const bounds = new mapboxgl.LngLatBounds(startCoords, endCoords);
-      mapInstance.value.fitBounds(bounds, { padding: 80 });
+      mapInstance.value.fitBounds(bounds, { padding: 80 }); // Sesuaikan zoom agar kedua marker terlihat
     }
   } catch (err) {
     console.error("Gagal mendapatkan rute:", err);
@@ -230,6 +132,7 @@ const drawRoute = (geojson) => {
 const formattedDate = computed(() => {
     if (!bookingDetail.value?.service.date) return '';
     const date = new Date(bookingDetail.value.service.date + 'T00:00:00');
+    // Pastikan untuk menggunakan 'id-ID' untuk format tanggal Indonesia
     return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 });
 
@@ -256,23 +159,124 @@ const generateGoogleCalendarUrl = computed(() => {
     const [hours, minutes] = time.split(':');
     const start = new Date(date);
     start.setHours(hours, minutes);
-    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    const end = new Date(start.getTime() + 60 * 60 * 1000); // Durasi 1 jam
     const formatDateToUTC = d => d.toISOString().replace(/-|:|\.\d+/g, '');
     return `https://www.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&details=${eventDesc}&location=${eventLoc}&dates=${formatDateToUTC(start)}/${formatDateToUTC(end)}`;
 });
 </script>
 
+<template>
+  <div class="bg-slate-50 min-h-screen font-sans">
+    <div class="max-w-5xl mx-auto p-5 sm:p-6 lg:p-8"> 
+      <div v-if="loading" class="text-center text-slate-500 py-12">
+        <p class="text-lg mb-4">Memuat detail pemesanan...</p>
+        <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+      </div>
+
+      <div v-else-if="error" class="text-center bg-red-100 border-l-4 border-red-500 text-red-700 p-6 rounded-r-lg shadow-md">
+        <h3 class="font-bold text-xl mb-2">Terjadi Kesalahan</h3>
+        <p>{{ error }}</p>
+      </div>
+
+      <div v-else-if="bookingDetail" class="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300">
+        <div class="w-full h-60 md:h-80 bg-slate-200 relative">
+          <img v-if="bookingDetail.service.image" :src="bookingDetail.service.image" :alt="bookingDetail.service.title" class="w-full h-full object-cover" />
+          <div v-else class="w-full h-full flex items-center justify-center">
+            <svg class="w-16 h-16 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6v-4.58l2.29 2.29l3.54-3.53l4.58 4.58V19zM17 10c-1.1 0-2-.9-2-2s.9-2 2-2s2 .9 2 2s-.9 2-2 2z"/></svg>
+          </div>
+          <div class="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-black/50 to-transparent"></div>
+        </div>
+
+        <div class="p-6 sm:p-8 md:p-10">
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-3">
+            <h1 class="text-3xl sm:text-4xl font-bold text-slate-800 leading-tight">{{ bookingDetail.service.title }}</h1>
+            <span :class="['px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap shadow-sm', statusClass]">
+              {{ bookingDetail.service.status }}
+            </span>
+          </div>
+
+          <p class="text-slate-600 text-base sm:text-lg mb-10 border-l-4 border-slate-200 pl-4">
+            {{ bookingDetail.service.description }}
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <div class="info-card p-5 sm:p-6"> 
+              <h3 class="info-card-title">Jadwal</h3>
+              <div class="info-card-content">
+                <svg class="w-6 h-6 text-blue-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <p class="text-slate-800 font-medium text-base sm:text-lg">{{ formattedDate }}, {{ bookingDetail.service.time }} WIB</p>
+              </div>
+            </div>
+            <div class="info-card p-5 sm:p-6">
+              <h3 class="info-card-title">Opsi Layanan</h3>
+              <div class="info-card-content">
+                   <svg class="w-6 h-6 text-blue-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <p class="text-slate-800 font-medium text-base sm:text-lg">{{ bookingDetail.service.option }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-10">
+            <h3 class="text-2xl font-semibold text-slate-800 mb-4">Lokasi</h3>
+            <div class="bg-slate-50 border border-slate-200 p-5 rounded-lg shadow-sm">
+              <template v-if="isOnlineBooking">
+                <a :href="bookingDetail.service.location" target="_blank" rel="noopener noreferrer" class="online-link text-base sm:text-lg py-2 sm:py-3 px-4 sm:px-6">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                  Buka Tautan Meeting Online
+                </a>
+              </template>
+              
+              <template v-else>
+                <p class="text-slate-700 flex items-start mb-5 text-base">
+                  <svg class="w-7 h-7 mr-4 text-blue-500 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  <span>{{ bookingDetail.service.location }}</span>
+                </p>
+
+                <div v-if="distance && duration" class="mb-5 p-3 sm:p-3.5 bg-blue-50 rounded-lg text-blue-800 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm sm:text-base font-medium">
+                  <div class="flex items-center"><svg class="w-5 h-5 mr-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Jarak: <strong class="ml-1.5">{{ distance }} km</strong></div>
+                  <div class="flex items-center"><svg class="w-5 h-5 mr-2 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Estimasi: <strong class="ml-1.5">{{ duration }} menit</strong></div>
+                </div>
+
+                <div ref="mapContainer" class="mapbox-map-container h-72 sm:h-80 md:h-96 lg:h-[450px] rounded-lg border border-slate-200"></div>
+                
+              </template>
+            </div>
+          </div>
+          
+          <div v-if="bookingDetail.service.status === 'Declined'" class="mb-6">
+              <h3 class="text-2xl font-semibold text-slate-800 mb-4">Note</h3>
+              <div class="bg-slate-50 border border-slate-200 p-5 rounded-lg shadow-sm">
+                  <p class="text-slate-600 italic leading-relaxed text-base">{{ bookingDetail.service.note || 'Tidak ada catatan tambahan yang diberikan.' }}</p>
+              </div>
+          </div>
+
+          <div v-if="showCalendarButton" class="text-center mt-12">
+            <a :href="generateGoogleCalendarUrl" target="_blank" rel="noopener noreferrer" class="calendar-button px-6 py-2.5 sm:px-8 sm:py-3">
+              <svg class="w-5 h-5 mr-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              Simpan ke Google Calendar
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <style>
 /* Penting: Impor stylesheet Mapbox */
 @import 'mapbox-gl/dist/mapbox-gl.css';
 
+/* Hapus height tetap di sini, gunakan kelas Tailwind di template */
 .mapbox-map-container {
-  height: 450px;
   width: 100%;
 }
 
 .info-card {
-  @apply bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300;
+  /* Class @apply ini akan mengambil p-5 yang sudah ada, lalu di template ditambahkan sm:p-6 */
+  @apply bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300;
 }
 
 .info-card-title {
@@ -280,15 +284,18 @@ const generateGoogleCalendarUrl = computed(() => {
 }
 
 .info-card-content {
-  @apply flex items-center text-lg;
+  /* text-lg untuk ukuran default yang lebih besar */
+  @apply flex items-center text-lg; 
 }
 
 .online-link {
-  @apply inline-flex items-center font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-3 rounded-lg transition-colors duration-300;
+  /* Penyesuaian padding dan font size untuk mobile */
+  @apply inline-flex items-center font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg transition-colors duration-300 text-base sm:text-lg;
 }
 
 .calendar-button {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105 duration-300 inline-flex items-center;
+  /* Penyesuaian padding dan font size untuk mobile */
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 sm:px-8 sm:py-3 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105 duration-300 inline-flex items-center text-base sm:text-lg;
 }
 
 /* Kustomisasi Popup Mapbox agar lebih sesuai dengan tema */

@@ -47,15 +47,14 @@
         aria-label="Go to My Bookmarks"
       >
         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
         </svg>
-        My Bookmarks
+        My Bookmarks <span v-if="bookmarkCount > 0" class="ml-1">({{ bookmarkCount }})</span>
       </button>
     </div>
 
     <div v-if="paginatedData.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      <MeetingCard
-        v-for="(item, i) in paginatedData"
+      <ServiceCard v-for="(item, i) in paginatedData"
         :key="i"
         :id="item.id"
         :title="item.title"
@@ -68,7 +67,7 @@
         :date="item.date"
         :endDate="item.endDate"
         :averageRating="item.averageRating"
-      />
+        :reviewCount="item.reviewCount" />
     </div>
     <div v-else class="text-center py-10 text-gray-600 text-lg">
       No services found matching your criteria.
@@ -85,14 +84,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router'; // Import useRouter
-import { serviceApi } from '@/api/service-api';
-import MeetingCard from '@/components/Client/card/ServiceCard.vue';
+import { useRouter } from 'vue-router';
+import { serviceApi } from '@/api/service-api'; // Pastikan path ini benar
+import ServiceCard from '@/components/Client/card/ServiceCard.vue'; // Menggunakan ServiceCard
 import PaginationPage from '@/components/Client/Pagination/PaginationPage.vue';
 import fallbackImage from '@/assets/images/booking.jpg';
+import { useBookmarkStore } from '@/stores/bookmark'; // Impor useBookmarkStore
 
 // --- Vue Router ---
-const router = useRouter(); // Inisialisasi router
+const router = useRouter();
+
+// --- Store Management ---
+const bookmarkStore = useBookmarkStore(); // Inisialisasi bookmark store
 
 // --- State Management ---
 const services = ref([]);
@@ -112,11 +115,13 @@ const fetchServicesData = async () => {
       const firstDate = item.date?.[0]?.date || null;
 
       let averageRating = 0;
+      let reviewCount = 0; // Inisialisasi reviewCount
       try {
         const reviews = await serviceApi.fetchServiceReviews(item.id);
         if (reviews.length > 0) {
           const total = reviews.reduce((sum, r) => sum + r.rating, 0);
           averageRating = (total / reviews.length).toFixed(1);
+          reviewCount = reviews.length; // Simpan jumlah ulasan
         }
       } catch (err) {
         console.warn(`Gagal fetch review untuk service ID ${item.id}`, err);
@@ -133,6 +138,7 @@ const fetchServicesData = async () => {
         date: formatDisplayDate(firstDate),
         endDate: formatDisplayDate(item.end_date),
         averageRating,
+        reviewCount, // Tambahkan reviewCount ke objek layanan
       };
     })
   );
@@ -175,6 +181,11 @@ const uniqueDays = computed(() => {
     return order.indexOf(dayA) - order.indexOf(dayB);
   });
 });
+
+// --- Computed Property for Bookmark Count ---
+// ASUMSI: useBookmarkStore memiliki getter `totalBookmarks`
+const bookmarkCount = computed(() => bookmarkStore.totalBookmarks);
+
 
 // --- Computed Properties for Filtered, Searched, and Paginated Data ---
 const filteredAndSearchedServices = computed(() => {

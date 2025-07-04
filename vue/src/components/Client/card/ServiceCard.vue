@@ -8,29 +8,15 @@
         @click.stop="toggleBookmark"
         :class="[
           'absolute top-3 right-3 p-2 rounded-full bg-white transition duration-300',
-          isServiceBookmarked ? 'text-red-500' : 'text-gray-400 hover:text-red-400',
+          isServiceBookmarked ? 'text-indigo-500' : 'text-gray-400 hover:text-indigo-400',
         ]"
         aria-label="Bookmark service"
       >
-        <svg
-          v-if="isServiceBookmarked"
-          class="w-6 h-6 fill-current"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-        >
-          <path
-            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-          />
+        <svg v-if="isServiceBookmarked" class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+          <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
         </svg>
-        <svg
-          v-else
-          class="w-6 h-6 fill-current"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-        >
-          <path
-            d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5c0-3.08-2.42-5.5-5.5-5.5zm-4.5 16.54l-7.39-6.73C4.25 10.76 4 9.28 4 8.5c0-2.07 1.47-3.5 3.5-3.5 1.41 0 2.75.58 3.75 1.63L12 7.84l.25-.27c1-1.05 2.34-1.63 3.75-1.63C18.53 5 20 6.43 20 8.5c0 .78-.25 2.26-2.61 4.51L12 19.54z"
-          />
+        <svg v-else class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+          <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/>
         </svg>
       </button>
     </div>
@@ -39,18 +25,52 @@
       <h2 class="text-xl font-bold text-gray-900 mb-2 truncate">{{ title }}</h2>
       <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ description }}</p>
 
-      <div class="flex justify-between items-center text-xs mb-3">
-        <span
-          v-if="averageRating"
-          class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-medium"
-        >
-          ⭐ {{ averageRating }}/5
-        </span>
-        <span v-else class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full font-medium">
-          No Rating
+      <div class="flex items-center text-sm mb-3">
+        <template v-if="normalizedAverageRating > 0">
+          <div class="flex items-center mr-2">
+            <svg
+              v-for="n in Math.floor(normalizedAverageRating)"
+              :key="'filled-' + n"
+              class="w-5 h-5 text-yellow-400 fill-current"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.92 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"
+              />
+            </svg>
+            <svg
+              v-if="normalizedAverageRating % 1 !== 0"
+              class="w-5 h-5 text-yellow-400 fill-current"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.92 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"
+                mask="url(#half-mask)"
+              />
+              <mask id="half-mask">
+                <rect x="0" y="0" width="10" height="20" fill="white" />
+              </mask>
+            </svg>
+            <svg
+              v-for="n in (5 - Math.ceil(normalizedAverageRating))"
+              :key="'empty-' + n"
+              class="w-5 h-5 text-gray-300 fill-current"
+              viewBox="0 0 20 20"
+            >
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.92 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"
+              />
+            </svg>
+          </div>
+          <span class="text-yellow-800 font-semibold mr-1">
+            {{ normalizedAverageRating.toFixed(1) }}/5
+          </span>
+          <span v-if="reviewCount > 0" class="text-gray-600 text-xs"> ({{ reviewCount }} ulasan)</span>
+        </template>
+        <span v-else class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
+          Belum ada ulasan
         </span>
       </div>
-
       <div class="text-sm text-gray-500 space-y-1 mb-5">
         <div><strong>Option:</strong> {{ option }}</div>
         <div><strong>Days:</strong> {{ days }}</div>
@@ -71,7 +91,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { useBookmarkStore } from '@/stores/bookmark'
+import { useBookmarkStore } from '@/stores/bookmark' // Pastikan path ini benar
 
 const props = defineProps({
   id: Number,
@@ -84,7 +104,11 @@ const props = defineProps({
   days: String,
   time: String,
   image: String,
-  averageRating: [Number, String],
+  averageRating: [Number, String], // Menerima Number atau String
+  reviewCount: { // Menambahkan prop untuk jumlah ulasan
+    type: Number,
+    default: 0,
+  }
 })
 
 const router = useRouter()
@@ -111,4 +135,12 @@ const toggleBookmark = () => {
     bookmarkStore.addBookmark(props.id)
   }
 }
+
+// Computed property untuk memastikan averageRating adalah angka dan di antara 0-5
+const normalizedAverageRating = computed(() => {
+  const rating = parseFloat(props.averageRating);
+  if (isNaN(rating) || rating < 0) return 0;
+  if (rating > 5) return 5;
+  return rating;
+});
 </script>

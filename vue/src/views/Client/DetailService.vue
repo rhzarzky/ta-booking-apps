@@ -1,8 +1,15 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useServiceStore } from '@/stores/service'
 import fallbackImage from '@/assets/images/booking.jpg'
+import ReviewSummary from '@/components/Client/Review/ReviewSummary.vue';
+import AllReviewsModal from '@/components/Client/modals/AllReviewsModal.vue';
+import MapModal from '@/components/Client/modals/MapModal.vue';
+
+import DatePicker from 'vue-datepicker-next';
+import 'vue-datepicker-next/index.css';
+import 'vue-datepicker-next/locale/id';
 
 // Import icons from lucide-vue-next
 import {
@@ -11,13 +18,9 @@ import {
   CalendarClock,
   ClipboardEdit,
   Clock,
-  CalendarDays, // Using CalendarDays for the new date picker icon
+  CalendarDays,
 } from 'lucide-vue-next'
 
-// Import DatePicker component and its CSS
-import DatePicker from 'vue-datepicker-next';
-import 'vue-datepicker-next/index.css';
-import 'vue-datepicker-next/locale/en'; // You can change locale if needed
 
 // --- Notification System Setup ---
 const notifications = ref([]);
@@ -50,11 +53,45 @@ const form = ref({
   note: '',
 })
 
+// === Bagian untuk Review ===
+const serviceReviews = ref([]); // Menyimpan semua review
+const showAllReviewsModal = ref(false); // State untuk menampilkan/menyembunyikan modal
+
+// Fungsi untuk membuka modal semua review
+const openAllReviewsModal = () => {
+  showAllReviewsModal.value = true;
+};
+
+// Fungsi untuk menutup modal semua review
+const closeAllReviewsModal = () => {
+  showAllReviewsModal.value = false;
+};
+// === Akhir Bagian untuk Review ===
+
+
+// === Bagian untuk Modal Peta (yang sekarang hanya mengontrol visibilitas komponen) ===
+const showMapModal = ref(false); // State untuk mengontrol visibilitas modal peta
+
+// Fungsi untuk membuka modal peta
+const openMapModal = async () => {
+  // Pastikan service dan koordinatnya tersedia
+  if (service.value && service.value.latitude && service.value.longitude) {
+    showMapModal.value = true;
+  } else {
+    showNotification('warning', 'Location coordinates are not available for this service.');
+  }
+};
+
+// Fungsi untuk menutup modal peta
+const closeMapModal = () => {
+  showMapModal.value = false;
+};
+// === Akhir Bagian untuk Modal Peta ===
+
+
 // Computed property for available dates formatted for DatePicker
 const availableDatesForCalendar = computed(() => {
   if (!service.value?.date) return [];
-  // Perbaikan: Pastikan tanggal dari backend juga diinterpretasikan sebagai tanggal lokal saat membuat Date object
-  // Menambahkan 'T00:00:00' untuk memastikan objek Date dibuat di zona waktu lokal
   return service.value.date.map(d => new Date(d.date + 'T00:00:00'));
 });
 
@@ -76,11 +113,8 @@ const disabledDates = computed(() => {
   };
 });
 
-
-// Perbaikan: Fungsi formatDate ini juga perlu diinterpretasikan sebagai tanggal lokal
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
-  // Tambahkan 'T00:00:00' untuk memastikan parsing sebagai tanggal lokal
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
     weekday: 'short',
     day: '2-digit',
@@ -89,10 +123,8 @@ const formatDate = (dateStr) => {
   })
 }
 
-// Perbaikan: Fungsi formatDateShort ini juga perlu diinterpretasikan sebagai tanggal lokal
 const formatDateShort = (dateStr) => {
   if (!dateStr) return '-'
-  // Tambahkan 'T00:00:00' untuk memastikan parsing sebagai tanggal lokal
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
     month: 'short',
     day: '2-digit',
@@ -100,7 +132,7 @@ const formatDateShort = (dateStr) => {
 }
 
 watch(() => form.value.date, (newDate, oldDate) => {
-
+  // Logika jika tanggal berubah (opsional)
 });
 
 
@@ -108,13 +140,19 @@ onMounted(async () => {
   try {
     await store.fetchServiceById(route.params.id)
     service.value = store.service
+    // Ambil review setelah data layanan dimuat
+    await store.fetchServiceReviews(route.params.id);
+    serviceReviews.value = store.reviews; // Simpan ke ref lokal serviceReviews
+
     if (service.value && service.value.time && service.value.time.length > 0) {
+      // Logic for time options if needed
     }
     if (service.value && service.value.option && service.value.option.length > 0) {
+      // Logic for option types if needed
     }
   } catch (err) {
-    console.error('Failed to load service:', err)
-    showNotification('error', 'Failed to load service details. Please try again.');
+    console.error('Failed to load service or reviews:', err)
+    showNotification('error', 'Failed to load service details or reviews. Please try again.');
   } finally {
     isLoadingService.value = false;
   }
@@ -130,14 +168,11 @@ const submitBooking = async () => {
     isSubmitting.value = true;
     const payload = {
       time: form.value.time,
-      // --- PERBAIKAN UTAMA DI SINI ---
-      // Ambil komponen tanggal, bulan, tahun secara LOKAL dari objek Date
       date: [
         form.value.date.getFullYear(),
-        (form.value.date.getMonth() + 1).toString().padStart(2, '0'), // Bulan dimulai dari 0
+        (form.value.date.getMonth() + 1).toString().padStart(2, '0'),
         form.value.date.getDate().toString().padStart(2, '0')
-      ].join('-'), // Hasilnya akan menjadi 'YYYY-MM-DD' (lokal)
-      // --- AKHIR PERBAIKAN ---
+      ].join('-'),
       note: form.value.note,
       option: form.value.option,
     };
@@ -262,17 +297,6 @@ const submitBooking = async () => {
               </div>
             </div>
 
-            <div>
-              <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">Additional Notes (Optional)</label>
-              <textarea
-                id="notes"
-                v-model="form.note"
-                rows="4"
-                class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none placeholder:text-gray-400"
-                placeholder="E.g., specific requirements, preferred communication method..."
-              ></textarea>
-            </div>
-
             <button
               type="submit"
               class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center gap-2"
@@ -300,12 +324,14 @@ const submitBooking = async () => {
         <h2 class="text-3xl font-extrabold text-gray-900 mb-3">{{ service.title }}</h2>
         <p class="text-gray-700 text-base leading-relaxed mb-6">{{ service.description }}</p>
 
+        <ReviewSummary :reviews="serviceReviews" @open-all-reviews="openAllReviewsModal" />
+
         <div class="space-y-4 text-gray-700 text-base">
-          <div class="flex items-start gap-3">
+          <div class="flex items-start gap-3 cursor-pointer" @click="openMapModal">
             <MapPin class="w-5 h-5 text-indigo-600 mt-1" />
             <div>
               <strong class="block text-gray-900">Location:</strong>
-              <span class="text-indigo-600 break-all">{{ service.location }}</span>
+              <span class="text-indigo-600 break-all hover:underline">{{ service.location }}</span>
             </div>
           </div>
 
@@ -343,11 +369,24 @@ const submitBooking = async () => {
         </div>
       </div>
     </div>
+
+    <AllReviewsModal :reviews="serviceReviews" :is-visible="showAllReviewsModal" @close="closeAllReviewsModal" />
+
+    <MapModal
+      :is-visible="showMapModal"
+      :location-name="service?.location"
+      :coordinates="service ? [service.longitude, service.latitude] : []"
+      :service-title="service?.title"
+      @close="closeMapModal"
+    />
+
   </div>
 </template>
 
 <style>
 /* CSS Anda yang ada di sini... */
+/* Hapus @import 'mapbox-gl/dist/mapbox-gl.css'; dari sini, pindahkan ke MapModal.vue */
+
 .mx-datepicker {
   width: 100%;
 }
