@@ -8,8 +8,10 @@ import AllReviewsModal from '@/components/Client/modals/AllReviewsModal.vue';
 
 import DatePicker from 'vue-datepicker-next';
 import 'vue-datepicker-next/index.css';
-import idLocale from 'vue-datepicker-next/locale/id'
-DatePicker.locale('id', idLocale)
+// Hapus baris ini: import 'vue-datepicker-next/locale/id';
+// Import objek lokal secara eksplisit
+import idLocale from 'vue-datepicker-next/locale/id'; // Nama variabel diubah menjadi idLocale untuk kejelasan
+
 
 // Import icons from lucide-vue-next
 import {
@@ -69,10 +71,6 @@ const closeAllReviewsModal = () => {
 // === Akhir Bagian untuk Review ===
 
 
-
-
-
-
 // Computed property for available dates formatted for DatePicker
 const availableDatesForCalendar = computed(() => {
   if (!service.value?.date) return [];
@@ -121,6 +119,10 @@ watch(() => form.value.date, (newDate, oldDate) => {
 
 
 onMounted(async () => {
+  // PENTING: Atur locale setelah DatePicker diimpor dan sebelum digunakan
+  // Ini adalah perbaikan utama untuk error "p.default.locale is not a function"
+  DatePicker.locale(idLocale); 
+  
   try {
     await store.fetchServiceById(route.params.id)
     service.value = store.service
