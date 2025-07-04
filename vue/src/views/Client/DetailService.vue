@@ -12,7 +12,7 @@ import MapModal from '@/components/Client/modals/MapModal.vue';
 import DatePicker from 'vue-datepicker-next';
 import 'vue-datepicker-next/index.css';
 // --- PENTING: Impor objek locale secara eksplisit ---
-import idLocale from 'vue-datepicker-next/locale/id';
+import idLocale from 'vue-datepicker-next/locale/id' 
 console.log('DatePicker component and CSS imported.');
 console.log('idLocale imported:', idLocale);
 
@@ -46,7 +46,7 @@ const removeNotification = (id) => {
   notifications.value = notifications.value.filter(n => n.id !== id);
   console.log(`Notification removed: ID=${id}`);
 };
-// --- End Notification System Setup ---
+// --- End Notification System Setup --- 
 
 const route = useRoute()
 const router = useRouter()
@@ -284,21 +284,21 @@ console.log('--- Script Setup End ---');
           <form @submit.prevent="submitBooking" class="space-y-6">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Select Date</label>
-              <DatePicker
-                v-model:value="form.date"
-                :disabled-date="disabledDates.customDates"
-                type="date"
-                placeholder="Choose a date"
-                format="YYYY-MM-DD"
-                value-type="date"
-                :clearable="false"
-                class="w-full"
-                :editable="false"
-              >
-                <template #icon-calendar>
-                  <CalendarDays class="w-5 h-5 text-gray-500" />
-                </template>
-              </DatePicker>
+<DatePicker
+  v-model:value="form.date"
+  :disabled-date="disabledDates.customDates"
+  type="date"
+  format="YYYY-MM-DD"
+  value-type="date"
+  :locale="idLocale"  
+  :clearable="false"
+  :editable="false"
+  class="w-full"
+>
+  <template #icon-calendar>
+    <CalendarDays class="w-5 h-5 text-gray-500" />
+  </template>
+</DatePicker>
               <p v-if="form.date && disabledDates.customDates(form.date)" class="text-sm text-red-500 mt-2">
                 This date is not available or is in the past. Please select an available date.
               </p>
