@@ -5,7 +5,6 @@ import { useServiceStore } from '@/stores/service'
 import fallbackImage from '@/assets/images/booking.jpg'
 import ReviewSummary from '@/components/Client/Review/ReviewSummary.vue';
 import AllReviewsModal from '@/components/Client/modals/AllReviewsModal.vue';
-import MapModal from '@/components/Client/modals/MapModal.vue';
 
 import DatePicker from 'vue-datepicker-next';
 import 'vue-datepicker-next/index.css';
@@ -70,24 +69,8 @@ const closeAllReviewsModal = () => {
 // === Akhir Bagian untuk Review ===
 
 
-// === Bagian untuk Modal Peta (yang sekarang hanya mengontrol visibilitas komponen) ===
-const showMapModal = ref(false); // State untuk mengontrol visibilitas modal peta
 
-// Fungsi untuk membuka modal peta
-const openMapModal = async () => {
-  // Pastikan service dan koordinatnya tersedia
-  if (service.value && service.value.latitude && service.value.longitude) {
-    showMapModal.value = true;
-  } else {
-    showNotification('warning', 'Location coordinates are not available for this service.');
-  }
-};
 
-// Fungsi untuk menutup modal peta
-const closeMapModal = () => {
-  showMapModal.value = false;
-};
-// === Akhir Bagian untuk Modal Peta ===
 
 
 // Computed property for available dates formatted for DatePicker
@@ -328,12 +311,10 @@ const submitBooking = async () => {
         <ReviewSummary :reviews="serviceReviews" @open-all-reviews="openAllReviewsModal" />
 
         <div class="space-y-4 text-gray-700 text-base">
-          <div class="flex items-start gap-3 cursor-pointer" @click="openMapModal">
             <MapPin class="w-5 h-5 text-indigo-600 mt-1" />
             <div>
               <strong class="block text-gray-900">Location:</strong>
               <span class="text-indigo-600 break-all hover:underline">{{ service.location }}</span>
-            </div>
           </div>
 
           <div class="flex items-start gap-3">
@@ -373,20 +354,10 @@ const submitBooking = async () => {
 
     <AllReviewsModal :reviews="serviceReviews" :is-visible="showAllReviewsModal" @close="closeAllReviewsModal" />
 
-    <MapModal
-      :is-visible="showMapModal"
-      :location-name="service?.location"
-      :coordinates="service ? [service.longitude, service.latitude] : []"
-      :service-title="service?.title"
-      @close="closeMapModal"
-    />
-
   </div>
 </template>
 
 <style>
-/* CSS Anda yang ada di sini... */
-/* Hapus @import 'mapbox-gl/dist/mapbox-gl.css'; dari sini, pindahkan ke MapModal.vue */
 
 .mx-datepicker {
   width: 100%;
