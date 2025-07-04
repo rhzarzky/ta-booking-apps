@@ -228,6 +228,7 @@ const submitBooking = async () => {
                 placeholder="Choose a date"
                 format="YYYY-MM-DD"
                 value-type="date"
+                locale="id"
                 :clearable="false"
                 class="w-full"
                 :editable="false"
