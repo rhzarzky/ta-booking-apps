@@ -71,8 +71,8 @@ const closeModal = () => {
 <template>
   <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
     <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-auto">
-      <h2 class="text-2xl font-bold text-gray-800 mb-4">Berikan Review Anda</h2>
-      <p class="text-sm text-gray-600 mb-4">Mohon berikan rating dan komentar untuk layanan ini.</p>
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Leave your review</h2>
+      <p class="text-sm text-gray-600 mb-4">Please rate and comment on this service.</p>
 
       <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2">Rating:</label>
@@ -89,16 +89,16 @@ const closeModal = () => {
             </svg>
           </template>
         </div>
-        <p v-if="rating > 0" class="text-sm text-gray-500 mt-1">Anda memberikan {{ rating }} bintang.</p>
+        <p v-if="rating > 0" class="text-sm text-gray-500 mt-1">You provide {{ rating }} star.</p>
       </div>
 
       <div class="mb-6">
-        <label for="comment" class="block text-gray-700 text-sm font-bold mb-2">Komentar:</label>
+        <label for="comment" class="block text-gray-700 text-sm font-bold mb-2">Comment:</label>
         <textarea
           id="comment"
           v-model="comment"
           rows="4"
-          placeholder="Tulis komentar Anda di sini..."
+          placeholder="Write your comments here..."
           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:ring-blue-500 focus:border-blue-500"
         ></textarea>
       </div>
@@ -111,7 +111,7 @@ const closeModal = () => {
           type="button"
           class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
         >
-          Batal
+          Cancel
         </button>
         <button
           @click="submitReview"
@@ -119,8 +119,8 @@ const closeModal = () => {
           :disabled="submitting"
           class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span v-if="submitting">Mengirim...</span>
-          <span v-else>Kirim Review</span>
+          <span v-if="submitting">Sending...</span>
+          <span v-else>Submit Review</span>
         </button>
       </div>
     </div>
