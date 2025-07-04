@@ -7,13 +7,12 @@ import ReviewSummary from '@/components/Client/Review/ReviewSummary.vue';
 import AllReviewsModal from '@/components/Client/modals/AllReviewsModal.vue';
 import MapModal from '@/components/Client/modals/MapModal.vue';
 
-console.log('Importing DatePicker and locale...')
+// --- PERBAIKAN PENTING UNTUK LOCALE DATEPICKER ---
 import DatePicker from 'vue-datepicker-next'
 import 'vue-datepicker-next/index.css'
-import 'vue-datepicker-next/locale/id'
-console.log('DatePicker imported:', DatePicker)
-
-
+// Hapus baris 'import 'vue-datepicker-next/locale/id''
+import idLocale from 'vue-datepicker-next/locale/id'; // Impor objek locale secara eksplisit
+// --- Akhir PERBAIKAN ---
 
 // Import icons from lucide-vue-next
 import {
@@ -141,6 +140,11 @@ watch(() => form.value.date, (newDate, oldDate) => {
 
 
 onMounted(async () => {
+  // --- PERBAIKAN PENTING UNTUK LOCALE DATEPICKER ---
+  // Pastikan ini dipanggil agar locale 'id' dikenali
+  DatePicker.locale(idLocale);
+  // --- Akhir PERBAIKAN ---
+
   try {
     await store.fetchServiceById(route.params.id)
     service.value = store.service
