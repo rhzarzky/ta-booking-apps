@@ -91,7 +91,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { useBookmarkStore } from '@/stores/bookmark' // Pastikan path ini benar
+import { useBookmarkStore } from '@/stores/bookmark' 
 
 const props = defineProps({
   id: Number,

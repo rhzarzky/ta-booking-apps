@@ -11,6 +11,8 @@ import DatePicker from 'vue-datepicker-next';
 import 'vue-datepicker-next/index.css';
 import 'vue-datepicker-next/locale/id';
 
+
+setLocale?.('id')
 // Import icons from lucide-vue-next
 import {
   MapPin,

@@ -3,8 +3,9 @@
     <div
       v-for="card in summaryCards"
       :key="card.status"
-      class="rounded-xl p-6 text-white"
+      class="rounded-xl p-6 text-white cursor-pointer hover:shadow-xl transition"
       :style="card.style"
+      @click="goToStatus(card.status)"
     >
       <h2 class="text-3xl font-semibold">{{ card.count }}</h2>
       <p class="text-lg font-semibold mt-1">{{ card.label }}</p>
@@ -17,6 +18,8 @@
 </template>
 
 <script>
+import { useRouter } from 'vue-router'
+
 export default {
   name: 'SummaryCards',
   props: {
@@ -24,6 +27,16 @@ export default {
       type: Object,
       required: true,
     },
+  },
+  setup() {
+    const router = useRouter()
+    const goToStatus = (status) => {
+      router.push({
+        name: 'client-activity', 
+        query: { status: status }
+      })
+    }
+    return { goToStatus }
   },
   computed: {
     summaryCards() {
@@ -48,7 +61,7 @@ export default {
           status: 'Completed',
           label: 'Completed',
           count: this.stats.completed || 0,
-          style: 'background: linear-gradient(135deg, #3b82f6, #1e40af)', 
+          style: 'background: linear-gradient(135deg, #3b82f6, #1e40af)',
           trend: `+${this.stats.completed || 0} ▲`,
           trendColor: 'text-emerald-400',
         },
@@ -60,7 +73,6 @@ export default {
           trend: `-${this.stats.declined || 0} ▼`,
           trendColor: 'text-red-500',
         },
-        
       ];
     },
   },

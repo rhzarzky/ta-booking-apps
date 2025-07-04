@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth' // Pastikan path ini benar
-import { useBookingStore } from '@/stores/booking' // Pastikan path ini benar
-import ActivityCard from '@/components/Client/card/ActivityCard.vue' // Pastikan path ini benar
-import PaginationPage from '@/components/Client/Pagination/PaginationPage.vue' // Pastikan path ini benar
-import ReviewModal from '@/components/Client/modals/ReviewModal.vue' // Pastikan path ini benar
-import AlertStatus from '@/components/Client/alert/AlertStatus.vue' // Pastikan path ini benar
+import { useAuthStore } from '@/stores/auth' 
+import { useBookingStore } from '@/stores/booking' 
+import ActivityCard from '@/components/Client/card/ActivityCard.vue' 
+import PaginationPage from '@/components/Client/Pagination/PaginationPage.vue' 
+import ReviewModal from '@/components/Client/modals/ReviewModal.vue' 
+import AlertStatus from '@/components/Client/alert/AlertStatus.vue' 
+import { useRoute } from 'vue-router'
 
 // Store
 const bookingStore = useBookingStore()
@@ -27,11 +28,21 @@ const showAlert = ref(false)
 const alertMessage = ref('')
 const alertType = ref('success')
 
+const route = useRoute()
+
 function triggerAlert(message, type = 'success') {
   alertMessage.value = message
   alertType.value = type
   showAlert.value = true
 }
+
+onMounted(() => {
+  const statusFromQuery = route.query.status
+  const validStatuses = ['Pending', 'Approved', 'Completed', 'Declined']
+  if (validStatuses.includes(statusFromQuery)) {
+    selectedStatus.value = statusFromQuery
+  }
+}) 
 
 // Load data
 onMounted(() => {
