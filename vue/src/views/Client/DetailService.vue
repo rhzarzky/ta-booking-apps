@@ -8,8 +8,8 @@ import AllReviewsModal from '@/components/Client/modals/AllReviewsModal.vue';
 
 import DatePicker from 'vue-datepicker-next';
 import 'vue-datepicker-next/index.css';
-import 'vue-datepicker-next/locale/id';
-
+import idLocale from 'vue-datepicker-next/locale/id'
+DatePicker.locale('id', idLocale)
 
 // Import icons from lucide-vue-next
 import {

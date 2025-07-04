@@ -1,8 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { useBookingStore } from '@/stores/booking';
-// Anda mungkin juga perlu mengimpor useAuthStore jika userId diambil dari sana
-// import { useAuthStore } from '@/stores/auth'; 
+
 
 const props = defineProps({
   show: {

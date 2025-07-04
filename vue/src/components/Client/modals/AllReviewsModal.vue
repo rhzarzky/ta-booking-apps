@@ -1,6 +1,6 @@
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue';
-import { X, Star } from 'lucide-vue-next'; // Impor ikon 'X' dan 'Star'
+import { X, Star } from 'lucide-vue-next'; 
 import ReviewCard from '../card/ReviewCard.vue';
 
 const props = defineProps({
