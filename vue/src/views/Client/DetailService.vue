@@ -8,9 +8,10 @@ import AllReviewsModal from '@/components/Client/modals/AllReviewsModal.vue';
 
 import DatePicker from 'vue-datepicker-next';
 import 'vue-datepicker-next/index.css';
-// Hapus baris ini: import 'vue-datepicker-next/locale/id';
-// Import objek lokal secara eksplisit
-import idLocale from 'vue-datepicker-next/locale/id'; // Nama variabel diubah menjadi idLocale untuk kejelasan
+// --- PERBAIKAN UTAMA: Hapus baris ini jika ada dan ganti dengan yang di bawahnya ---
+// import 'vue-datepicker-next/locale/id';
+// --- Impor objek locale secara eksplisit ---
+import idLocale from 'vue-datepicker-next/locale/id';
 
 
 // Import icons from lucide-vue-next
@@ -114,15 +115,15 @@ const formatDateShort = (dateStr) => {
 }
 
 watch(() => form.value.date, (newDate, oldDate) => {
-  // Logika jika tanggal berubah (opsional)
+  // Logic if date changes (optional)
 });
 
 
 onMounted(async () => {
-  // PENTING: Atur locale setelah DatePicker diimpor dan sebelum digunakan
-  // Ini adalah perbaikan utama untuk error "p.default.locale is not a function"
-  DatePicker.locale(idLocale); 
-  
+  // --- PERBAIKAN UTAMA: Atur locale setelah DatePicker diimpor ---
+  // Ini harus dipanggil sebelum DatePicker digunakan/dirender
+  DatePicker.locale(idLocale);
+
   try {
     await store.fetchServiceById(route.params.id)
     service.value = store.service
@@ -228,7 +229,6 @@ const submitBooking = async () => {
                 placeholder="Choose a date"
                 format="YYYY-MM-DD"
                 value-type="date"
-                locale="id"
                 :clearable="false"
                 class="w-full"
                 :editable="false"
@@ -361,7 +361,7 @@ const submitBooking = async () => {
 </template>
 
 <style>
-
+/* Anda bisa mempertahankan bagian style ini seperti sebelumnya */
 .mx-datepicker {
   width: 100%;
 }
