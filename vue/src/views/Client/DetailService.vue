@@ -7,12 +7,15 @@ import ReviewSummary from '@/components/Client/Review/ReviewSummary.vue';
 import AllReviewsModal from '@/components/Client/modals/AllReviewsModal.vue';
 import MapModal from '@/components/Client/modals/MapModal.vue';
 
-// --- PERBAIKAN PENTING UNTUK LOCALE DATEPICKER ---
-import DatePicker from 'vue-datepicker-next'
-import 'vue-datepicker-next/index.css'
-// Hapus baris 'import 'vue-datepicker-next/locale/id''
-import idLocale from 'vue-datepicker-next/locale/id'; // Impor objek locale secara eksplisit
-// --- Akhir PERBAIKAN ---
+
+
+import DatePicker from 'vue-datepicker-next';
+import 'vue-datepicker-next/index.css';
+// --- PENTING: Impor objek locale secara eksplisit ---
+import idLocale from 'vue-datepicker-next/locale/id';
+console.log('DatePicker component and CSS imported.');
+console.log('idLocale imported:', idLocale);
+
 
 // Import icons from lucide-vue-next
 import {
@@ -24,6 +27,7 @@ import {
   CalendarDays,
 } from 'lucide-vue-next'
 
+console.log('Lucide icons imported.');
 
 // --- Notification System Setup ---
 const notifications = ref([]);
@@ -32,6 +36,7 @@ let notificationId = 0;
 const showNotification = (type, message) => {
   const id = notificationId++;
   notifications.value.push({ id, type, message });
+  console.log(`Notification shown: Type=${type}, Message=${message}`);
   setTimeout(() => {
     removeNotification(id);
   }, 5000); // Notifications disappear after 5 seconds
@@ -39,6 +44,7 @@ const showNotification = (type, message) => {
 
 const removeNotification = (id) => {
   notifications.value = notifications.value.filter(n => n.id !== id);
+  console.log(`Notification removed: ID=${id}`);
 };
 // --- End Notification System Setup ---
 
@@ -49,53 +55,63 @@ const service = ref(null)
 const isSubmitting = ref(false)
 const isLoadingService = ref(true)
 
+console.log('Vue Router, Pinia store, and reactive refs initialized.');
+
 const form = ref({
   date: null, // Will store Date object from calendar
   time: '',
   option: '',
   note: '',
 })
+console.log('Form data initialized:', form.value);
+
 
 // === Bagian untuk Review ===
 const serviceReviews = ref([]); // Menyimpan semua review
 const showAllReviewsModal = ref(false); // State untuk menampilkan/menyembunyikan modal
 
-// Fungsi untuk membuka modal semua review
 const openAllReviewsModal = () => {
   showAllReviewsModal.value = true;
+  console.log('All Reviews Modal opened.');
 };
 
-// Fungsi untuk menutup modal semua review
 const closeAllReviewsModal = () => {
   showAllReviewsModal.value = false;
+  console.log('All Reviews Modal closed.');
 };
 // === Akhir Bagian untuk Review ===
 
 
-// === Bagian untuk Modal Peta (yang sekarang hanya mengontrol visibilitas komponen) ===
-const showMapModal = ref(false); // State untuk mengontrol visibilitas modal peta
+// === Bagian untuk Modal Peta ===
+const showMapModal = ref(false);
 
-// Fungsi untuk membuka modal peta
 const openMapModal = async () => {
-  // Pastikan service dan koordinatnya tersedia
+  console.log('Attempting to open Map Modal...');
   if (service.value && service.value.latitude && service.value.longitude) {
     showMapModal.value = true;
+    console.log(`Map Modal opened with coordinates: [${service.value.longitude}, ${service.value.latitude}]`);
   } else {
     showNotification('warning', 'Location coordinates are not available for this service.');
+    console.warn('Map Modal not opened: Missing latitude or longitude for service.', service.value);
   }
 };
 
-// Fungsi untuk menutup modal peta
 const closeMapModal = () => {
   showMapModal.value = false;
+  console.log('Map Modal closed.');
 };
 // === Akhir Bagian untuk Modal Peta ===
 
 
 // Computed property for available dates formatted for DatePicker
 const availableDatesForCalendar = computed(() => {
-  if (!service.value?.date) return [];
-  return service.value.date.map(d => new Date(d.date + 'T00:00:00'));
+  if (!service.value?.date) {
+    console.log('No service dates available for calendar.');
+    return [];
+  }
+  const dates = service.value.date.map(d => new Date(d.date + 'T00:00:00'));
+  console.log('Available dates for calendar computed:', dates);
+  return dates;
 });
 
 // Function to disable dates in the calendar
@@ -103,72 +119,90 @@ const disabledDates = computed(() => {
   return {
     customDates: (date) => {
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Normalize to midnight
+      today.setHours(0, 0, 0, 0);
       const currentDate = new Date(date);
       currentDate.setHours(0, 0, 0, 0);
 
       const isAvailable = availableDatesForCalendar.value.some(availDate =>
         availDate.toDateString() === currentDate.toDateString()
       );
-
-      return !isAvailable || currentDate < today;
+      const isDisabled = !isAvailable || currentDate < today;
+      // console.log(`Date ${date.toDateString()}: IsAvailable=${isAvailable}, IsPast=${currentDate < today}, IsDisabled=${isDisabled}`); // Terlalu banyak log jika diaktifkan
+      return isDisabled;
     },
   };
 });
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
+  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-  })
+  });
+  console.log(`Formatted date "${dateStr}" to "${formatted}" (id-ID)`);
+  return formatted;
 }
 
 const formatDateShort = (dateStr) => {
   if (!dateStr) return '-'
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
+  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
     month: 'short',
     day: '2-digit',
-  })
+  });
+  console.log(`Formatted short date "${dateStr}" to "${formatted}" (id-ID)`);
+  return formatted;
 }
 
 watch(() => form.value.date, (newDate, oldDate) => {
+  console.log('Form date changed:', newDate, ' (old:', oldDate, ')');
   // Logika jika tanggal berubah (opsional)
 });
 
 
 onMounted(async () => {
-  // --- PERBAIKAN PENTING UNTUK LOCALE DATEPICKER ---
-  // Pastikan ini dipanggil agar locale 'id' dikenali
-  DatePicker.locale(idLocale);
-  // --- Akhir PERBAIKAN ---
+  console.log('onMounted hook triggered.');
+  // --- PENTING: Atur locale agar DatePicker berfungsi dengan benar di production ---
+  try {
+    DatePicker.locale(idLocale);
+    console.log('DatePicker locale set to idLocale.');
+  } catch (localeErr) {
+    console.error('Error setting DatePicker locale:', localeErr);
+    showNotification('error', 'Failed to load date picker locale. Please refresh.');
+  }
 
   try {
-    await store.fetchServiceById(route.params.id)
-    service.value = store.service
-    // Ambil review setelah data layanan dimuat
-    await store.fetchServiceReviews(route.params.id);
-    serviceReviews.value = store.reviews; // Simpan ke ref lokal serviceReviews
+    isLoadingService.value = true;
+    console.log(`Fetching service by ID: ${route.params.id}`);
+    await store.fetchServiceById(route.params.id);
+    service.value = store.service;
+    console.log('Service data fetched:', service.value);
 
-    if (service.value && service.value.time && service.value.time.length > 0) {
-      // Logic for time options if needed
+    console.log(`Fetching reviews for service ID: ${route.params.id}`);
+    await store.fetchServiceReviews(route.params.id);
+    serviceReviews.value = store.reviews;
+    console.log('Service reviews fetched:', serviceReviews.value);
+
+    if (service.value) {
+      console.log('Service time options:', service.value.time);
+      console.log('Service meeting options:', service.value.option);
     }
-    if (service.value && service.value.option && service.value.option.length > 0) {
-      // Logic for option types if needed
-    }
+
   } catch (err) {
-    console.error('Failed to load service or reviews:', err)
+    console.error('Failed to load service or reviews:', err);
     showNotification('error', 'Failed to load service details or reviews. Please try again.');
   } finally {
     isLoadingService.value = false;
+    console.log('Service loading finished. isLoadingService:', isLoadingService.value);
   }
 })
 
 const submitBooking = async () => {
+  console.log('Submit booking initiated. Form data:', form.value);
   if (!form.value.date || !form.value.time || !form.value.option) {
     showNotification('warning', 'Please select a date, time, and meeting method to confirm your booking.');
+    console.warn('Booking submission aborted: Missing required fields.');
     return;
   }
 
@@ -184,18 +218,25 @@ const submitBooking = async () => {
       note: form.value.note,
       option: form.value.option,
     };
+    console.log('Booking payload:', payload);
 
+    console.log(`Booking service ID ${route.params.id} with payload...`);
     await store.bookService(route.params.id, payload);
     showNotification('success', 'Service booked successfully, awaiting approval.');
+    console.log('Booking successful. Redirecting to /client/activity');
     router.push('/client/activity');
   } catch (err) {
-    console.error(err);
+    console.error('Booking failed:', err);
     const errorMessage = err.response?.data?.message || 'Unfortunately, this service is already booked at that time or an error occurred. Please select another date/time.';
     showNotification('error', errorMessage);
+    console.error('Displaying booking error message:', errorMessage);
   } finally {
     isSubmitting.value = false;
+    console.log('Booking submission process finished. isSubmitting:', isSubmitting.value);
   }
 };
+
+console.log('--- Script Setup End ---');
 </script>
 
 <template>
@@ -393,7 +434,6 @@ const submitBooking = async () => {
 
 <style>
 /* CSS Anda yang ada di sini... */
-/* Hapus @import 'mapbox-gl/dist/mapbox-gl.css'; dari sini, pindahkan ke MapModal.vue */
 
 .mx-datepicker {
   width: 100%;
