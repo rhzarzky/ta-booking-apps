@@ -290,7 +290,6 @@ console.log('--- Script Setup End ---');
   type="date"
   format="YYYY-MM-DD"
   value-type="date"
-  :locale="idLocale"  
   :clearable="false"
   :editable="false"
   class="w-full"
