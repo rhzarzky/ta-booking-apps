@@ -40,6 +40,14 @@ class RoleController extends Controller
                 'permissions.*' => 'string|exists:permissions,name'
             ]);
 
+            // $existing = Role::whereRaw('LOWER(name) = ?', [strtolower($validated['name'])])->first();
+            // if ($existing) {
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => 'Role name already exists (case-insensitive).',
+            //     ], 422);
+            // }
+
             $role = Role::create(['name' => $validated['name']]);
 
             if (!empty($validated['permissions'])) {
@@ -98,13 +106,21 @@ class RoleController extends Controller
     public function editRole(Request $request, $id)
     {
         try {
+            $role = Role::findOrFail($id);
+
+            if (in_array($role->name, ['admin', 'user'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cannot edit this role',
+                ], 403);
+            }
+
+            // Validasi input
             $validated = $request->validate([
                 'name' => 'sometimes|unique:roles,name,' . $id,
                 'permissions' => 'nullable|array',
                 'permissions.*' => 'string|exists:permissions,name'
             ]);
-
-            $role = Role::findOrFail($id);
 
             // Update name if provided
             if (isset($validated['name'])) {
@@ -116,14 +132,6 @@ class RoleController extends Controller
             if (isset($validated['permissions'])) {
                 $role->syncPermissions($validated['permissions']);
             }
-
-            if (in_array($role->name, ['admin', 'user'])) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Cant edit this role',
-                ], 403);
-            }
-            
 
             return response()->json([
                 'status' => 'success',
