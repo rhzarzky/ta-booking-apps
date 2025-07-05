@@ -117,6 +117,14 @@ class RoleController extends Controller
                 $role->syncPermissions($validated['permissions']);
             }
 
+            if (in_array($role->name, ['admin', 'user'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cant edit this role',
+                ], 403);
+            }
+            
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Role updated successfully',
