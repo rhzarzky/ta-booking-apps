@@ -27,8 +27,6 @@ router.beforeEach((to, from, next) => {
   if (to.path === "/" && isAuthenticated) {
     if (userRole === "user") {
       next("/"); 
-    } else {
-      next("/dashboard"); 
     }
     return;
   }
