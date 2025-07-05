@@ -146,9 +146,34 @@ const groupedPermissions = computed(() => {
 });
 
 // Check if all permissions in the group are checked
+const isAllGroupsChecked = computed(() => {
+  const allPermissions = Object.values(groupedPermissions.value).flat();
+  return allPermissions.every((permission) =>
+    rolePermissions.value.includes(permission)
+  );
+});
+
 const isAllGroupChecked = (groupName) => {
   const groupPermissions = groupedPermissions.value[groupName];
-  return groupPermissions.every((permission) => rolePermissions.value.includes(permission));
+  return groupPermissions.every((permission) =>
+    rolePermissions.value.includes(permission)
+  );
+};
+
+// // Toggle all grup (global)
+const toggleAllGroups = () => {
+  const allPermissions = Object.values(groupedPermissions.value).flat();
+  const allSelected = isAllGroupsChecked.value;
+
+  if (allSelected) {
+    rolePermissions.value = rolePermissions.value.filter(
+      (permission) => !allPermissions.includes(permission)
+    );
+  } else {
+    const updatedPermissions = new Set(rolePermissions.value);
+    allPermissions.forEach((permission) => updatedPermissions.add(permission));
+    rolePermissions.value = [...updatedPermissions];
+  }
 };
 
 // Toggle all permissions in the group
@@ -319,6 +344,16 @@ watch(searchQuery, () => {
                       </h3>
 
                       <form @submit.prevent="savePermissions">
+                        <!-- Select All Groups -->
+                        <div class="flex left-end mb-4">
+                          <label class="flex items-center gap-2 text-sm cursor-pointer">
+                            <input type="checkbox" :checked="isAllGroupsChecked" @change="toggleAllGroups"
+                              class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700"
+                              :disabled="!hasPermission('assign permission')" />
+                            Select All Groups
+                          </label>
+                        </div>
+
                         <!-- Loop Per Group -->
                         <div v-for="(permissions, group) in groupedPermissions" :key="group" class="mb-4 border-b pb-3">
                           <!-- Select All Checkbox -->

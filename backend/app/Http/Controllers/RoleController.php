@@ -82,7 +82,7 @@ class RoleController extends Controller
     {
         try {
             $validated =  $request->validate([
-                'permissions' => 'required|array',
+                'permissions' => 'nullable|array',
                 'permissions.*' => 'string|exists:permissions,name'
             ]);
 
