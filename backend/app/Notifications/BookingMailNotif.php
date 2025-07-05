@@ -34,7 +34,7 @@ class BookingMailNotif extends Notification
             ->line("Date: {$this->booking->date}")
             ->line("Time: {$this->booking->time}")
             ->line("Location: {$this->booking->location}")
-            ->line('Please verify or take the necessary action.');
+            ->line('Please log in to the admin panel to verify or manage this booking.');
     }
 }
 
