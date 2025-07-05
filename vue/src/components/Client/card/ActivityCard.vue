@@ -175,7 +175,7 @@ const handleOpenReviewModal = () => {
           </button>
 
           <button
-            v-if="booking.status === 'Completed' && !extraStatusData.hasUserReviewed"
+            v-if="booking.status === 'Completed' && !userReview"
             @click.stop="handleOpenReviewModal"
             class="text-sm bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center shadow-sm hover:shadow-md"
           >
@@ -184,25 +184,6 @@ const handleOpenReviewModal = () => {
             </svg>
             Berikan Review
           </button>
-
-          <div v-else-if="booking.status === 'Completed' && userReview" class="mt-2 text-sm">
-            <div class="flex items-center text-yellow-500 mb-1">
-              <span v-for="n in 5" :key="n" class="mr-0.5">
-                <svg
-                  class="w-4 h-4"
-                  fill="currentColor"
-                  :class="n <= userReview.rating ? 'text-yellow-400' : 'text-gray-300'"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.92 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"
-                  />
-                </svg>
-              </span>
-              <span class="text-gray-700 ml-1 font-medium">{{ userReview.rating }}/5</span>
-            </div>
-            <p class="text-gray-700 text-sm italic">{{ userReview.comment }}</p>
-          </div>
         </div>
       </div>
     </div>

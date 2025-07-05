@@ -7,14 +7,13 @@ import ReviewSummary from '@/components/Client/Review/ReviewSummary.vue';
 import AllReviewsModal from '@/components/Client/modals/AllReviewsModal.vue';
 import MapModal from '@/components/Client/modals/MapModal.vue';
 
-
-
 import DatePicker from 'vue-datepicker-next';
 import 'vue-datepicker-next/index.css';
-// --- PENTING: Impor objek locale secara eksplisit ---
-import idLocale from 'vue-datepicker-next/locale/id' 
+// --- PENTING: idLocale TIDAK diimpor di sini, DatePicker akan menggunakan locale defaultnya ---
+// import idLocale from 'vue-datepicker-next/locale/id'
+
 console.log('DatePicker component and CSS imported.');
-console.log('idLocale imported:', idLocale);
+// console.log('idLocale imported:', idLocale); // Baris ini akan error jika idLocale tidak diimpor
 
 
 // Import icons from lucide-vue-next
@@ -46,7 +45,7 @@ const removeNotification = (id) => {
   notifications.value = notifications.value.filter(n => n.id !== id);
   console.log(`Notification removed: ID=${id}`);
 };
-// --- End Notification System Setup --- 
+// --- End Notification System Setup ---
 
 const route = useRoute()
 const router = useRouter()
@@ -163,14 +162,14 @@ watch(() => form.value.date, (newDate, oldDate) => {
 
 onMounted(async () => {
   console.log('onMounted hook triggered.');
-  // --- PENTING: Atur locale agar DatePicker berfungsi dengan benar di production ---
-  try {
-    DatePicker.locale(idLocale);
-    console.log('DatePicker locale set to idLocale.');
-  } catch (localeErr) {
-    console.error('Error setting DatePicker locale:', localeErr);
-    showNotification('error', 'Failed to load date picker locale. Please refresh.');
-  }
+  // --- PENTING: Pengaturan locale DatePicker dihapus di sini ---
+  // try {
+  //   DatePicker.locale(idLocale); // Baris ini akan menyebabkan error jika idLocale tidak diimpor
+  //   console.log('DatePicker locale set to idLocale.');
+  // } catch (localeErr) {
+  //   console.error('Error setting DatePicker locale:', localeErr);
+  //   showNotification('error', 'Failed to load date picker locale. Please refresh.');
+  // }
 
   try {
     isLoadingService.value = true;
