@@ -46,7 +46,7 @@ function statusClass(status) {
     </div>
 
     <div class="bg-white shadow rounded-lg p-4">
-      <div v-if="loading" class="text-gray-500 text-center py-4">Memuat data...</div>
+      <div v-if="loading" class="text-gray-500 text-center py-4">Loading data...</div>
       <div v-else-if="error" class="text-red-500 text-center py-4">{{ error }}</div>
       <div v-else>
         <div class="overflow-x-auto">
@@ -62,7 +62,7 @@ function statusClass(status) {
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-if="latestBookings.length === 0">
                 <td colspan="4" class="px-4 py-6 text-center text-gray-500 italic">
-                  Tidak ada aktivitas terbaru.
+                  No recent activity.
                 </td>
               </tr>
               <tr v-for="booking in latestBookings" :key="booking.id" class="hover:bg-gray-50 transition-colors duration-150">

@@ -34,7 +34,7 @@ const formatDate = (dateStr) => {
   // Menambahkan penanganan error untuk tanggal yang tidak valid
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('id-ID', options); // Gunakan 'id-ID' untuk format Indonesia
+    return date.toLocaleDateString('id-ID', options); 
   } catch (e) {
     console.error("Invalid date string:", dateStr, e);
     return '-';
@@ -76,14 +76,12 @@ const progressPercentage = computed(() => {
     return 100; 
   }
 
-  // Contoh sederhana: progress berdasarkan waktu dari sekarang hingga tanggal booking
-  // Ini bisa disesuaikan dengan logika bisnis yang lebih spesifik
+
   const oneDay = 1000 * 60 * 60 * 24;
   const daysDiff = Math.max(0, (bookingDate.getTime() - now.getTime()) / oneDay);
   
-  // Asumsi: Semua booking dianggap 'pending' untuk maksimal 30 hari dari sekarang
-  // Ini sangat fleksibel dan harus disesuaikan dengan kebutuhan nyata
-  const maxDaysForProgress = 30; // Misalnya, semua booking akan berjalan dalam 30 hari
+
+  const maxDaysForProgress = 30;
   
   const percentage = 100 - (daysDiff / maxDaysForProgress) * 100;
   

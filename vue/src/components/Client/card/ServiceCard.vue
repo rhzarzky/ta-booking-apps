@@ -65,10 +65,10 @@
           <span class="text-yellow-800 font-semibold mr-1">
             {{ normalizedAverageRating.toFixed(1) }}/5
           </span>
-          <span v-if="reviewCount > 0" class="text-gray-600 text-xs"> ({{ reviewCount }} ulasan)</span>
+          <span v-if="reviewCount > 0" class="text-gray-600 text-xs"> ({{ reviewCount }} review)</span>
         </template>
         <span v-else class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
-          Belum ada ulasan
+          No review yet
         </span>
       </div>
       <div class="text-sm text-gray-500 space-y-1 mb-5">
@@ -104,8 +104,8 @@ const props = defineProps({
   days: String,
   time: String,
   image: String,
-  averageRating: [Number, String], // Menerima Number atau String
-  reviewCount: { // Menambahkan prop untuk jumlah ulasan
+  averageRating: [Number, String],
+  reviewCount: { 
     type: Number,
     default: 0,
   }

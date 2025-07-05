@@ -1,3 +1,5 @@
+//MapModal.vue
+
 <script setup>
 import { ref, watch, nextTick } from 'vue';
 import mapboxgl from 'mapbox-gl';

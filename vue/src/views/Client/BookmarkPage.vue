@@ -80,7 +80,7 @@ const bookmarkedServices = computed(() => {
 // Helper function untuk format tanggal (sama seperti di component Service.vue)
 const formatDisplayDate = (dateStr) => {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString('id-ID', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',

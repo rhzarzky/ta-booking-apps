@@ -1,6 +1,6 @@
 <script setup>
 import { defineProps, defineEmits, computed } from 'vue';
-import { X, Star } from 'lucide-vue-next'; // Impor ikon 'X' dan 'Star'
+import { X, Star } from 'lucide-vue-next'; 
 import ReviewCard from '../card/ReviewCard.vue';
 
 const props = defineProps({
@@ -70,7 +70,7 @@ const ratingDistribution = computed(() => {
       :class="{ 'scale-100 opacity-100': isVisible, 'scale-95 opacity-0': !isVisible }"
       @click.stop >
       <div class="flex justify-between items-center p-5 border-b border-gray-200">
-        <h3 class="text-xl font-bold text-gray-800">Semua Ulasan ({{ reviews.length }})</h3>
+        <h3 class="text-xl font-bold text-gray-800">All Reviews ({{ reviews.length }})</h3>
         <button @click="closeModal" class="text-gray-500 hover:text-gray-700 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-300">
           <X class="w-6 h-6" />
         </button>
@@ -111,7 +111,7 @@ const ratingDistribution = computed(() => {
       <div class="p-5 space-y-5">
         <ReviewCard v-for="review in reviews" :key="review.id" :review="review" />
         <div v-if="reviews.length === 0" class="text-gray-500 text-center py-5">
-          Tidak ada ulasan.
+          No reviews.
         </div>
       </div>
     </div>

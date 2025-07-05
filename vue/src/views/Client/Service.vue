@@ -147,7 +147,7 @@ const fetchServicesData = async () => {
 // --- Helper Functions ---
 const formatDisplayDate = (dateStr) => {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  return new Date(dateStr).toLocaleDateString('id-ID', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',
