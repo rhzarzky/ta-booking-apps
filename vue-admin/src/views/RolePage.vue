@@ -17,7 +17,6 @@ const currentPage = ref(1);
 const rolesPerPage = 10;
 const authStore = useAuthStore();
 const roleStore = useRoleStore();
-const users = ref([]);
 const roles = ref([]);
 const searchQuery = ref("");
 const isVisible = ref(false);
