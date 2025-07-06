@@ -44,7 +44,7 @@ const store = async () => {
     if (error.response?.data?.errors) {
       validation.value = error.response.data.errors;
     } else {
-      roleStore.showNotification("Failed to update role", "error");
+      roleStore.showNotification(error.response.data.message, "error");
     }
   }
 };

@@ -73,6 +73,6 @@ const formatReviewDate = (dateStr) => {
       </template>
     </div>
     <p v-if="review.comment" class="text-gray-700 text-sm">{{ review.comment }}</p>
-    <p v-else class="text-gray-500 text-sm italic">Tidak ada komentar.</p>
+    <p v-else class="text-gray-500 text-sm italic">No comment.</p>
   </div>
 </template>

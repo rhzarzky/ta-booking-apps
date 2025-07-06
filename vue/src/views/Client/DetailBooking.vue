@@ -33,10 +33,10 @@ const setupMapAndNavigation = async () => {
   try {
     const userCoords = await getUserLocation();
     userLocation.value = userCoords;
-    
+
     // Pastikan DOM sudah diperbarui sebelum menginisialisasi peta
     await nextTick();
-    
+
     const destinationCoords = [
       bookingDetail.value.service.longitude,
       bookingDetail.value.service.latitude
@@ -99,12 +99,12 @@ const getDirections = async (startCoords, endCoords) => {
       duration.value = Math.round(route.duration / 60); // Dalam menit
 
       const routeGeoJSON = { type: 'Feature', geometry: route.geometry };
-      
+
       // Pastikan peta sudah dimuat sebelum menambahkan rute
       mapInstance.value.on('load', () => drawRoute(routeGeoJSON));
       // Jika peta sudah dimuat saat ini
       if (mapInstance.value.isStyleLoaded()) drawRoute(routeGeoJSON);
-      
+
       const bounds = new mapboxgl.LngLatBounds(startCoords, endCoords);
       mapInstance.value.fitBounds(bounds, { padding: 80 }); // Sesuaikan zoom agar kedua marker terlihat
     }
@@ -167,9 +167,9 @@ const generateGoogleCalendarUrl = computed(() => {
 
 <template>
   <div class="bg-slate-50 min-h-screen font-sans">
-    <div class="max-w-5xl mx-auto p-5 sm:p-6 lg:p-8"> 
+    <div class="max-w-5xl mx-auto p-5 sm:p-6 lg:p-8">
       <div v-if="loading" class="text-center text-slate-500 py-12">
-        <p class="text-lg mb-4">Memuat detail pemesanan...</p>
+        <p class="text-lg mb-4">Loading booking details...</p>
         <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -177,7 +177,7 @@ const generateGoogleCalendarUrl = computed(() => {
       </div>
 
       <div v-else-if="error" class="text-center bg-red-100 border-l-4 border-red-500 text-red-700 p-6 rounded-r-lg shadow-md">
-        <h3 class="font-bold text-xl mb-2">Terjadi Kesalahan</h3>
+        <h3 class="font-bold text-xl mb-2">Error occurred</h3>
         <p>{{ error }}</p>
       </div>
 
@@ -203,32 +203,37 @@ const generateGoogleCalendarUrl = computed(() => {
           </p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-            <div class="info-card p-5 sm:p-6"> 
-              <h3 class="info-card-title">Jadwal</h3>
-              <div class="info-card-content">
-                <svg class="w-6 h-6 text-blue-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                <p class="text-slate-800 font-medium text-base sm:text-lg">{{ formattedDate }}, {{ bookingDetail.service.time }} WIB</p>
+            <div class="info-card p-5 sm:p-6">
+              <h3 class="info-card-title">Schedule</h3>
+              <div class="info-card-content justify-between items-center"> <div class="flex items-center">
+                  <svg class="w-6 h-6 text-blue-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                  <p class="text-slate-800 font-medium text-base sm:text-lg">{{ formattedDate }}, {{ bookingDetail.service.time }} WIB</p>
+                </div>
+                <a v-if="showCalendarButton" :href="generateGoogleCalendarUrl" target="_blank" rel="noopener noreferrer" class="calendar-button-small">
+                  <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  Save
+                </a>
               </div>
             </div>
             <div class="info-card p-5 sm:p-6">
-              <h3 class="info-card-title">Opsi Layanan</h3>
+              <h3 class="info-card-title">Service Options</h3>
               <div class="info-card-content">
-                   <svg class="w-6 h-6 text-blue-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <svg class="w-6 h-6 text-blue-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 <p class="text-slate-800 font-medium text-base sm:text-lg">{{ bookingDetail.service.option }}</p>
               </div>
             </div>
           </div>
 
           <div class="mb-10">
-            <h3 class="text-2xl font-semibold text-slate-800 mb-4">Lokasi</h3>
+            <h3 class="text-2xl font-semibold text-slate-800 mb-4">Location</h3>
             <div class="bg-slate-50 border border-slate-200 p-5 rounded-lg shadow-sm">
               <template v-if="isOnlineBooking">
                 <a :href="bookingDetail.service.location" target="_blank" rel="noopener noreferrer" class="online-link text-base sm:text-lg py-2 sm:py-3 px-4 sm:px-6">
                   <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                  Buka Tautan Meeting Online
+                  Open Online Meeting Link
                 </a>
               </template>
-              
+
               <template v-else>
                 <p class="text-slate-700 flex items-start mb-5 text-base">
                   <svg class="w-7 h-7 mr-4 text-blue-500 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -241,25 +246,18 @@ const generateGoogleCalendarUrl = computed(() => {
                 </div>
 
                 <div ref="mapContainer" class="mapbox-map-container h-72 sm:h-80 md:h-96 lg:h-[450px] rounded-lg border border-slate-200"></div>
-                
+
               </template>
             </div>
           </div>
-          
+
           <div v-if="bookingDetail.service.status === 'Declined'" class="mb-6">
               <h3 class="text-2xl font-semibold text-slate-800 mb-4">Note</h3>
               <div class="bg-slate-50 border border-slate-200 p-5 rounded-lg shadow-sm">
                   <p class="text-slate-600 italic leading-relaxed text-base">{{ bookingDetail.service.note || 'Tidak ada catatan tambahan yang diberikan.' }}</p>
               </div>
           </div>
-
-          <div v-if="showCalendarButton" class="text-center mt-12">
-            <a :href="generateGoogleCalendarUrl" target="_blank" rel="noopener noreferrer" class="calendar-button px-6 py-2.5 sm:px-8 sm:py-3">
-              <svg class="w-5 h-5 mr-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              Simpan ke Google Calendar
-            </a>
           </div>
-        </div>
       </div>
     </div>
   </div>
@@ -285,7 +283,7 @@ const generateGoogleCalendarUrl = computed(() => {
 
 .info-card-content {
   /* text-lg untuk ukuran default yang lebih besar */
-  @apply flex items-center text-lg; 
+  @apply flex items-center text-lg;
 }
 
 .online-link {
@@ -293,10 +291,21 @@ const generateGoogleCalendarUrl = computed(() => {
   @apply inline-flex items-center font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2.5 sm:px-6 sm:py-3 rounded-lg transition-colors duration-300 text-base sm:text-lg;
 }
 
-.calendar-button {
-  /* Penyesuaian padding dan font size untuk mobile */
+/* Old calendar-button styles (can be removed if not used elsewhere) */
+/* .calendar-button {
   @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 sm:px-8 sm:py-3 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105 duration-300 inline-flex items-center text-base sm:text-lg;
+} */
+
+/* New style for the smaller calendar button inside info-card */
+.calendar-button-small {
+  @apply inline-flex items-center justify-center font-semibold text-blue-600 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-full text-sm transition-colors duration-300 whitespace-nowrap;
+  /* Add responsive adjustments if needed */
+  @screen sm {
+    padding: 0.5rem 1rem; /* px-4 py-2 */
+    font-size: 0.875rem; /* text-sm */
+  }
 }
+
 
 /* Kustomisasi Popup Mapbox agar lebih sesuai dengan tema */
 .mapboxgl-popup-content {

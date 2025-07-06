@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\BookingMailNotif;
 use App\Notifications\ConfirmedBookingMail;
 use Illuminate\Http\Request;
 use App\Models\Booking;
@@ -225,6 +226,9 @@ class BookingController extends Controller
                 ? 'Waiting for video meeting URL'
                 : $service->location->location,
         ]);
+
+         // Notify the user about the booking confirmation 
+         $booking->service->assigned->notify(new BookingMailNotif($booking));
 
         return response()->json([
             'status' => 'success',

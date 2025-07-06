@@ -4,7 +4,8 @@ import RegisterClient from '@/views/RegisterClient.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Dashboard from '@/views/Client/Dashboard.vue'
 import Service from '@/views/Client/Service.vue'
-import Activity from '@/views/Client/Activity.vue'
+import History from '@/views/Client/History.vue'
+import Activity from '@/views/Client/History.vue'
 import Profile from '@/views/Client/Profile.vue'
 import EditProfile from '@/views/Client/EditProfile.vue'
 import ChangePassword from '@/views/Client/ChangePassword.vue'
@@ -127,12 +128,12 @@ const routes = [
         },
       },
       {
-        path: 'activity',
-        name: 'client-activity',
-        component: Activity,
+        path: 'history',
+        name: 'client-history',
+        component: History,
         meta: {
-          title: 'Activity',
-          breadcrumbs: 'Activity',
+          title: 'History',
+          breadcrumbs: 'History',
         },
       },
       {

@@ -5,9 +5,7 @@ import { ref, watch, onMounted } from 'vue'
 const route = useRoute()
 const breadcrumbs = ref([])
 
-/**
- * Format text to Title Case (e.g. 'edit-profile' → 'Edit Profile')
- */
+
 const formatTitle = (text = '') =>
   text
     .replace(/-/g, ' ')

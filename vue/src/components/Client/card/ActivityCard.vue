@@ -34,7 +34,7 @@ const formatDate = (dateStr) => {
   // Menambahkan penanganan error untuk tanggal yang tidak valid
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('id-ID', options); // Gunakan 'id-ID' untuk format Indonesia
+    return date.toLocaleDateString('id-ID', options); 
   } catch (e) {
     console.error("Invalid date string:", dateStr, e);
     return '-';
@@ -76,14 +76,12 @@ const progressPercentage = computed(() => {
     return 100; 
   }
 
-  // Contoh sederhana: progress berdasarkan waktu dari sekarang hingga tanggal booking
-  // Ini bisa disesuaikan dengan logika bisnis yang lebih spesifik
+
   const oneDay = 1000 * 60 * 60 * 24;
   const daysDiff = Math.max(0, (bookingDate.getTime() - now.getTime()) / oneDay);
   
-  // Asumsi: Semua booking dianggap 'pending' untuk maksimal 30 hari dari sekarang
-  // Ini sangat fleksibel dan harus disesuaikan dengan kebutuhan nyata
-  const maxDaysForProgress = 30; // Misalnya, semua booking akan berjalan dalam 30 hari
+
+  const maxDaysForProgress = 30;
   
   const percentage = 100 - (daysDiff / maxDaysForProgress) * 100;
   
@@ -177,7 +175,7 @@ const handleOpenReviewModal = () => {
           </button>
 
           <button
-            v-if="booking.status === 'Completed' && !extraStatusData.hasUserReviewed"
+            v-if="booking.status === 'Completed' && !userReview"
             @click.stop="handleOpenReviewModal"
             class="text-sm bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center shadow-sm hover:shadow-md"
           >
@@ -186,25 +184,6 @@ const handleOpenReviewModal = () => {
             </svg>
             Berikan Review
           </button>
-
-          <div v-else-if="booking.status === 'Completed' && userReview" class="mt-2 text-sm">
-            <div class="flex items-center text-yellow-500 mb-1">
-              <span v-for="n in 5" :key="n" class="mr-0.5">
-                <svg
-                  class="w-4 h-4"
-                  fill="currentColor"
-                  :class="n <= userReview.rating ? 'text-yellow-400' : 'text-gray-300'"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.92 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z"
-                  />
-                </svg>
-              </span>
-              <span class="text-gray-700 ml-1 font-medium">{{ userReview.rating }}/5</span>
-            </div>
-            <p class="text-gray-700 text-sm italic">{{ userReview.comment }}</p>
-          </div>
         </div>
       </div>
     </div>

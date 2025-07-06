@@ -1,8 +1,8 @@
 <template>
   <div
-    class="bg-white rounded-xl shadow-md overflow-hidden transform hover:scale-102 transition duration-300 ease-in-out"
+    class="bg-white rounded-xl shadow-md overflow-hidden transform hover:scale-102 transition duration-300 ease-in-out flex flex-col"
   >
-    <div class="relative">
+    <div class="relative flex-shrink-0">
       <img :src="image" alt="Service" class="h-48 w-full object-cover" />
       <button
         @click.stop="toggleBookmark"
@@ -21,7 +21,7 @@
       </button>
     </div>
 
-    <div class="p-5">
+    <div class="p-5 flex flex-col flex-grow">
       <h2 class="text-xl font-bold text-gray-900 mb-2 truncate">{{ title }}</h2>
       <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ description }}</p>
 
@@ -65,10 +65,10 @@
           <span class="text-yellow-800 font-semibold mr-1">
             {{ normalizedAverageRating.toFixed(1) }}/5
           </span>
-          <span v-if="reviewCount > 0" class="text-gray-600 text-xs"> ({{ reviewCount }} ulasan)</span>
+          <span v-if="reviewCount > 0" class="text-gray-600 text-xs"> ({{ reviewCount }} review)</span>
         </template>
         <span v-else class="text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
-          Belum ada ulasan
+          No review yet
         </span>
       </div>
       <div class="text-sm text-gray-500 space-y-1 mb-5">
@@ -80,7 +80,7 @@
 
       <button
         @click="goToDetail"
-        class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300"
+        class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300 mt-auto"
       >
         Book Appointment
       </button>
@@ -91,7 +91,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { useBookmarkStore } from '@/stores/bookmark' 
+import { useBookmarkStore } from '@/stores/bookmark'
 
 const props = defineProps({
   id: Number,
@@ -104,8 +104,8 @@ const props = defineProps({
   days: String,
   time: String,
   image: String,
-  averageRating: [Number, String], // Menerima Number atau String
-  reviewCount: { // Menambahkan prop untuk jumlah ulasan
+  averageRating: [Number, String],
+  reviewCount: {
     type: Number,
     default: 0,
   }
@@ -136,7 +136,6 @@ const toggleBookmark = () => {
   }
 }
 
-// Computed property untuk memastikan averageRating adalah angka dan di antara 0-5
 const normalizedAverageRating = computed(() => {
   const rating = parseFloat(props.averageRating);
   if (isNaN(rating) || rating < 0) return 0;

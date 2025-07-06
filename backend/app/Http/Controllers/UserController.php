@@ -210,7 +210,7 @@ class UserController extends Controller
     {
         try{
             $request->validate([
-                'permissions' => 'required|array',
+                'permissions' => 'nullable|array',
                 'permissions.*' => 'string|exists:permissions,name'
             ]);
 
