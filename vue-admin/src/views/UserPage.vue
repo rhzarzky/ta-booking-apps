@@ -99,6 +99,10 @@ const hasPermission = (permission) => {
 
 // Checked Box Permission
 const ontoggle = async (userId) => {
+  if (!hasPermission("show permission")) {
+    authStore.showNotification("You do not have the required authorization.", "error");
+    return;
+  }
   isVisible.value = !isVisible.value;
   userIdForPermissions.value = userId;
   console.log("Available permissions:", authStore.currentPermission);
@@ -118,7 +122,76 @@ const ontoggle = async (userId) => {
   }
 };
 
-// Save Permissions
+// Group permissions based on the last word
+const groupedPermissions = computed(() => {
+  const groups = {};
+
+  authStore.currentPermission.forEach((permission) => {
+    const parts = permission.trim().split(" ");
+    if (parts.length >= 2) {
+      const group = parts[parts.length - 1]; // take the last word
+      if (!groups[group]) {
+        groups[group] = [];
+      }
+      groups[group].push(permission);
+    }
+  });
+
+  return groups;
+});
+
+// Check if all permissions in the group are checked
+const isAllGroupsChecked = computed(() => {
+  const allPermissions = Object.values(groupedPermissions.value).flat();
+  return allPermissions.every((permission) =>
+    userPermissions.value.includes(permission)
+  );
+});
+
+const isAllGroupChecked = (groupName) => {
+  const groupPermissions = groupedPermissions.value[groupName];
+  return groupPermissions.every((permission) =>
+    userPermissions.value.includes(permission)
+  );
+};
+
+// // Toggle all grup (global)
+const toggleAllGroups = () => {
+  const allPermissions = Object.values(groupedPermissions.value).flat();
+  const allSelected = isAllGroupsChecked.value;
+
+  if (allSelected) {
+    userPermissions.value = userPermissions.value.filter(
+      (permission) => !allPermissions.includes(permission)
+    );
+  } else {
+    const updatedPermissions = new Set(userPermissions.value);
+    allPermissions.forEach((permission) => updatedPermissions.add(permission));
+    userPermissions.value = [...updatedPermissions];
+  }
+};
+
+// Toggle all permissions in the group
+const toggleGroup = (groupName) => {
+  const groupPermissions = groupedPermissions.value[groupName];
+  const allSelected = isAllGroupChecked(groupName);
+
+  if (allSelected) {
+    // Uncheck all
+    userPermissions.value = userPermissions.value.filter(
+      (permission) => !groupPermissions.includes(permission)
+    );
+  } else {
+    // Add missing ones
+    groupPermissions.forEach((permission) => {
+      if (!userPermissions.value.includes(permission)) {
+        userPermissions.value.push(permission);
+      }
+    });
+  }
+};
+
+// Save Permissions to User
 const savePermissions = async () => {
   if (!userIdForPermissions.value) {
     authStore.showNotification("User ID is missing.", "error");
@@ -290,27 +363,55 @@ watch(searchQuery, () => {
                   <div v-if="isVisible"
                     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" aria-modal="true"
                     role="dialog" aria-labelledby="modal-title">
-                    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+                    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-xl relative">
                       <button @click="ontoggle(null)" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900"
                         aria-label="Close modal">
                         &times;
                       </button>
+
                       <h3 id="modal-title" class="text-lg font-bold mb-4 text-cobalt-950">
-                        Manage Permissions for User: {{ users.find(u => u.id === userIdForPermissions)?.name || 'User' }}
+                        Manage Permissions for User:
+                        {{users.find(u => u.id === userIdForPermissions)?.name || 'User'}}
                       </h3>
 
                       <form @submit.prevent="savePermissions">
-                        <div class="max-h-60 overflow-y-auto mb-4 grid grid-cols-2 gap-x-6 gap-y-3">
-                          <label v-for="permission in authStore.currentPermission" :key="permission"
-                            class="inline-flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" :value="permission" v-model="userPermissions"
-                              :disabled="!hasPermission('assign permission')"
-                              class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700" />
-                            {{ permission }}
+                        <!-- Select All Groups -->
+                        <div class="flex left-end mb-4">
+                          <label class="flex items-center gap-2 text-sm cursor-pointer">
+                            <input type="checkbox" :checked="isAllGroupsChecked" @change="toggleAllGroups"
+                              class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700"
+                              :disabled="!hasPermission('assign permission')" />
+                            Select All Groups
                           </label>
                         </div>
 
-                        <div class="flex justify-end gap-3">
+                        <!-- Loop Per Group -->
+                        <div v-for="(permissions, group) in groupedPermissions" :key="group" class="mb-4 border-b pb-3">
+                          <!-- Select All Checkbox -->
+                          <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold capitalize text-cobalt-800">{{ group }}</h4>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                              <input type="checkbox" :checked="isAllGroupChecked(group)" @change="toggleGroup(group)"
+                                class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700"
+                                :disabled="!hasPermission('assign permission')" />
+                              Select All
+                            </label>
+                          </div>
+
+                          <!-- Permissions in Group -->
+                          <div class="grid grid-cols-2 gap-2">
+                            <label v-for="permission in permissions" :key="permission"
+                              class="flex items-center gap-2 text-sm cursor-pointer">
+                              <input type="checkbox" :value="permission" v-model="userPermissions"
+                                class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700"
+                                :disabled="!hasPermission('assign permission')" />
+                              {{ permission }}
+                            </label>
+                          </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex justify-end gap-3 mt-6">
                           <button type="button" @click="ontoggle(null)"
                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
                             Cancel
