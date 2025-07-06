@@ -19,7 +19,14 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*', 'https://dev-booking.mieso.my.id/', 'https://dev-appointly.mieso.my.id/'],
+    'allowed_origins' =>  [
+        'http://103.160.213.108:8080',
+        'http://103.160.213.108:8081',
+        'http://103.160.213.108:8082',
+        'https://dev-booking.mieso.my.id',
+        'https://dev-appointly.mieso.my.id',
+        'https://api-appointly.mieso.my.id',
+    ],
 
     'allowed_origins_patterns' => [],
 
