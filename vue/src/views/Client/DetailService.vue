@@ -9,12 +9,8 @@ import MapModal from '@/components/Client/modals/MapModal.vue';
 
 import DatePicker from 'vue-datepicker-next';
 import 'vue-datepicker-next/index.css';
-// --- PENTING: idLocale TIDAK diimpor di sini, DatePicker akan menggunakan locale defaultnya ---
-// import idLocale from 'vue-datepicker-next/locale/id'
 
 console.log('DatePicker component and CSS imported.');
-// console.log('idLocale imported:', idLocale); // Baris ini akan error jika idLocale tidak diimpor
-
 
 // Import icons from lucide-vue-next
 import {
@@ -24,6 +20,7 @@ import {
   ClipboardEdit,
   Clock,
   CalendarDays,
+  Info, // Import the Info icon
 } from 'lucide-vue-next'
 
 console.log('Lucide icons imported.');
@@ -126,7 +123,6 @@ const disabledDates = computed(() => {
         availDate.toDateString() === currentDate.toDateString()
       );
       const isDisabled = !isAvailable || currentDate < today;
-      // console.log(`Date ${date.toDateString()}: IsAvailable=${isAvailable}, IsPast=${currentDate < today}, IsDisabled=${isDisabled}`); // Terlalu banyak log jika diaktifkan
       return isDisabled;
     },
   };
@@ -134,43 +130,54 @@ const disabledDates = computed(() => {
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
-  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
+  // Changed locale to 'en-US' for English formatting
+  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',
     year: 'numeric',
   });
-  console.log(`Formatted date "${dateStr}" to "${formatted}" (id-ID)`);
+  console.log(`Formatted date "${dateStr}" to "${formatted}" (en-US)`);
   return formatted;
 }
 
-const formatDateShort = (dateStr) => {
-  if (!dateStr) return '-'
-  const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', {
-    month: 'short',
-    day: '2-digit',
-  });
-  console.log(`Formatted short date "${dateStr}" to "${formatted}" (id-ID)`);
-  return formatted;
-}
+// New reactive variable for Google Calendar toggle
+const enableGoogleCalendar = ref(false);
+// New reactive variable for "More Information" toggle
+const showMoreInformation = ref(false);
 
-watch(() => form.value.date, (newDate, oldDate) => {
-  console.log('Form date changed:', newDate, ' (old:', oldDate, ')');
-  // Logika jika tanggal berubah (opsional)
+
+// Computed property to generate Google Calendar URL
+const googleCalendarUrl = computed(() => {
+  if (!form.value.date || !form.value.time || !service.value) {
+    return '';
+  }
+
+  const startDate = new Date(form.value.date);
+  const [hours, minutes] = form.value.time.split(':').map(Number);
+  startDate.setHours(hours, minutes, 0, 0);
+
+  // Assuming the service lasts for 1 hour for calendar event. Adjust as needed.
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+
+  const formatDateTime = (date) => {
+    return date.toISOString().replace(/[-:]|\.\d{3}/g, '');
+  };
+
+  const eventTitle = encodeURIComponent(`Booking: ${service.value.title}`);
+  // Updated event details to English
+  const eventDetails = encodeURIComponent(`Service: ${service.value.title}\nTime: ${form.value.time}\nMeeting Method: ${form.value.option}\nNote: ${form.value.note || 'N/A'}`);
+  const eventLocation = encodeURIComponent(service.value.location);
+  const dates = `${formatDateTime(startDate)}/${formatDateTime(endDate)}`;
+
+  let calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${dates}&details=${eventDetails}&location=${eventLocation}&sf=true&output=xml`;
+
+  return calendarUrl;
 });
 
 
 onMounted(async () => {
   console.log('onMounted hook triggered.');
-  // --- PENTING: Pengaturan locale DatePicker dihapus di sini ---
-  // try {
-  //   DatePicker.locale(idLocale); // Baris ini akan menyebabkan error jika idLocale tidak diimpor
-  //   console.log('DatePicker locale set to idLocale.');
-  // } catch (localeErr) {
-  //   console.error('Error setting DatePicker locale:', localeErr);
-  //   showNotification('error', 'Failed to load date picker locale. Please refresh.');
-  // }
-
   try {
     isLoadingService.value = true;
     console.log(`Fetching service by ID: ${route.params.id}`);
@@ -200,6 +207,7 @@ onMounted(async () => {
 const submitBooking = async () => {
   console.log('Submit booking initiated. Form data:', form.value);
   if (!form.value.date || !form.value.time || !form.value.option) {
+    // Notification message translated
     showNotification('warning', 'Please select a date, time, and meeting method to confirm your booking.');
     console.warn('Booking submission aborted: Missing required fields.');
     return;
@@ -221,11 +229,18 @@ const submitBooking = async () => {
 
     console.log(`Booking service ID ${route.params.id} with payload...`);
     await store.bookService(route.params.id, payload);
+    // Notification message translated
     showNotification('success', 'Service booked successfully, awaiting approval.');
     console.log('Booking successful. Redirecting to /client/activity');
     router.push('/client/activity');
+
+    if (enableGoogleCalendar.value) {
+      window.open(googleCalendarUrl.value, '_blank');
+    }
+
   } catch (err) {
     console.error('Booking failed:', err);
+    // Error message translated
     const errorMessage = err.response?.data?.message || 'Unfortunately, this service is already booked at that time or an error occurred. Please select another date/time.';
     showNotification('error', errorMessage);
     console.error('Displaying booking error message:', errorMessage);
@@ -344,6 +359,40 @@ console.log('--- Script Setup End ---');
               </div>
             </div>
 
+            <div class="border-t border-gray-200 pt-6">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM5 7V6h14v1H5z"/>
+                        </svg>
+                        <span class="text-lg font-semibold text-gray-800">Google Calendar</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input
+                            type="checkbox"
+                            v-model="enableGoogleCalendar"
+                            class="sr-only peer"
+                            :disabled="!form.date || !form.time || !form.option || isSubmitting"
+                        >
+                        <div
+                            class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"
+                        ></div>
+                    </label>
+                </div>
+                <p class="text-sm text-gray-600 mb-4">Automatically add this appointment to Google Calendar with reminders.</p>
+
+                <div v-if="enableGoogleCalendar" class="bg-indigo-50 border border-indigo-200 text-indigo-800 p-4 rounded-lg flex items-start gap-3 transition-all duration-300 ease-in-out transform scale-100 opacity-100"
+                     :class="{'scale-95 opacity-0': !enableGoogleCalendar}">
+                    <Info class="w-5 h-5 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <ul class="list-disc pl-5 text-sm space-y-1">
+                            <li>Reminder 30 minutes before appointment</li>
+                            <li>Location details and notes will be included</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <button
               type="submit"
               class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 ease-in-out shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center justify-center gap-2"
@@ -373,44 +422,52 @@ console.log('--- Script Setup End ---');
 
         <ReviewSummary :reviews="serviceReviews" @open-all-reviews="openAllReviewsModal" />
 
-        <div class="space-y-4 text-gray-700 text-base">
-          <div class="flex items-start gap-3 cursor-pointer" @click="openMapModal">
-            <MapPin class="w-5 h-5 text-indigo-600 mt-1" />
-            <div>
-              <strong class="block text-gray-900">Location:</strong>
-              <span class="text-indigo-600 break-all hover:underline">{{ service.location }}</span>
-            </div>
-          </div>
+        <div class="mt-6 border-t border-gray-200 pt-6">
+          <button @click="showMoreInformation = !showMoreInformation" class="w-full text-left text-indigo-600 hover:underline font-semibold py-2 px-0 focus:outline-none flex justify-between items-center">
+            <span>{{ showMoreInformation ? 'Hide Details' : 'More Information' }}</span>
+            <svg :class="{'rotate-180': showMoreInformation}" class="w-5 h-5 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
 
-          <div class="flex items-start gap-3">
-            <ListChecks class="w-5 h-5 text-indigo-600 mt-1" />
-            <div>
-              <strong class="block text-gray-900">Options:</strong>
-              <span>{{ service.option?.join(', ') || 'N/A' }}</span>
+          <div v-if="showMoreInformation" class="space-y-4 text-gray-700 text-base mt-4 transition-all duration-300 ease-in-out overflow-hidden"
+               :class="{'max-h-0 opacity-0': !showMoreInformation, 'max-h-screen opacity-100': showMoreInformation}">
+            <div class="flex items-start gap-3 cursor-pointer" @click="openMapModal">
+              <MapPin class="w-5 h-5 text-indigo-600 mt-1" />
+              <div>
+                <strong class="block text-gray-900">Location:</strong>
+                <span class="text-indigo-600 break-all hover:underline">{{ service.location }}</span>
+              </div>
             </div>
-          </div>
 
-          <div class="flex items-start gap-3">
-            <CalendarClock class="w-5 h-5 text-indigo-600 mt-1" />
-            <div>
-              <strong class="block text-gray-900">Available Days:</strong>
-              <span>{{ service.days?.join(', ') || 'N/A' }}</span>
+            <div class="flex items-start gap-3">
+              <ListChecks class="w-5 h-5 text-indigo-600 mt-1" />
+              <div>
+                <strong class="block text-gray-900">Options:</strong>
+                <span>{{ service.option?.join(', ') || 'N/A' }}</span>
+              </div>
             </div>
-          </div>
 
-          <div class="flex items-start gap-3">
-            <Clock class="w-5 h-5 text-indigo-600 mt-1" />
-            <div>
-              <strong class="block text-gray-900">Available Time Slots:</strong>
-              <span>{{ service.time?.join(', ') || 'N/A' }}</span>
+            <div class="flex items-start gap-3">
+              <CalendarClock class="w-5 h-5 text-indigo-600 mt-1" />
+              <div>
+                <strong class="block text-gray-900">Available Days:</strong>
+                <span>{{ service.days?.join(', ') || 'N/A' }}</span>
+              </div>
             </div>
-          </div>
 
-          <div class="flex items-start gap-3">
-            <CalendarDays class="w-5 h-5 text-indigo-600 mt-1" />
-            <div>
-              <strong class="block text-gray-900">Date Range:</strong>
-              <span>{{ formatDate(service.date?.[0]?.date) }} - {{ formatDate(service.end_date) }}</span>
+            <div class="flex items-start gap-3">
+              <Clock class="w-5 h-5 text-indigo-600 mt-1" />
+              <div>
+                <strong class="block text-gray-900">Available Time Slots:</strong>
+                <span>{{ service.time?.join(', ') || 'N/A' }}</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3">
+              <CalendarDays class="w-5 h-5 text-indigo-600 mt-1" />
+              <div>
+                <strong class="block text-gray-900">Date Range:</strong>
+                <span>{{ formatDate(service.date?.[0]?.date) }} - {{ formatDate(service.end_date) }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -431,43 +488,44 @@ console.log('--- Script Setup End ---');
 </template>
 
 <style>
-/* CSS Anda yang ada di sini... */
+/* Your existing CSS here... */
 
-.mx-datepicker {
-  width: 100%;
+/* Styles for the toggle switch */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
-.mx-input {
-  display: block;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+/* Add transition for the "More Information" section */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+.duration-300 {
+    transition-duration: 300ms;
+}
+.ease-in-out {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.max-h-0 {
+    max-height: 0;
+}
+.max-h-screen {
+    max-height: 100vh; /* Adjust as needed, sufficiently large value */
+}
+.opacity-0 {
+    opacity: 0;
+}
+.opacity-100 {
+    opacity: 1;
 }
 
-.mx-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
-  outline: none;
-}
-
-.mx-icon-calendar {
-  right: 12px;
-}
-
-
-.mx-calendar-content .cell.disabled {
-  background-color: #f3f4f6 !important;
-  color: #9ca3af !important;
-  cursor: not-allowed !important;
-}
-
-.fixed.top-4.right-4.z-50.space-y-3 > div {
-  min-width: 250px;
-  max-width: 350px;
-}
 </style>

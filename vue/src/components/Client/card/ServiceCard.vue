@@ -1,8 +1,8 @@
 <template>
   <div
-    class="bg-white rounded-xl shadow-md overflow-hidden transform hover:scale-102 transition duration-300 ease-in-out"
+    class="bg-white rounded-xl shadow-md overflow-hidden transform hover:scale-102 transition duration-300 ease-in-out flex flex-col"
   >
-    <div class="relative">
+    <div class="relative flex-shrink-0">
       <img :src="image" alt="Service" class="h-48 w-full object-cover" />
       <button
         @click.stop="toggleBookmark"
@@ -21,7 +21,7 @@
       </button>
     </div>
 
-    <div class="p-5">
+    <div class="p-5 flex flex-col flex-grow">
       <h2 class="text-xl font-bold text-gray-900 mb-2 truncate">{{ title }}</h2>
       <p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ description }}</p>
 
@@ -80,7 +80,7 @@
 
       <button
         @click="goToDetail"
-        class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300"
+        class="w-full bg-indigo-600 text-white font-semibold py-2.5 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-300 mt-auto"
       >
         Book Appointment
       </button>
@@ -91,7 +91,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
-import { useBookmarkStore } from '@/stores/bookmark' 
+import { useBookmarkStore } from '@/stores/bookmark'
 
 const props = defineProps({
   id: Number,
@@ -105,7 +105,7 @@ const props = defineProps({
   time: String,
   image: String,
   averageRating: [Number, String],
-  reviewCount: { 
+  reviewCount: {
     type: Number,
     default: 0,
   }
@@ -136,7 +136,6 @@ const toggleBookmark = () => {
   }
 }
 
-// Computed property untuk memastikan averageRating adalah angka dan di antara 0-5
 const normalizedAverageRating = computed(() => {
   const rating = parseFloat(props.averageRating);
   if (isNaN(rating) || rating < 0) return 0;
