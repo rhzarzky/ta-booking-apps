@@ -19,6 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
+    // This is the list of allowed origins for CORS requests.
     'allowed_origins' =>  [
         'http://103.160.213.108:8080',
         'http://103.160.213.108:8081',
