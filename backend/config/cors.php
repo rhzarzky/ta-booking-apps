@@ -21,6 +21,8 @@ return [
 
     // This is the list of allowed origins for CORS requests.
     'allowed_origins' =>  [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',  
         'http://103.160.213.108:8080',
         'http://103.160.213.108:8081',
         'http://103.160.213.108:8082',
