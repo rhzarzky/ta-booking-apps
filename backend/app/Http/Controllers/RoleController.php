@@ -40,13 +40,13 @@ class RoleController extends Controller
                 'permissions.*' => 'string|exists:permissions,name'
             ]);
 
-            // $existing = Role::whereRaw('LOWER(name) = ?', [strtolower($validated['name'])])->first();
-            // if ($existing) {
-            //     return response()->json([
-            //         'status' => 'error',
-            //         'message' => 'Role name already exists (case-insensitive).',
-            //     ], 422);
-            // }
+            $existing = Role::whereRaw('LOWER(name) = ?', [strtolower($validated['name'])])->first();
+            if ($existing) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Role name already exists (case-insensitive).',
+                ], 422);
+            }
 
             $role = Role::create(['name' => $validated['name']]);
 
