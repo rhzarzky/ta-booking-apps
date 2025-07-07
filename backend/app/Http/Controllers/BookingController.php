@@ -190,10 +190,12 @@ class BookingController extends Controller
         ]);
 
         $alreadyBooked = Booking::where('service_id', $service->id)
-            ->where('user_id', $user->id)
-            ->where('date', $validated['date'])
-            ->where('time', $validated['time'])
-            ->exists();
+        ->where('user_id', $user->id)
+        ->where('date', $validated['date'])
+        ->where('time', $validated['time'])
+        ->whereIn('status', ['Pending', 'Approved']) 
+        ->exists();
+
 
         if ($alreadyBooked) {
             return response()->json([
@@ -203,9 +205,11 @@ class BookingController extends Controller
         }
 
         $otherBooked = Booking::where('service_id', $service->id)
-            ->where('date', $validated['date'])
-            ->where('time', $validated['time'])
-            ->exists();
+        ->where('date', $validated['date'])
+        ->where('time', $validated['time'])
+        ->whereIn('status', ['Pending', 'Approved']) 
+        ->exists();
+
 
         if ($otherBooked) {
             return response()->json([
