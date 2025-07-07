@@ -87,6 +87,14 @@ class RoleController extends Controller
             ]);
 
             $role = Role::findOrFail($id);
+
+            if (in_array($role->name, ['admin', 'user'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cannot edit this role',
+                ], 403);
+            }
+
             if (!$role) {
                 return response()->json(['message' => 'Role not found'], 404);
             }
