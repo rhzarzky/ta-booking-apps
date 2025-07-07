@@ -39,9 +39,9 @@ function statusClass(status) {
     <AnalyticsChart />
 
     <div class="flex items-center justify-between mb-2">
-      <h2 class="text-lg font-semibold text-gray-800">Recent Activity</h2>
-      <router-link to="/client/activity" class="text-blue-600 hover:underline text-sm font-medium">
-        View all activities
+      <h2 class="text-lg font-semibold text-gray-800">Recent history</h2>
+      <router-link to="/client/history" class="text-blue-600 hover:underline text-sm font-medium">
+        View all history
       </router-link>
     </div>
 
@@ -62,7 +62,7 @@ function statusClass(status) {
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-if="latestBookings.length === 0">
                 <td colspan="4" class="px-4 py-6 text-center text-gray-500 italic">
-                  No recent activity.
+                  No recent history.
                 </td>
               </tr>
               <tr v-for="booking in latestBookings" :key="booking.id" class="hover:bg-gray-50 transition-colors duration-150">

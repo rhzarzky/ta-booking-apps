@@ -32,7 +32,7 @@ export default {
     const router = useRouter()
     const goToStatus = (status) => {
       router.push({
-        name: 'client-activity', 
+        name: 'client-history', 
         query: { status: status }
       })
     }
