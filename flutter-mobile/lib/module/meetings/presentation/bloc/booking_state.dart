@@ -9,6 +9,7 @@ final class BookingLoaded extends BookingState {
   final List<Booking> approved;
   final List<Booking> pending;
   final List<Booking> declined;
+  final List<Booking> completed;
   final Map<String, int> stats;
   final bool isFiltered;
   final DateTime? filterStartDate;
@@ -22,6 +23,7 @@ final class BookingLoaded extends BookingState {
     required this.approved,
     required this.pending,
     required this.declined,
+    required this.completed,
     this.bookingDetail,
     this.stats = const {},
     this.isFiltered = false,

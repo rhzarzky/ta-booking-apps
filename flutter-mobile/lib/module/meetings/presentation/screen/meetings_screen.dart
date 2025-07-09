@@ -35,12 +35,13 @@ class MeetingsScreen extends StatefulWidget {
 
 class _MeetingsScreenState extends State<MeetingsScreen>
     with WidgetsBindingObserver {
-  late ScrollController _scrollController;
-  bool _isSearchBarVisible = true;
-  String _searchQuery = '';
-  List<dynamic> _filteredResults = [];
-  final _savedServiceRepository =
-      SavedServiceRepository(); // Map untuk menyimpan service reviews berdasarkan serviceId
+  late ScrollController _scrollController; //mengnotrol behavior scroll
+  bool _isSearchBarVisible = true; // Menyimpan status visibilitas search bar
+  String _searchQuery = ''; // Menyimpan query pencarian
+  List<dynamic> _filteredResults = []; // Menyimpan hasil pencarian
+  final _savedServiceRepository = SavedServiceRepository();
+
+  // Map untuk menyimpan service reviews berdasarkan serviceId, untuk menghindari duplikasi fetch
   Map<int, Map<String, dynamic>> _serviceReviews = {};
 
   // Set untuk melacak serviceId yang sedang di-fetch untuk mencegah duplikasi
@@ -48,6 +49,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
 
   // Map untuk melacak multiple service requests dan responses
   Map<int, bool> _serviceRequestMap = {};
+
   // Timeout untuk request yang terlalu lama
   Map<int, Timer?> _requestTimers = {};
 
@@ -65,7 +67,8 @@ class _MeetingsScreenState extends State<MeetingsScreen>
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance
+        .removeObserver(this); //auto refresh saat app lifecycle berubah
     _scrollController.removeListener(_scrollistener);
     _scrollController.dispose();
     _cleanupTimers(); // Cleanup timers on dispose
@@ -115,6 +118,36 @@ class _MeetingsScreenState extends State<MeetingsScreen>
     return Future.value();
   }
 
+  // Method untuk memvalidasi data reviews
+  bool _isValidReviewData(Map<String, dynamic>? reviewData) {
+    if (reviewData == null) return false;
+    return reviewData.containsKey('averageRating') &&
+        reviewData.containsKey('totalReviews');
+  }
+
+  // Method untuk handle timeout
+  // Mencegah request hang forever 🔒
+  // Membersihkan tracking state 🧹
+  void _handleRequestTimeout(int serviceId) {
+    print('⏰ Request timeout for service $serviceId');
+    if (mounted) {
+      setState(() {
+        _fetchingServices.remove(serviceId);
+        _serviceRequestMap.remove(serviceId);
+        _requestTimers.remove(serviceId);
+      });
+    } else {
+      // Handle case when widget is not mounted
+      _fetchingServices.remove(serviceId);
+      _serviceRequestMap.remove(serviceId);
+      _requestTimers.remove(serviceId);
+    }
+
+    // Reschedule this specific service for retry
+    print('🔄 Rescheduling service $serviceId after timeout');
+    _scheduleServiceReviewFetch(serviceId);
+  }
+
   void _fetchServiceReviews(int serviceId) {
     // Hanya fetch jika belum ada data valid dan tidak sedang di-fetch
     if (!_isValidReviewData(_serviceReviews[serviceId]) &&
@@ -124,7 +157,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
       _fetchingServices.add(serviceId);
       _serviceRequestMap[serviceId] = true;
 
-      // Set timeout untuk request
+      // Set timeout untuk request = Jika lebih dari 10 detik belum selesai → trigger timeout handler
       _requestTimers[serviceId] = Timer(Duration(seconds: 10), () {
         _handleRequestTimeout(serviceId);
       });
@@ -192,15 +225,9 @@ class _MeetingsScreenState extends State<MeetingsScreen>
     );
   }
 
-  // Method untuk memvalidasi data reviews
-  bool _isValidReviewData(Map<String, dynamic>? reviewData) {
-    if (reviewData == null) return false;
-    return reviewData.containsKey('averageRating') &&
-        reviewData.containsKey('totalReviews');
-  }
-
   // Method untuk mendapatkan cached review atau default values
   Map<String, dynamic> _getServiceReviewData(int serviceId) {
+    // Coba ambil data review dari cache berdasarkan serviceId
     final cachedData = _serviceReviews[serviceId];
     if (_isValidReviewData(cachedData)) {
       return cachedData!;
@@ -248,27 +275,6 @@ class _MeetingsScreenState extends State<MeetingsScreen>
       // Schedule fresh fetch
       _scheduleServiceReviewFetch(serviceId);
     }
-  }
-
-  // Method untuk handle timeout
-  void _handleRequestTimeout(int serviceId) {
-    print('⏰ Request timeout for service $serviceId');
-    if (mounted) {
-      setState(() {
-        _fetchingServices.remove(serviceId);
-        _serviceRequestMap.remove(serviceId);
-        _requestTimers.remove(serviceId);
-      });
-    } else {
-      // Handle case when widget is not mounted
-      _fetchingServices.remove(serviceId);
-      _serviceRequestMap.remove(serviceId);
-      _requestTimers.remove(serviceId);
-    }
-
-    // Reschedule this specific service for retry
-    print('🔄 Rescheduling service $serviceId after timeout');
-    _scheduleServiceReviewFetch(serviceId);
   }
 
   // Method untuk cleanup timers
@@ -543,7 +549,7 @@ class _MeetingsScreenState extends State<MeetingsScreen>
                               padding: const EdgeInsets.only(bottom: 12.0),
                               child: CardService(
                                 headService: service.title,
-                                descService: service.description, 
+                                descService: service.description,
                                 imageService: service.image,
                                 timeService: service.days,
                                 locationService: service.location,

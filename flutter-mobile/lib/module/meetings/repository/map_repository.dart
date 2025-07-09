@@ -59,7 +59,7 @@ class MapRepository {
     }
   }
 
-  /// Method untuk reverse geocoding (koordinat ke alamat)
+  /// Method untuk reverse geocoding (koordinat ke alamat) atau mengkonversi koordinat menjadi nama tempat
   Future<Map<String, dynamic>> _reverseGeocode(
       double latitude, double longitude) async {
     try {
@@ -119,6 +119,8 @@ class MapRepository {
       if (response.statusCode == 200 && response.data['features'].isNotEmpty) {
         final feature = response.data['features'][0];
         final coordinates = feature['center'];
+        // hanya mengambil koordinat dari 'center'
+        // yang merupakan [longitude, latitude]
         final placeName = feature['place_name'];
 
         print(
@@ -163,8 +165,12 @@ class MapRepository {
 
       if (response.statusCode == 200 && response.data['routes'].isNotEmpty) {
         final route = response.data['routes'][0];
+        //kenapa di bagi 1000? karena distance yang didapat dari API adalah dalam satuan meter
         final distance = route['distance'] / 1000; // convert to km
+        // kenapa di bagi 60? karena duration yang didapat dari API adalah dalam satuan detik
         final duration = route['duration'] / 60; // convert to minutes
+        // mengambil geometri rute dalam format GeoJSON
+        // LineString coordinates untuk polyline
         final geometry = route['geometry'];
 
         return {

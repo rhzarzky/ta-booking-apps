@@ -70,3 +70,33 @@ class GetServiceReviewsSuccess extends ReviewState {
   @override
   List<Object?> get props => [serviceReviews, serviceId];
 }
+
+class GetUserReviewsForServiceSuccess extends ReviewState {
+  final List<ReviewsModel> userReviews;
+  final int serviceId;
+  final int userId;
+
+  const GetUserReviewsForServiceSuccess({
+    required this.userReviews,
+    required this.serviceId,
+    required this.userId,
+  });
+
+  @override
+  List<Object?> get props => [userReviews, serviceId, userId];
+}
+
+class CheckUserReviewStatusSuccess extends ReviewState {
+  final bool hasReviewed;
+  final int serviceId;
+  final int userId;
+
+  const CheckUserReviewStatusSuccess({
+    required this.hasReviewed,
+    required this.serviceId,
+    required this.userId,
+  });
+
+  @override
+  List<Object?> get props => [hasReviewed, serviceId, userId];
+}

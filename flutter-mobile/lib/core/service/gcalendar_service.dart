@@ -1,12 +1,17 @@
+// Google Calendar API
 import 'package:googleapis/calendar/v3.dart' as calendar;
+// Google Auth
 import 'package:googleapis_auth/auth_io.dart';
+// Google Sign In
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 
 class GoogleCalendarService {
+  // permission yg diminta ke user untuk akses calendar
   static const List<String> _scopes = [calendar.CalendarApi.calendarScope];
   final Logger _logger = Logger();
+  // inisialisasi GoogleSignIn dengan scopes
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: _scopes,
     // Add this for testing unverified apps
@@ -14,6 +19,7 @@ class GoogleCalendarService {
   );
 
   // sign in to get auth client
+  // cek apakah user sudah login atau belum
   Future<AuthClient?> _getAuthClient() async {
     try {
       _logger.i('Attempting Google sign-in for calendar access...');
@@ -24,6 +30,7 @@ class GoogleCalendarService {
       if (account == null) {
         // Sign in interactively
         _logger.i('No existing sign-in found, prompting user...');
+        // User harus manual pilih akun dan berikan permission dari dialog Google
         account = await _googleSignIn.signIn();
       }
 
@@ -33,6 +40,7 @@ class GoogleCalendarService {
       }
 
       _logger.i('Google sign-in successful for: ${account.email}');
+      // Mengambil authentication credentials dari Google account yang sudah berhasil sign-in.
       final GoogleSignInAuthentication auth = await account.authentication;
 
       if (auth.accessToken == null) {
@@ -44,9 +52,11 @@ class GoogleCalendarService {
         AccessToken(
           'Bearer',
           auth.accessToken!,
+          // Set expiration time to 1 hour from now
           DateTime.now().add(const Duration(hours: 1)).toUtc(),
         ),
         null,
+        // Scopes yang diminta untuk akses calendar
         _scopes,
       );
 
@@ -78,17 +88,18 @@ class GoogleCalendarService {
   }) async {
     try {
       _logger.i('Creating calendar event: $title');
-
+// get auth client
       final AuthClient? client = await _getAuthClient();
 
       if (client == null) {
         throw Exception('Failed to get auth client with google');
       }
-
+// creatate calendar API instance
       final calendar.CalendarApi calendarApi = calendar.CalendarApi(client);
 
       // create event
       final calendar.Event event = calendar.Event()
+      // fungsi (..)-> untuk menginisialisasi properti event
         ..summary = title
         ..description = description
         ..location = location

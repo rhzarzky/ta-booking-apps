@@ -15,6 +15,8 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
     on<GetReviewEvent>(_onGetReview);
     on<GetAllReviewEvent>(_getAllReview);
     on<GetServiceReviewsEvent>(_getServiceReviews);
+    on<GetUserReviewsForServiceEvent>(_getUserReviewsForService);
+    on<CheckUserReviewStatusEvent>(_onCheckUserReviewStatus); // Add new handler
   }
 
   Future<void> _onCompleteMeeting(
@@ -44,14 +46,16 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
       emit(ReviewLoading());
 
       final result = await _reviewRepository.postReview(
-        event.bookingId,
+        event.serviceId, // Use serviceId for the API endpoint
         event.rating,
         event.comment,
         event.userId,
+        bookingId: event.bookingId, // Pass bookingId for proper tracking
       );
 
       emit(SubmitReviewSuccess(review: result));
-      _logger.i('Review submitted successfully for booking ${event.bookingId}');
+      _logger.i(
+          'Review submitted successfully for service ${event.serviceId}${event.bookingId != null ? ', booking ${event.bookingId}' : ''}');
     } catch (e) {
       _logger.e('Error submitting review: $e');
       emit(ReviewFailure(error: e.toString()));
@@ -111,6 +115,55 @@ class ReviewBloc extends Bloc<ReviewEvent, ReviewState> {
           'Service reviews fetched successfully for service ${event.serviceId}');
     } catch (e) {
       _logger.e('Error fetching service reviews: $e');
+      emit(ReviewFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _getUserReviewsForService(
+    GetUserReviewsForServiceEvent event,
+    Emitter<ReviewState> emit,
+  ) async {
+    try {
+      emit(ReviewLoading());
+
+      final result = await _reviewRepository.getUserReviewsForService(
+        event.serviceId,
+        event.userId,
+      );
+
+      emit(GetUserReviewsForServiceSuccess(
+        userReviews: result,
+        serviceId: event.serviceId,
+        userId: event.userId,
+      ));
+      _logger.i(
+          'User reviews fetched successfully for service ${event.serviceId}, user ${event.userId}: ${result.length} reviews');
+    } catch (e) {
+      _logger.e('Error fetching user reviews for service: $e');
+      emit(ReviewFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _onCheckUserReviewStatus(
+    CheckUserReviewStatusEvent event,
+    Emitter<ReviewState> emit,
+  ) async {
+    try {
+      final hasReviewed = await _reviewRepository.isBookingReviewed(
+        event.serviceId,
+        event.userId,
+      );
+
+      emit(CheckUserReviewStatusSuccess(
+        hasReviewed: hasReviewed,
+        serviceId: event.serviceId,
+        userId: event.userId,
+      ));
+
+      _logger.i(
+          'Review status checked for service ${event.serviceId}, user ${event.userId}: $hasReviewed');
+    } catch (e) {
+      _logger.e('Error checking user review status: $e');
       emit(ReviewFailure(error: e.toString()));
     }
   }

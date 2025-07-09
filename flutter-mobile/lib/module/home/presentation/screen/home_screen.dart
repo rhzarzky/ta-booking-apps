@@ -31,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final AuthRepository _authRepository = AuthRepository();
   String? userName;
   bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
@@ -38,11 +39,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Load data with current month and year
     final now = DateTime.now();
+    // mengambil data booking dengan bulan dan tahun saat ini yg ditampilkan perminggu
     context
         .read<BookingBloc>()
         .add(GetBookingEvent(month: now.month, year: now.year));
 
-    // Simulate loading state for 2 seconds
+    // memberikan efek loading selama 2 detik
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
@@ -62,8 +64,41 @@ class _HomeScreenState extends State<HomeScreen> {
     _logger.d(userName);
   }
 
+// Fungsi untuk menghitung selisih antara currentCount dan 0
   int calculateDifference(int currentCount) {
     return currentCount > 0 ? currentCount - 0 : 0;
+  }
+
+  // Fungsi helper untuk navigasi ke history meeting berdasarkan status
+  void _navigateToHistoryMeeting(String status) {
+    int tabIndex;
+    switch (status.toLowerCase()) {
+      case 'approved':
+        tabIndex = 0;
+        break;
+      case 'pending':
+      case 'under review':
+        tabIndex = 1;
+        break;
+      case 'declined':
+        tabIndex = 2;
+        break;
+      case 'completed':
+        tabIndex = 3;
+        break;
+      default:
+        tabIndex = 0;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HistoryMeetingsWithProvider(
+          bookingId: widget.bookingId,
+          initialTabIndex: tabIndex,
+        ),
+      ),
+    );
   }
 
   @override
@@ -160,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Text(
           "You've got",
           style: GoogleFonts.ubuntu(
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             color: ColorPallete.darkBlack,
           ),
@@ -171,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ? '${state.stats['approved'] ?? 0} Approval Event${state.stats['approved'] != 1 ? 's' : ''}'
               : '0 Approval Events',
           style: GoogleFonts.ubuntu(
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             color: ColorPallete.primaryColor,
           ),
@@ -187,9 +222,20 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const BouncingScrollPhysics(),
         clipBehavior: Clip.none,
         child: Padding(
-          padding: const EdgeInsets.only(right: 16.0),
+          padding: const EdgeInsets.only(right: 8.0),
           child: Row(
             children: [
+              StatusCard(
+                title: 'Total Event',
+                count: state.stats['total'] ?? 0,
+                timeRange: '30',
+                difference: calculateDifference(state.stats['total'] ?? 0),
+                startColor: ColorPallete.secondColor,
+                endColor: ColorPallete.redCinnabar,
+                iconAsset: 'assets/icons/calendar-check-white.svg',
+                // Total Event tidak memiliki onTap karena tidak ada tab khusus untuk total
+              ),
+              const SizedBox(width: 12),
               StatusCard(
                 title: 'Approved Event',
                 count: state.stats['approved'] ?? 0,
@@ -198,6 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 startColor: ColorPallete.primary400,
                 endColor: ColorPallete.primaryDark,
                 iconAsset: 'assets/icons/calendar-check-white.svg',
+                onTap: () => _navigateToHistoryMeeting('approved'),
               ),
               const SizedBox(width: 12),
               StatusCard(
@@ -208,6 +255,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 difference: calculateDifference(state.stats['pending'] ?? 0),
                 startColor: ColorPallete.accent400,
                 endColor: ColorPallete.accentDark,
+                onTap: () => _navigateToHistoryMeeting('pending'),
+              ),
+              const SizedBox(width: 12),
+              StatusCard(
+                iconAsset: 'assets/icons/calendar-check-white.svg',
+                title: 'Completed Event',
+                count: state.stats['completed'] ?? 0,
+                timeRange: '30',
+                difference: calculateDifference(state.stats['completed'] ?? 0),
+                startColor: ColorPallete.secondColor.withOpacity(0.2),
+                endColor: ColorPallete.secondColor,
+                onTap: () => _navigateToHistoryMeeting('completed'),
               ),
               const SizedBox(width: 12),
               StatusCard(
@@ -218,6 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 difference: calculateDifference(state.stats['declined'] ?? 0),
                 startColor: ColorPallete.greySilverChalice,
                 endColor: ColorPallete.greySilverChalice950,
+                onTap: () => _navigateToHistoryMeeting('declined'),
               ),
             ],
           ),
@@ -243,6 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 startColor: ColorPallete.darkGreySilver,
                 endColor: ColorPallete.greySilverChalice,
                 iconAsset: 'assets/icons/calendar-check-white.svg',
+                onTap: null, // Skeleton tidak memiliki fungsi tap
               ),
             ),
           ),
@@ -298,6 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     MaterialPageRoute(
                       builder: (context) => HistoryMeetingsWithProvider(
                         bookingId: widget.bookingId,
+                        initialTabIndex: 0, // Default ke tab pertama (Approved)
                       ),
                     ),
                   );
@@ -328,7 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 540, // Fixed height
+          height: 440, // Fixed height
           child: _buildPendingCards(),
         ),
       ],
@@ -339,7 +401,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocBuilder<BookingBloc, BookingState>(
       builder: (context, state) {
         return SizedBox(
-          height: 530,
+          height: 400,
           child: _buildPendingListContent(state),
         );
       },
@@ -399,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 );
               },
-              noteCard: booking.note ?? '',
+              //noteCard: booking.note ?? '',
               statusCard: booking.status,
             ),
           );

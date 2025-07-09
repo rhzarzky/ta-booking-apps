@@ -26,7 +26,7 @@ class LocationModel {
       name: json['name']?.toString(),
       latitude: json['latitude'] != null
           ? (json['latitude'] is String
-              ? double.tryParse(json['latitude'])
+              ? double.tryParse(json['latitude']) // menggunakan tryParse untuk aman 
               : (json['latitude'] as num).toDouble())
           : null,
       longitude: json['longitude'] != null

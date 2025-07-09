@@ -54,15 +54,72 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         confirmPassword.text.isNotEmpty;
   }
 
+  bool _isPasswordValid() {
+    return newPassword.text.isNotEmpty &&
+        confirmPassword.text.isNotEmpty &&
+        newPassword.text == confirmPassword.text &&
+        _isPasswordStrong(newPassword.text) &&
+        _isNotSequential(newPassword.text);
+  }
+
+  bool _isPasswordStrong(String password) {
+    // Regex untuk validasi password yang kuat
+    final regex = RegExp(
+        r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{8,}$');
+    return regex.hasMatch(password);
+  }
+
+  bool _hasLowercase(String password) {
+    return RegExp(r'[a-z]').hasMatch(password);
+  }
+
+  bool _hasUppercase(String password) {
+    return RegExp(r'[A-Z]').hasMatch(password);
+  }
+
+  bool _hasDigit(String password) {
+    return RegExp(r'\d').hasMatch(password);
+  }
+
+  bool _hasSpecialChar(String password) {
+    return RegExp(r'[@$!%*#?&^]').hasMatch(password);
+  }
+
+  bool _isMinLength(String password) {
+    return password.length >= 8;
+  }
+
+  bool _isNotSequential(String password) {
+    // Cek apakah password berupa angka berurutan 1-8 atau pola berurutan lainnya
+    const sequential = [
+      '12345678',
+      '87654321',
+      '11111111',
+      '22222222',
+      '33333333',
+      '44444444',
+      '55555555',
+      '66666666',
+      '77777777',
+      '88888888',
+      '99999999',
+      '00000000'
+    ];
+    return !sequential.contains(password) && password != '12345678';
+  }
+
   bool _isPasswordMatching() {
-    return newPassword.text == confirmPassword.text;
+    return newPassword.text == confirmPassword.text &&
+        _isPasswordStrong(newPassword.text) &&
+        _isNotSequential(newPassword.text);
   }
 
   void _updatePassword() {
     if (!_isPasswordMatching()) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('New password and confirmation do not match'),
+          content: Text(
+              'Password baru harus memenuhi semua kriteria dan sama dengan konfirmasi'),
           backgroundColor: Colors.red,
         ),
       );
@@ -242,10 +299,66 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             isPassword: true,
           ),
           SizedBox(
+            height: 16.0,
+          ),
+          // Password requirements
+          Container(
+            padding: EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Password Requirements:',
+                  style: GoogleFonts.ubuntu(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: ColorPallete.darkBlack,
+                  ),
+                ),
+                SizedBox(height: 8.0),
+                _buildRequirement(
+                  'Minimal 8 karakter',
+                  _isMinLength(newPassword.text),
+                ),
+                _buildRequirement(
+                  'Mengandung huruf kecil (a-z)',
+                  _hasLowercase(newPassword.text),
+                ),
+                _buildRequirement(
+                  'Mengandung huruf besar (A-Z)',
+                  _hasUppercase(newPassword.text),
+                ),
+                _buildRequirement(
+                  'Mengandung angka (0-9)',
+                  _hasDigit(newPassword.text),
+                ),
+                _buildRequirement(
+                  'Mengandung karakter khusus (@\$!%*#?&^)',
+                  _hasSpecialChar(newPassword.text),
+                ),
+                _buildRequirement(
+                  'Bukan angka berurutan (1-8) atau sama',
+                  _isNotSequential(newPassword.text),
+                ),
+                _buildRequirement(
+                  'Password harus sama',
+                  newPassword.text.isNotEmpty &&
+                      confirmPassword.text.isNotEmpty &&
+                      newPassword.text == confirmPassword.text,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
             height: 32.0,
           ),
           Visibility(
-            visible: _areFieldsFilled(),
+            visible: _areFieldsFilled() && _isPasswordValid(),
             child: Button(
               text: 'Save Changes',
               onTap: _confirmChangePassword,
@@ -253,6 +366,26 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRequirement(String text, bool isValid) {
+    return Row(
+      children: [
+        Icon(
+          isValid ? Icons.check_circle : Icons.radio_button_unchecked,
+          size: 16,
+          color: isValid ? Colors.green : Colors.grey,
+        ),
+        SizedBox(width: 8.0),
+        Text(
+          text,
+          style: GoogleFonts.ubuntu(
+            fontSize: 12,
+            color: isValid ? Colors.green : Colors.grey,
+          ),
+        ),
+      ],
     );
   }
 }

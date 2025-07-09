@@ -99,8 +99,8 @@ class ServiceRepository {
     try {
       _logger.i('Starting calendar event creation...');
 
-      // Check calendar permission first
       _logger.i('Checking calendar permission...');
+      // Check calendar permission first
       final hasPermission = await PermissionService.hasCalendarPermission();
       _logger.i('Has calendar permission: $hasPermission');
 
@@ -127,6 +127,7 @@ class ServiceRepository {
 
       // Parse booking time to create proper DateTime
       _logger.i('Parsing booking time: $bookingTime');
+      // Split time into hour and minute, ex "14:30" => ["14", "30"]
       final timeComponents = bookingTime.split(':');
       if (timeComponents.length < 2) {
         throw Exception('Invalid time format: $bookingTime');
@@ -144,7 +145,9 @@ class ServiceRepository {
         minute,
       );
 
-      // Assume 1 hour appointment duration
+      // Assume 1 hour before appointment duration
+      //startDateTime = DateTime(2025, 7, 15, 23, 30)  // 15 Jul 2025, 11:30 PM
+      //endDateTime = DateTime(2025, 7, 16, 0, 30)     // 16 Jul 2025, 12:30 AM
       final endDateTime = startDateTime.add(const Duration(hours: 1));
 
       _logger.i('Creating calendar event: $serviceTitle on $startDateTime');
@@ -218,21 +221,21 @@ class ServiceRepository {
               location = 'Online Meeting';
             }
 
-            // Create calendar event
-            final calendarSuccess = await createCalendarEvent(
-              serviceTitle: serviceDetails.title,
-              serviceDescription: serviceDetails.description,
-              bookingDate: bookingDate,
-              bookingTime: time,
-              location: location,
-              meetingUrl: meetingUrl,
-            );
+            // // Create calendar event
+            // final calendarSuccess = await createCalendarEvent(
+            //   serviceTitle: serviceDetails.title,
+            //   serviceDescription: serviceDetails.description,
+            //   bookingDate: bookingDate,
+            //   bookingTime: time,
+            //   location: location,
+            //   meetingUrl: meetingUrl,
+            // );
 
-            if (calendarSuccess) {
-              _logger.i('Booking and calendar event created successfully');
-            } else {
-              _logger.w('Booking created but calendar sync failed');
-            }
+            // if (calendarSuccess) {
+            //   _logger.i('Booking and calendar event created successfully');
+            // } else {
+            //   _logger.w('Booking created but calendar sync failed');
+            // }
           } catch (calendarError) {
             _logger.e('Calendar sync error: $calendarError');
             // Don't fail the booking if calendar sync fails

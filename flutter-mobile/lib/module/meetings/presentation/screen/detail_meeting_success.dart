@@ -17,6 +17,8 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:Appointly/module/meetings/model/booking_model.dart';
 import 'package:Appointly/module/meetings/presentation/screen/visual_map.dart';
+import 'package:Appointly/module/meetings/repository/service_repository.dart';
+import 'package:Appointly/module/meetings/presentation/widget/calendar_sync_dialog.dart';
 
 class DetailMeetingSuccess extends StatefulWidget {
   final int bookingId;
@@ -34,6 +36,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     with SingleTickerProviderStateMixin {
   DateTime? selectedDate;
   AnimationController? _controller;
+  final ServiceRepository _serviceRepository = ServiceRepository();
 
   final Logger _logger = Logger();
 
@@ -67,6 +70,7 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
         });
         return;
       }
+      // fetch data secara langsung dari initstate
       context
           .read<BookingBloc>()
           .add(BookAppointmentByIdEvent(idBooking: widget.bookingId));
@@ -206,6 +210,157 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     }
   }
 
+  // Google Calendar Integration Methods
+  Future<void> _handleCalendarSync(detail.BookingDetail booking) async {
+    try {
+      // Show loading dialog for calendar sync
+      CalendarSyncLoadingDialog.show(context);
+
+      try {
+        // Parse date and time from booking
+        final bookingDate = DateTime.parse(booking.date);
+
+        // Create calendar event
+        final calendarSuccess = await _serviceRepository.createCalendarEvent(
+          serviceTitle: booking.service.title,
+          serviceDescription: booking.service.description,
+          bookingDate: bookingDate,
+          bookingTime: booking.time,
+          location: booking.option.toLowerCase() == 'online'
+              ? 'Online Meeting'
+              : booking.service.location ?? 'Location not specified',
+          meetingUrl: booking.option.toLowerCase() == 'online'
+              ? 'Meeting URL akan diberikan sebelum appointment'
+              : null,
+        );
+
+        // Hide loading dialog
+        if (mounted) {
+          CalendarSyncLoadingDialog.hide(context);
+
+          if (calendarSuccess) {
+            CalendarSyncMessages.showSuccess(context);
+          } else {
+            CalendarSyncMessages.showError(context);
+          }
+        }
+      } catch (calendarError) {
+        // Hide loading dialog
+        if (mounted) {
+          CalendarSyncLoadingDialog.hide(context);
+
+          // Check specific error types
+          String errorMessage = 'Gagal sync ke calendar';
+          if (calendarError.toString().contains('Permission calendar')) {
+            errorMessage =
+                calendarError.toString().replaceAll('Exception: ', '');
+
+            // Show dialog for permission settings if permanently denied
+            if (calendarError.toString().contains('permanen')) {
+              _showPermissionDialog();
+              return;
+            }
+          } else if (calendarError.toString().contains('Authentication')) {
+            errorMessage = 'Gagal login ke Google Account. Silakan coba lagi.';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      _logger.e('Error in calendar sync: $e');
+      if (mounted) {
+        CalendarSyncLoadingDialog.hide(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan saat sync ke calendar'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Show permission dialog when calendar permission is permanently denied
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.calendar_today,
+              color: ColorPallete.primaryColor,
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Calendar Permission',
+              style: GoogleFonts.ubuntu(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: ColorPallete.darkBlack,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Untuk sync appointment ke Google Calendar, izinkan akses calendar di pengaturan aplikasi.',
+              style: GoogleFonts.ubuntu(
+                fontSize: 14,
+                color: ColorPallete.darkBlack,
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Settings > Apps > Appointly > Permissions > Calendar',
+              style: GoogleFonts.ubuntu(
+                fontSize: 12,
+                color: ColorPallete.darkGreySilver,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Nanti',
+              style: GoogleFonts.ubuntu(
+                color: ColorPallete.darkGreySilver,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Open app settings (implementation depends on platform)
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorPallete.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(
+              'Buka Settings',
+              style: GoogleFonts.ubuntu(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSkeletonLoader() {
     final dummyBooking = detail.BookingDetail(
       service: detail.Service(
@@ -315,10 +470,16 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           _buildLocationWithStatus(booking),
           SizedBox(height: 16),
           // Add null safety check for note
-          _buildNoteSection(booking.note ?? ''),
-          SizedBox(height: 16),
+          _buildNoteSection(booking.note ?? ''), SizedBox(height: 16),
           _buildReviewSection(booking),
-          SizedBox(height: 16),
+          SizedBox(
+              height:
+                  16), // Show Google Calendar section only for approved and completed bookings
+          if (booking.status.toLowerCase() == 'approved' ||
+              booking.status.toLowerCase() == 'completed') ...[
+            _buildGoogleCalendarSection(booking),
+            SizedBox(height: 16),
+          ],
           if (booking.option == 'Online') ...[
             Column(
               children: [
@@ -1142,6 +1303,9 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
           Navigator.push(
             context,
             MaterialPageRoute(
+              // visual map hanya membutuhkan 1 booking spesifik untuk ditampilkan di map yaitu approved booking
+              //Logic: Karena user sedang melihat detail 1 booking yang sudah approved, maka: Hanya approved array yang diisi
+              //Array lain kosong karena tidak relevan
               builder: (context) => VisualMap(
                 booking: BookingModel(
                     status: booking.status,
@@ -1216,5 +1380,77 @@ class _DetailMeetingSuccessState extends State<DetailMeetingSuccess>
     } else {
       return 'Just now';
     }
+  }
+
+  Widget _buildGoogleCalendarSection(detail.BookingDetail booking) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ColorPallete.concrete50),
+      ),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.calendar_today,
+                color: ColorPallete.primaryColor,
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Add to Google Calendar',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: ColorPallete.darkBlack,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Appointment yang sudah approved dapat ditambahkan ke Google Calendar dengan reminder otomatis.',
+            style: GoogleFonts.ubuntu(
+              fontSize: 14,
+              color: ColorPallete.darkBlack.withOpacity(0.7),
+            ),
+          ),
+          SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                await _handleCalendarSync(booking);
+              },
+              icon: Icon(
+                Icons.add_to_photos,
+                size: 18,
+                color: Colors.white,
+              ),
+              label: Text(
+                'Tambahkan ke Calendar',
+                style: GoogleFonts.ubuntu(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorPallete.primaryColor,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),          
+        ],
+      ),
+    );
   }
 }

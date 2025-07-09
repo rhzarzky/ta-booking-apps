@@ -11,6 +11,7 @@ class MapInitial extends MapState {}
 class MapLoading extends MapState {}
 
 class MapLoaded extends MapState {
+  // Menggunakan tipe data yang spesifik dari Mapbox SDK
   final mapbox.Point destinationCoordinates;
   final String destinationName;
 
@@ -20,6 +21,7 @@ class MapLoaded extends MapState {
   });
 
   @override
+  // Equatable functionality = untuk membandingkan objek berdasarkan nilai yg dimiliki sama
   List<Object?> get props => [destinationCoordinates, destinationName];
 }
 

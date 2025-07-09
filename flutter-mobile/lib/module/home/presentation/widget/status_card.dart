@@ -13,6 +13,7 @@ class StatusCard extends StatelessWidget {
   final Color startColor;
   final Color endColor;
   final String iconAsset;
+  final VoidCallback? onTap;
 
   const StatusCard({
     super.key,
@@ -23,92 +24,93 @@ class StatusCard extends StatelessWidget {
     required this.startColor,
     required this.endColor,
     required this.iconAsset,
+    this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 188,
-      height: 228,
-      margin: EdgeInsets.only(right: 12),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [startColor, endColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SvgPicture.asset(
-            iconAsset,
-            width: 32,
-            height: 32,
-            colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
-          ),
-          SizedBox(height: 4),
-          Text(
-            title,
-            style: GoogleFonts.ubuntu(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
+    return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 188,
+          height: 228,
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [startColor, endColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(16),
           ),
-          Spacer(),
-          Text(
-            count.toString(),
-            style: GoogleFonts.ubuntu(
-              fontSize: 56,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              SvgPicture.asset(
+                iconAsset,
+                width: 32,
+                height: 32,
+                colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              ),
+              SizedBox(height: 4),
               Text(
-                'Last $timeRange days',
+                title,
                 style: GoogleFonts.ubuntu(
-                  fontSize: 14,
-                  color: Colors.white70,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
                 ),
               ),
-              SizedBox(width: 8),
-              if (difference != 0)
-                Row(
-                  children: [
-                    Text(
-                      '${difference >= 0 ? '+' : ''}$difference',
-                      style: GoogleFonts.ubuntu(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: difference > 0
-                            ? ColorPallete.greenMalachite
-                            : ColorPallete.redCinnabar,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(
-                      difference > 0
-                          ? Icons.arrow_upward
-                          : Icons.arrow_downward,
-                      size: 14,
-                      color: difference > 0
-                          ? ColorPallete.greenMalachite
-                          : ColorPallete.redCinnabar,
-                    ),
-                  ],
+              Spacer(),
+              Text(
+                count.toString(),
+                style: GoogleFonts.ubuntu(
+                  fontSize: 56,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
+              ),
+              SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Last $timeRange days',
+                    style: GoogleFonts.ubuntu(
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  if (difference != 0)
+                    Row(
+                      children: [
+                        Text(
+                          '${difference >= 0 ? '+' : ''}$difference',
+                          style: GoogleFonts.ubuntu(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: difference > 0
+                                ? ColorPallete.greenMalachite
+                                : ColorPallete.redCinnabar,
+                          ),
+                        ),
+                        SizedBox(width: 4),
+                        Icon(
+                          difference > 0
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          size: 14,
+                          color: difference > 0
+                              ? ColorPallete.greenMalachite
+                              : ColorPallete.redCinnabar,
+                        ),
+                      ],
+                    ),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
-    );
+        ));
   }
 }

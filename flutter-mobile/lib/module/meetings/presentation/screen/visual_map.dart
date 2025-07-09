@@ -24,6 +24,8 @@ class VisualMap extends StatefulWidget {
 class _VisualMapState extends State<VisualMap> {
   mapbox.MapboxMap? _mapboxMap;
   final _mapRepository = MapRepository();
+  // kenapa menggunakan late karena kita akan menginisialisasi MapBloc di initState
+  // dan tidak ingin null safety error, karena MapBloc akan digunakan di listener
   late MapBloc _mapBloc;
   double? _distance;
   double? _duration;
@@ -132,6 +134,7 @@ class _VisualMapState extends State<VisualMap> {
                 final lastState = _mapBloc.state as MapLoaded;
                 debugPrint(
                     'Calculating route to: ${lastState.destinationCoordinates.coordinates.lng}, ${lastState.destinationCoordinates.coordinates.lat}');
+                // Trigger route calculation to the destination
                 _mapBloc
                     .add(CalculateRouteEvent(lastState.destinationCoordinates));
               }
@@ -424,11 +427,13 @@ class _VisualMapState extends State<VisualMap> {
   }
 
   void _checkAndAddMarker() {
+    // Validasi 1: MapboxMap sudah diinisialisasi?
     if (_mapboxMap == null) {
       debugPrint('MapboxMap is not initialized. Cannot add markers.');
       return;
     }
 
+    // Validasi 2: Data tujuan + marker belum ditambah?
     if (_mapBloc.state is MapLoaded && !_markerAdded) {
       debugPrint('Adding destination marker.');
       _addDestinationMarker(
@@ -438,6 +443,7 @@ class _VisualMapState extends State<VisualMap> {
       debugPrint('State is not MapLoaded or marker already added.');
     }
 
+    // Validasi 3: Data lokasi user + marker belum ditambah?
     if (_mapBloc.state is CurrentLocationLoaded && !_currentMarkerAdded) {
       debugPrint('Adding current location marker.');
       _addCurrentLocationMarker(
@@ -471,7 +477,7 @@ class _VisualMapState extends State<VisualMap> {
         debugPrint(
             'Menggunakan pendekatan PolylineAnnotation untuk menggambar rute');
 
-        // Buat polyline annotation manager
+        // configuration untuk menggambar garis di map
         final polylineManager =
             await _mapboxMap!.annotations.createPolylineAnnotationManager();
 
@@ -486,7 +492,7 @@ class _VisualMapState extends State<VisualMap> {
         // Buat polyline
         await polylineManager.create(polylineOptions);
         debugPrint('Polyline annotation untuk rute berhasil dibuat');
-
+// Memastikan route + markers selalu lengkap
         // Tambahkan marker jika belum
         if (_mapBloc.state is MapLoaded && !_markerAdded) {
           final state = _mapBloc.state as MapLoaded;
@@ -506,6 +512,7 @@ class _VisualMapState extends State<VisualMap> {
       }
 
       // Set camera to show entire route
+      // menyesuaikan camera dan zoom dalam satu tampilan (auto-fit)
       final coordinates = routeGeometry.coordinates;
       if (coordinates.isNotEmpty && mounted && _mapboxMap != null) {
         // Create bounds that include both start and end points
@@ -615,7 +622,7 @@ class _VisualMapState extends State<VisualMap> {
               textColor: 0xFFFF0000, // Merah
               textOffset: [0, -0.8] // Tempatkan teks di atas lingkaran
               );
-
+      // Buat label annotation
       await pointManager.create(labelOptions);
 
       debugPrint('Destination marker created successfully');
@@ -691,6 +698,8 @@ class _VisualMapState extends State<VisualMap> {
     }
   }
 
+// Menghapus layer dan source yang ada
+  // Ini untuk membersihkan layer lama sebelum menambahkan yang baru, mencegah overlap dan konflik visual
   Future<void> _removeExistingLayers() async {
     if (_mapboxMap == null || !mounted) return;
 
@@ -861,7 +870,7 @@ class _VisualMapState extends State<VisualMap> {
     }
   }
 
-  // Helper method untuk mengkonversi service data ke LocationModel
+  // Mengkonversi data service booking menjadi LocationModel yang bisa diproses oleh MapBloc untuk geocoding dan menampilkan lokasi di peta.
   LocationModel _extractLocationFromService() {
     if (widget.booking.services.approved.isEmpty) {
       return LocationModel(address: 'Default Location');

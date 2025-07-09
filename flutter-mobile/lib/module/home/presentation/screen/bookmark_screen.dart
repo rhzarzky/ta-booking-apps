@@ -24,6 +24,8 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   int _onlineCount = 0;
   int _offlineCount = 0;
 
+  // hanya berfungsi untuk update ui state atau efek dari action
+  // kenapa pakai void, karna tidak memiliki return value
   Future<void> _loadSavedServicesCounts() async {
     final onlineServices = await _savedServiceRepository.getOnlineServices();
     final offlineServices = await _savedServiceRepository.getOfflineServices();
@@ -44,7 +46,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-          backgroundColor: ColorPallete.backgroundBody, 
+          backgroundColor: ColorPallete.backgroundBody,
           appBar: AppBar(
             automaticallyImplyLeading: false,
             foregroundColor: Colors.white,
@@ -88,6 +90,7 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
                         builder: (context) =>
                             DetailBookmark(title: 'Online Collection'),
                       ),
+                      // sebagai callback setelah navigasi selesai, akan memanggil fungsi _loadSavedServicesCounts, dan merender ulang state yg terjadi di dalam detail bookmark
                     ).then((_) => _loadSavedServicesCounts());
                   },
                   startColor: ColorPallete.primaryDark,

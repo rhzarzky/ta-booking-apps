@@ -92,6 +92,7 @@ class AuthRepository {
 
   // Check if user is logged in
   Future<bool> isLoggedIn() async {
+    // simpan di local storage
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('token');
     return token != null;
@@ -128,6 +129,7 @@ class AuthRepository {
       },
       'token': user.token,
     };
+    // save user data to local storage
     await prefs.setString('user_data', jsonEncode(userData));
   }
 
@@ -181,6 +183,15 @@ class AuthRepository {
         'password_confirmation': confirmPassword,
       });
       if (res.statusCode == 200) {
+        // if (res.data['token'] != null) {
+        //   await _saveToken(res.data['token']);
+
+        //   // Update user data jika ada
+        //   if (res.data['user'] != null) {
+        //     final user = UsersModel.fromJson(res.data);
+        //     await saveUserData(user);
+        //   }
+        // }
         return res.data;
       }
     } catch (e) {
