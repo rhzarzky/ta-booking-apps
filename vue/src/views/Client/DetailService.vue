@@ -271,9 +271,9 @@ const submitBooking = async () => {
     await store.bookService(route.params.id, payload);
     // Show success notification upon successful booking
     showNotification('success', 'Service booked successfully, awaiting approval.');
-    console.log('Booking successful. Redirecting to /client/activity');
+    console.log('Booking successful. Redirecting to /client/history');
     // Redirect to the client activity page
-    router.push('/client/activity');
+    router.push('/client/history');
 
     // REMOVED: Google Calendar opening logic
     /*
