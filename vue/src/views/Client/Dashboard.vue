@@ -2,19 +2,19 @@
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useDashboardStore } from '@/stores/dashboard'
-import SummaryCards from '@/components/Client/card/SummaryCards.vue'
+import SummaryCards from '@/components/Client/card/SummaryCards.vue' 
 import AnalyticsChart from '@/components/Client/AnalyticsChart.vue'
 
-// Ambil data dari store dashboard
+
 const dashboardStore = useDashboardStore()
 const { summary, latestBookings, loading, error } = storeToRefs(dashboardStore)
 
-// Fetch data saat komponen dimount
+
 onMounted(() => {
   dashboardStore.fetchDashboardData()
 })
 
-// Fungsi untuk memberi warna status
+
 function statusClass(status) {
   const base = 'px-2 py-1 rounded text-xs font-medium'
   switch ((status || '').toLowerCase()) {
@@ -82,4 +82,3 @@ function statusClass(status) {
     </div>
   </div>
 </template>
-
