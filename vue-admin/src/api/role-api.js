@@ -51,6 +51,18 @@ export const editRole = async (roleId, roleData) => {
     }
 };
 
+// GET role permission default api
+export const permissionDefaultApi = async () => {
+    try {
+      const response = await api.get("/role/default-permissions");
+      console.log("Permission API Response:", response.data); 
+      return response.data; 
+    } catch (error) {
+      console.error("Failed to fetch permissions:", error);
+      throw error; 
+    }
+};
+
 // GET permission api from user
 export const permissionApi = async () => {
     try {

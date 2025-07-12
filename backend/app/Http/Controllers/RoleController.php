@@ -31,6 +31,30 @@ class RoleController extends Controller
         ]);
     }
 
+    public function defaultPermissions()
+    {
+        try {
+            $roles = Role::with('permissions:id,name')->get();
+
+            $data = $roles->mapWithKeys(function ($role) {
+                return [
+                    $role->name => $role->permissions->pluck('name')->sort()->values()
+                ];
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'roles' => $data
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function storeRole(Request $request)
     {
         try {
