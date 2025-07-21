@@ -24,20 +24,32 @@ const userPermissions = ref([]);
 const userIdForPermissions = ref(null);
 const showDeleteModal = ref(false);
 const userToDelete = ref(null);
+const roleDefaults = ref({});
 
 // Fetch Users
 const fetchUserData = async () => {
   isLoading.value = true;
   try {
+    // Ambil users
     const response = await fetchUsers();
-    users.value = response.users;
+
+    // Ambil permission default per role
+    const roleResponse = await roleStore.fetchDefaultPermissions();
+    roleDefaults.value = roleResponse.roles;
+
+    // Tandai user apakah punya custom permission
+    users.value = response.users.map(user => ({
+      ...user,
+      hasCustomPermission: isCustomPermission(user)
+    }));
   } catch (err) {
-    error.value = "Failed to fetch users";
-    console.error("Error fetching users:", err);
+    error.value = "Failed to fetch users or default permissions";
+    console.error("Error fetching users/defaults:", err);
   } finally {
     isLoading.value = false;
   }
 };
+
 
 // filter users based on search query
 const filteredUsers = computed(() => {
@@ -206,6 +218,7 @@ const savePermissions = async () => {
     await authStore.handleUpdateUser(userIdForPermissions.value, updateData);
     authStore.showNotification("Permissions updated successfully.", "success");
     isVisible.value = false;
+    await fetchUserData();
     router.push("/user-list");
   } catch (err) {
     console.error("Error saving permissions:", err);
@@ -215,6 +228,17 @@ const savePermissions = async () => {
   }
 };
 
+function isCustomPermission(user) {
+  const role = Array.isArray(user.role) ? user.role[0] : user.role;
+
+  // Jika belum tersedia, anggap belum bisa dibandingkan
+  if (!roleDefaults.value[role]) return false;
+
+  const defaultPerms = roleDefaults.value[role].slice().sort();
+  const userPerms = [...user.permission].sort();
+
+  return JSON.stringify(defaultPerms) !== JSON.stringify(userPerms);
+}
 
 onMounted(() => {
   if (!authStore.isLoggedIn) {
@@ -287,6 +311,9 @@ watch(searchQuery, () => {
                 <td class="px-4 py-2 hidden sm:table-cell">{{ user.email }}</td>
                 <td class="px-4 py-2">
                   {{ Array.isArray(user.role) ? user.role.join(", ") : user.role }}
+                  <span v-if="user.hasCustomPermission" class="ml-1 text-yellow-600" title="Custom permissions">
+                    ⚙️
+                  </span>
                 </td>
                 <td>
                   <span :class="{

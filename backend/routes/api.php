@@ -40,6 +40,7 @@ Route::middleware([JwtMiddleware::class])->group(function () {
     });
     
     Route::middleware(['permission:edit role'])->group(function () {
+        Route::get('/role/default-permissions', [RoleController::class, 'defaultPermissions']);
         Route::put('/role/{id}', [RoleController::class, 'editRole']);
     });
 
