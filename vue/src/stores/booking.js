@@ -1,4 +1,3 @@
-// src/stores/booking.js
 import { defineStore } from 'pinia';
 import { bookingApi } from '@/api/booking-api';
 
@@ -138,6 +137,30 @@ export const useBookingStore = defineStore('booking', {
 
     hasUserReviewedService: (state) => (serviceId) => {
       return state.userReviews.some(review => review.service?.id === serviceId)
-    }
+    },
+
+    // Getter baru untuk booking aktif (Pending dan Approved)
+    activeBookings: (state) => {
+      const active = [];
+      if (state.bookingsByStatus['Pending']) {
+        active.push(...state.bookingsByStatus['Pending']);
+      }
+      if (state.bookingsByStatus['Approved']) {
+        active.push(...state.bookingsByStatus['Approved']);
+      }
+      return active.sort((a, b) => b.id_booking - a.id_booking);
+    },
+
+    // Getter baru untuk riwayat booking (Completed dan Declined)
+    historicalBookings: (state) => {
+      const history = [];
+      if (state.bookingsByStatus['Completed']) {
+        history.push(...state.bookingsByStatus['Completed']);
+      }
+      if (state.bookingsByStatus['Declined']) {
+        history.push(...state.bookingsByStatus['Declined']);
+      }
+      return history.sort((a, b) => b.id_booking - a.id_booking);
+    },
   }
 })

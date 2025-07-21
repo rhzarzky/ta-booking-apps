@@ -7,12 +7,13 @@ import { useSidebarStore } from "@/stores/sidebar";
 import AppointlyIcon from "@/assets/icons/appointly.svg";
 import {
   LayoutDashboard,
-  ActivitySquare,
+  ActivitySquare, // Akan digunakan untuk ikon Booking
   UserCircle2,
   LogOut,
   Users,
   ChevronLeft,
   ChevronRight,
+  CalendarDays // Icon baru untuk Booking
 } from "lucide-vue-next";
 
 const auth = useAuthStore();
@@ -38,7 +39,14 @@ onBeforeUnmount(() => {
 const items = [
   { name: "Dashboard", icon: LayoutDashboard, route: "/client/dashboard" },
   { name: "Service", icon: Users, route: "/client/service" },
-  { name: "History", icon: ActivitySquare, route: "/client/history" },
+  { // Item utama "Booking"
+    name: "Booking",
+    icon: CalendarDays, // Ganti ikon ActivitySquare menjadi CalendarDays
+    children: [ // Submenu untuk Booking
+      { label: "Aktif", route: "/client/booking/aktif" },
+      { label: "Riwayat", route: "/client/booking/riwayat" },
+    ],
+  },
   { name: "Profile", icon: UserCircle2, route: "/client/profile" },
 ];
 
@@ -55,14 +63,12 @@ const toggleSidebar = () => {
 </script>
 
 <template>
-  <!-- Overlay on mobile -->
   <div
     class="fixed inset-0 z-30 bg-black bg-opacity-50 md:hidden"
     v-if="sidebar.isSidebarOpen"
     @click="toggleSidebar"
   ></div>
 
-  <!-- Sidebar -->
   <aside
     :class="[
       'z-40 bg-white border-r border-gray-200 h-full flex flex-col transition-all duration-300 shadow-lg',
@@ -71,13 +77,11 @@ const toggleSidebar = () => {
       'fixed md:static'
     ]"
   >
-    <!-- Header -->
     <div class="flex items-center p-4 border-b border-gray-200 relative">
       <div v-if="sidebar.isSidebarOpen" class="flex items-center">
         <img :src="AppointlyIcon" alt="Appointly Icon" class="h-10 w-13 mr-5" />
       </div>
 
-      <!-- Toggle Sidebar (desktop only) -->
       <button
         @click="toggleSidebar"
         :class="[
@@ -90,7 +94,6 @@ const toggleSidebar = () => {
         <ChevronRight v-else class="h-5 w-5" />
       </button>
 
-      <!-- Toggle Sidebar (mobile only) -->
       <button
         v-if="sidebar.isSidebarOpen || !isMobile"
         @click="toggleSidebar"
@@ -113,7 +116,6 @@ const toggleSidebar = () => {
       </button>
     </div>
 
-    <!-- Navigation -->
     <nav
       v-if="sidebar.isSidebarOpen || !isMobile"
       class="flex-1 px-4 py-3 space-y-2"
@@ -125,13 +127,13 @@ const toggleSidebar = () => {
         :label="item.name"
         :to="item.route"
         :isOpen="sidebar.isSidebarOpen"
+        :children="item.children"
         class="text-gray-700"
         activeClass="bg-purple-600 text-white"
         hoverClass="hover:bg-purple-100 hover:text-purple-700"
       />
     </nav>
 
-    <!-- Logout -->
     <div
       v-if="sidebar.isSidebarOpen || !isMobile"
       class="p-4 border-t border-gray-200"

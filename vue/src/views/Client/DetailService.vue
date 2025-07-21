@@ -273,7 +273,7 @@ const submitBooking = async () => {
     showNotification('success', 'Service booked successfully, awaiting approval.');
     console.log('Booking successful. Redirecting to /client/history');
     // Redirect to the client activity page
-    router.push('/client/history');
+    router.push('/client/booking/aktif');
 
     // REMOVED: Google Calendar opening logic
     /*
