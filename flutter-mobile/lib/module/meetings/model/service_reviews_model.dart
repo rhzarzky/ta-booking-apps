@@ -18,6 +18,7 @@ class ServiceReviewsModel {
       List<ReviewsModel> reviewsList = [];
 
       // Try different possible locations for reviews data
+      // menangani inconsistent API responses.
       if (json.containsKey('reviews') && json['reviews'] is List) {
         // Direct reviews array
         final reviewsData = json['reviews'] as List<dynamic>;
@@ -47,6 +48,7 @@ class ServiceReviewsModel {
 
         if (validRatings.isNotEmpty) {
           final totalRating =
+          // gabung semua rating yang valid dan hitung rata2
               validRatings.reduce((sum, rating) => sum + rating);
           avgRating = totalRating / validRatings.length;
         }

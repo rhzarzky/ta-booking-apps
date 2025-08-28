@@ -2,6 +2,7 @@ import 'package:logger/logger.dart';
 
 final Logger _logger = Logger();
 
+// seb
 class DataService {
   final List<Service> services;
   final int? bookingId;
@@ -97,6 +98,7 @@ class Service {
 
   factory Service.fromModel(Map<String, dynamic> json) {
     List<String> parseOption() {
+      // validasi untuk memastikan bahwa opsi hanya "Online" atau "Offline" dan berbentuk list
       if (json['option'] is List) {
         final options =
             List<String>.from(json['option'].map((item) => item.toString()));
@@ -124,6 +126,7 @@ class Service {
     // Menangani time yang bisa berupa string atau list
     List<String> parseTime() {
       if (json['time'] is List) {
+        //Mengubah setiap item di list menjadi String
         return List<String>.from(json['time'].map((item) => item.toString()));
       } else if (json['time'] is String) {
         return [json['time']];

@@ -207,124 +207,124 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
   }
 
   // Google Calendar Integration Methods
-  Future<void> _handleCalendarSync(Service service, String formattedDate,
-      String time24, int bookingId) async {
-    try {
-      // Show loading dialog for calendar sync
-      CalendarSyncLoadingDialog.show(context);
+  // Future<void> _handleCalendarSync(Service service, String formattedDate,
+  //     String time24, int bookingId) async {
+  //   try {
+  //     // Show loading dialog for calendar sync
+  //     CalendarSyncLoadingDialog.show(context);
 
-      try {
-        // Create calendar event
-        final calendarSuccess = await _serviceRepository.createCalendarEvent(
-          serviceTitle: service.title,
-          serviceDescription: service.description,
-          bookingDate: DateTime.parse(formattedDate),
-          bookingTime: time24,
-          location: selectedOption.toLowerCase() == 'online'
-              ? 'Online Meeting'
-              : service.location,
-          meetingUrl: selectedOption.toLowerCase() == 'online'
-              ? 'Meeting URL akan diberikan sebelum appointment'
-              : null,
-        );
+  //     try {
+  //       // Create calendar event
+  //       final calendarSuccess = await _serviceRepository.createCalendarEvent(
+  //         serviceTitle: service.title,
+  //         serviceDescription: service.description,
+  //         bookingDate: DateTime.parse(formattedDate),
+  //         bookingTime: time24,
+  //         location: selectedOption.toLowerCase() == 'online'
+  //             ? 'Online Meeting'
+  //             : service.location,
+  //         meetingUrl: selectedOption.toLowerCase() == 'online'
+  //             ? 'Meeting URL akan diberikan sebelum appointment'
+  //             : null,
+  //       );
 
-        // Hide loading dialog
-        if (mounted) {
-          CalendarSyncLoadingDialog.hide(context);
+  //       // Hide loading dialog
+  //       if (mounted) {
+  //         CalendarSyncLoadingDialog.hide(context);
 
-          if (calendarSuccess) {
-            CalendarSyncMessages.showSuccess(context);
-          } else {
-            CalendarSyncMessages.showError(context);
-          }
-        }
-      } catch (calendarError) {
-        // Hide loading dialog
-        if (mounted) {
-          CalendarSyncLoadingDialog.hide(context);
+  //         if (calendarSuccess) {
+  //           CalendarSyncMessages.showSuccess(context);
+  //         } else {
+  //           CalendarSyncMessages.showError(context);
+  //         }
+  //       }
+  //     } catch (calendarError) {
+  //       // Hide loading dialog
+  //       if (mounted) {
+  //         CalendarSyncLoadingDialog.hide(context);
 
-          // Check specific error types
-          String errorMessage = 'Gagal sync ke calendar';
-          if (calendarError.toString().contains('Permission calendar')) {
-            errorMessage =
-                calendarError.toString().replaceAll('Exception: ', '');
+  //         // Check specific error types
+  //         String errorMessage = 'Gagal sync ke calendar';
+  //         if (calendarError.toString().contains('Permission calendar')) {
+  //           errorMessage =
+  //               calendarError.toString().replaceAll('Exception: ', '');
 
-            // Show dialog for permission settings if permanently denied
-            if (calendarError.toString().contains('permanen')) {
-              _showPermissionDialog();
-              return;
-            }
-          } else if (calendarError.toString().contains('Authentication')) {
-            errorMessage = 'Gagal login ke Google Account. Silakan coba lagi.';
-          }
+  //           // Show dialog for permission settings if permanently denied
+  //           if (calendarError.toString().contains('permanen')) {
+  //             _showPermissionDialog();
+  //             return;
+  //           }
+  //         } else if (calendarError.toString().contains('Authentication')) {
+  //           errorMessage = 'Gagal login ke Google Account. Silakan coba lagi.';
+  //         }
 
-          CalendarSyncMessages.showError(context, errorMessage);
-        }
-      }
-    } catch (e) {
-      print('Error in calendar sync: $e');
-      if (mounted) {
-        CalendarSyncMessages.showError(
-            context, 'Terjadi kesalahan saat sync ke calendar');
-      }
-    }
-  }
+  //         CalendarSyncMessages.showError(context, errorMessage);
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print('Error in calendar sync: $e');
+  //     if (mounted) {
+  //       CalendarSyncMessages.showError(
+  //           context, 'Terjadi kesalahan saat sync ke calendar');
+  //     }
+  //   }
+  // }
 
   // Show permission dialog when calendar permission is permanently denied
-  void _showPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Row(
-          children: [
-            Icon(Icons.settings, color: Colors.orange),
-            SizedBox(width: 8),
-            Text('Permission Diperlukan'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Aplikasi memerlukan akses ke Calendar untuk menambahkan appointment ke Google Calendar.',
-              style: TextStyle(fontSize: 14),
-            ),
-            SizedBox(height: 12),
-            Text(
-              'Silakan aktifkan permission Calendar di:',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            SizedBox(height: 8),
-            Text(
-              '• Pengaturan > Apps > Appointly > Permissions > Calendar',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Nanti Saja'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await PermissionService.openDeviceSettings();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-            child: Text('Buka Pengaturan'),
-          ),
-        ],
-      ),
-    );
-  }
+  // void _showPermissionDialog() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       shape: RoundedRectangleBorder(
+  //         borderRadius: BorderRadius.circular(16),
+  //       ),
+  //       title: Row(
+  //         children: [
+  //           Icon(Icons.settings, color: Colors.orange),
+  //           SizedBox(width: 8),
+  //           Text('Permission Diperlukan'),
+  //         ],
+  //       ),
+  //       content: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Text(
+  //             'Aplikasi memerlukan akses ke Calendar untuk menambahkan appointment ke Google Calendar.',
+  //             style: TextStyle(fontSize: 14),
+  //           ),
+  //           SizedBox(height: 12),
+  //           Text(
+  //             'Silakan aktifkan permission Calendar di:',
+  //             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+  //           ),
+  //           SizedBox(height: 8),
+  //           Text(
+  //             '• Pengaturan > Apps > Appointly > Permissions > Calendar',
+  //             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+  //           ),
+  //         ],
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.of(context).pop(),
+  //           child: Text('Nanti Saja'),
+  //         ),
+  //         ElevatedButton(
+  //           onPressed: () async {
+  //             Navigator.of(context).pop();
+  //             await PermissionService.openDeviceSettings();
+  //           },
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor: Colors.blue,
+  //             foregroundColor: Colors.white,
+  //           ),
+  //           child: Text('Buka Pengaturan'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Future<void> _selectDate() async {
     // Dapatkan service dari state saat ini
@@ -618,11 +618,11 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
             SizedBox(height: 16),
             _buildLocationSection(service),
             SizedBox(height: 16),
-            _buildNoteSection(service),
-            SizedBox(height: 16),
+            // _buildNoteSection(service),
+            // SizedBox(height: 16),
             _buildReviewSection(),
             SizedBox(height: 16),
-            _buildGoogleCalendarSection(),
+            // _buildGoogleCalendarSection(),
             SizedBox(height: 16),
             _buildButtonSend()
           ],
@@ -643,11 +643,11 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
           SizedBox(height: 16),
           _buildLocationSection(service),
           SizedBox(height: 16),
-          _buildNoteSection(service),
-          SizedBox(height: 16),
+          // _buildNoteSection(service),
+          // SizedBox(height: 16),
           _buildReviewSection(),
           SizedBox(height: 16),
-          _buildGoogleCalendarSection(),
+          // _buildGoogleCalendarSection(),
           SizedBox(height: 20), // Extra space before sticky button
         ],
       ),
@@ -1008,99 +1008,99 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
     );
   }
 
-  Widget _buildGoogleCalendarSection() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(color: ColorPallete.concrete50),
-      ),
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.calendar_today,
-                color: ColorPallete.primaryColor,
-                size: 20,
-              ),
-              SizedBox(width: 8),
-              Text(
-                'Google Calendar',
-                style: GoogleFonts.ubuntu(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: ColorPallete.darkBlack,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.0),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Otomatis tambahkan appointment ke Google Calendar dengan reminder',
-                  style: GoogleFonts.ubuntu(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: ColorPallete.darkBlack.withOpacity(0.7),
-                  ),
-                ),
-              ),
-              Switch(
-                value: _enableCalendarSync,
-                onChanged: (value) {
-                  setState(() {
-                    _enableCalendarSync = value;
-                  });
-                },
-                activeColor: ColorPallete.primaryColor,
-                activeTrackColor: ColorPallete.primaryColor.withOpacity(0.3),
-                inactiveThumbColor: Colors.grey,
-                inactiveTrackColor: Colors.grey.withOpacity(0.3),
-              ),
-            ],
-          ),
-          if (_enableCalendarSync) ...[
-            SizedBox(height: 8.0),
-            Container(
-              padding: EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                color: ColorPallete.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(
-                    color: ColorPallete.primaryColor.withOpacity(0.3)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: ColorPallete.primaryColor,
-                    size: 16,
-                  ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '• Reminder 30 menit sebelum appointment\n• Reminder 1 jam sebelum appointment\n• Detail lokasi dan catatan akan disertakan',
-                      style: GoogleFonts.ubuntu(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w400,
-                        color: ColorPallete.primaryColor,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+  // Widget _buildGoogleCalendarSection() {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(8.0),
+  //       border: Border.all(color: ColorPallete.concrete50),
+  //     ),
+  //     padding: EdgeInsets.all(16.0),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             Icon(
+  //               Icons.calendar_today,
+  //               color: ColorPallete.primaryColor,
+  //               size: 20,
+  //             ),
+  //             SizedBox(width: 8),
+  //             Text(
+  //               'Google Calendar',
+  //               style: GoogleFonts.ubuntu(
+  //                 fontSize: 16,
+  //                 fontWeight: FontWeight.w600,
+  //                 color: ColorPallete.darkBlack,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         SizedBox(height: 8.0),
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: Text(
+  //                 'Otomatis tambahkan appointment ke Google Calendar dengan reminder',
+  //                 style: GoogleFonts.ubuntu(
+  //                   fontSize: 12,
+  //                   fontWeight: FontWeight.w400,
+  //                   color: ColorPallete.darkBlack.withOpacity(0.7),
+  //                 ),
+  //               ),
+  //             ),
+  //             Switch(
+  //               value: _enableCalendarSync,
+  //               onChanged: (value) {
+  //                 setState(() {
+  //                   _enableCalendarSync = value;
+  //                 });
+  //               },
+  //               activeColor: ColorPallete.primaryColor,
+  //               activeTrackColor: ColorPallete.primaryColor.withOpacity(0.3),
+  //               inactiveThumbColor: Colors.grey,
+  //               inactiveTrackColor: Colors.grey.withOpacity(0.3),
+  //             ),
+  //           ],
+  //         ),
+  //         if (_enableCalendarSync) ...[
+  //           SizedBox(height: 8.0),
+  //           Container(
+  //             padding: EdgeInsets.all(12.0),
+  //             decoration: BoxDecoration(
+  //               color: ColorPallete.primaryColor.withOpacity(0.1),
+  //               borderRadius: BorderRadius.circular(8.0),
+  //               border: Border.all(
+  //                   color: ColorPallete.primaryColor.withOpacity(0.3)),
+  //             ),
+  //             child: Row(
+  //               children: [
+  //                 Icon(
+  //                   Icons.info_outline,
+  //                   color: ColorPallete.primaryColor,
+  //                   size: 16,
+  //                 ),
+  //                 SizedBox(width: 8),
+  //                 Expanded(
+  //                   child: Text(
+  //                     '• Reminder 30 menit sebelum appointment\n• Reminder 1 jam sebelum appointment\n• Detail lokasi dan catatan akan disertakan',
+  //                     style: GoogleFonts.ubuntu(
+  //                       fontSize: 11,
+  //                       fontWeight: FontWeight.w400,
+  //                       color: ColorPallete.primaryColor,
+  //                       height: 1.4,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildReviewSection() {
     return Column(
@@ -1714,19 +1714,20 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
             ? null
             : () async {
                 // 1. First check for notification permissions
-                final settings =
-                    await FirebaseMessaging.instance.requestPermission();
-                if (settings.authorizationStatus !=
-                    AuthorizationStatus.authorized) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          'Please enable notifications to receive booking confirmations'),
-                    ),
-                  );
-                  return;
-                }
+                // final settings =
+                //     await FirebaseMessaging.instance.requestPermission();
+                // if (settings.authorizationStatus !=
+                //     AuthorizationStatus.authorized) {
+                //   ScaffoldMessenger.of(context).showSnackBar(
+                //     SnackBar(
+                //       content: Text(
+                //           'Please enable notifications to receive booking confirmations'),
+                //     ),
+                //   );
+                //   return;
+                // }
 
+                // 2. Check for selected date
                 if (selectedDate == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1747,6 +1748,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                 // Get note from controller
                 final note = _noteController.text.trim();
 
+                // Mencari service dengan ID yang sesuai dengan
                 final state = context.read<ServiceBloc>().state;
                 if (state is ServiceLoaded) {
                   final service = state.services.firstWhere(
@@ -1768,7 +1770,7 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                         time: time24,
                       ));
 
-                  // Listen for the booking response
+                  // Listen for the booking response, untuk mendapatkan ID booking dari ServiceBloc serta mendapat feedback dari bloc
                   context.read<ServiceBloc>().stream.listen((state) async {
                     if (state is ServiceSucees) {
                       print('🔔 Booking successful! Creating notification...');
@@ -1799,12 +1801,14 @@ class _DetailMeetingScreenState extends State<DetailMeetingScreen> {
                           );
 
                       // Handle Google Calendar sync after successful booking (only if enabled)
-                      if (mounted && _enableCalendarSync) {
-                        await _handleCalendarSync(
-                            service, formattedDate, time24, state.bookingId);
-                      }
+                      // if (mounted && _enableCalendarSync) {
+                      //   await _handleCalendarSync(
+                      //       service, formattedDate, time24, state.bookingId);
+                      // }
 
                       // Navigate to success screen after calendar sync (or user declined)
+                      // cara untuk tahu apakah widget masih aktif, sebelum melakukan perubahan seperti 
+                      // Wajib digunakan saat kerja dengan async, Future, stream, atau controller
                       if (mounted) {
                         Navigator.pushReplacement(
                           context,

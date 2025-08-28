@@ -31,11 +31,65 @@ class _AuthChangepasswordState extends State<AuthChangepassword> {
     });
   }
 
+  @override
+  void dispose() {
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   bool _isPasswordValid() {
     return passwordController.text.isNotEmpty &&
         confirmPasswordController.text.isNotEmpty &&
         passwordController.text == confirmPasswordController.text &&
-        passwordController.text.length >= 8;
+        _isPasswordStrong(passwordController.text) &&
+        _isNotSequential(passwordController.text);
+  }
+
+  bool _isPasswordStrong(String password) {
+    // Regex untuk validasi password yang kuat
+    final regex = RegExp(
+        r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&^])[A-Za-z\d@$!%*#?&^]{8,}$');
+    return regex.hasMatch(password);
+  }
+
+  bool _hasLowercase(String password) {
+    return RegExp(r'[a-z]').hasMatch(password);
+  }
+
+  bool _hasUppercase(String password) {
+    return RegExp(r'[A-Z]').hasMatch(password);
+  }
+
+  bool _hasDigit(String password) {
+    return RegExp(r'\d').hasMatch(password);
+  }
+
+  bool _hasSpecialChar(String password) {
+    return RegExp(r'[@$!%*#?&^]').hasMatch(password);
+  }
+
+  bool _isMinLength(String password) {
+    return password.length >= 8;
+  }
+
+  bool _isNotSequential(String password) {
+    // Cek apakah password berupa angka berurutan 1-8 atau pola berurutan lainnya
+    const sequential = [
+      '12345678',
+      '87654321',
+      '11111111',
+      '22222222',
+      '33333333',
+      '44444444',
+      '55555555',
+      '66666666',
+      '77777777',
+      '88888888',
+      '99999999',
+      '00000000'
+    ];
+    return !sequential.contains(password) && password != '12345678';
   }
 
   @override
@@ -119,6 +173,18 @@ class _AuthChangepasswordState extends State<AuthChangepassword> {
                       isPassword: true,
                       controller: passwordController,
                       labelText: 'New Password',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password tidak boleh kosong';
+                        }
+                        if (!_isPasswordStrong(value)) {
+                          return 'Password harus memenuhi semua kriteria';
+                        }
+                        if (!_isNotSequential(value)) {
+                          return 'Password tidak boleh berupa angka berurutan';
+                        }
+                        return null;
+                      },
                     ),
                     SizedBox(height: 24.0),
                     AuthField(
@@ -126,9 +192,17 @@ class _AuthChangepasswordState extends State<AuthChangepassword> {
                       isPassword: true,
                       controller: confirmPasswordController,
                       labelText: 'Confirm Password',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Konfirmasi password tidak boleh kosong';
+                        }
+                        if (value != passwordController.text) {
+                          return 'Password tidak sama';
+                        }
+                        return null;
+                      },
                     ),
-                    SizedBox(height: 16.0),
-                    // Password requirements
+                    SizedBox(height: 16.0), // Password requirements
                     Container(
                       padding: EdgeInsets.all(12.0),
                       decoration: BoxDecoration(
@@ -150,7 +224,27 @@ class _AuthChangepasswordState extends State<AuthChangepassword> {
                           SizedBox(height: 8.0),
                           _buildRequirement(
                             'Minimal 8 karakter',
-                            passwordController.text.length >= 8,
+                            _isMinLength(passwordController.text),
+                          ),
+                          _buildRequirement(
+                            'Mengandung huruf kecil (a-z)',
+                            _hasLowercase(passwordController.text),
+                          ),
+                          _buildRequirement(
+                            'Mengandung huruf besar (A-Z)',
+                            _hasUppercase(passwordController.text),
+                          ),
+                          _buildRequirement(
+                            'Mengandung angka (0-9)',
+                            _hasDigit(passwordController.text),
+                          ),
+                          _buildRequirement(
+                            'Mengandung karakter khusus (@\$!%*#?&^)',
+                            _hasSpecialChar(passwordController.text),
+                          ),
+                          _buildRequirement(
+                            'Bukan angka berurutan (1-8) atau sama',
+                            _isNotSequential(passwordController.text),
                           ),
                           _buildRequirement(
                             'Password harus sama',
@@ -172,13 +266,17 @@ class _AuthChangepasswordState extends State<AuthChangepassword> {
                       onTap: state is AuthLoading || !_isPasswordValid()
                           ? null
                           : () {
-                              context.read<AuthBloc>().add(
-                                    ResetPassword(
-                                      password: passwordController.text.trim(),
-                                      confirmPassword:
-                                          confirmPasswordController.text.trim(),
-                                    ),
-                                  );
+                              if (_formKey.currentState!.validate()) {
+                                context.read<AuthBloc>().add(
+                                      ResetPassword(
+                                        password:
+                                            passwordController.text.trim(),
+                                        confirmPassword:
+                                            confirmPasswordController.text
+                                                .trim(),
+                                      ),
+                                    );
+                              }
                             },
                     );
                   },
@@ -209,12 +307,5 @@ class _AuthChangepasswordState extends State<AuthChangepassword> {
         ),
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    passwordController.dispose();
-    confirmPasswordController.dispose();
-    super.dispose();
   }
 }

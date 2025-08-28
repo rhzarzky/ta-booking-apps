@@ -18,9 +18,11 @@ import 'package:Appointly/module/auth/repository/auth_repository.dart';
 
 class HistoryMeetings extends StatefulWidget {
   final int bookingId;
+  final int? initialTabIndex;
   const HistoryMeetings({
     super.key,
     required this.bookingId,
+    this.initialTabIndex,
   });
 
   @override
@@ -29,114 +31,243 @@ class HistoryMeetings extends StatefulWidget {
 
 class HistoryMeetingsWithProvider extends StatelessWidget {
   final int bookingId;
+  final int? initialTabIndex;
 
   const HistoryMeetingsWithProvider({
     super.key,
     required this.bookingId,
+    this.initialTabIndex,
   });
 
   @override
   Widget build(BuildContext context) {
-    return HistoryMeetings(bookingId: bookingId);
+    return HistoryMeetings(
+      bookingId: bookingId,
+      initialTabIndex: initialTabIndex,
+    );
   }
 }
 
-class _HistoryMeetingsState extends State<HistoryMeetings> {
-  // Set untuk melacak service yang sudah di-review oleh user (berdasarkan service ID)
-  Set<int> reviewedServiceIds = {};
-  final ReviewRepository _reviewRepository = ReviewRepository();
-  bool _isLoadingReviewedBookings = true;
+class _HistoryMeetingsState extends State<HistoryMeetings>
+    with WidgetsBindingObserver {
+  // Track which bookings have been reviewed (for button control only)
+  // Multiple reviews are still allowed through other means
+  Set<int> reviewedBookingIds = {};
+  bool isLoadingReviewedBookings = true;
+  bool _isRefreshing = false; // Prevent multiple concurrent refresh calls
+
+  // Track completion timestamps untuk sorting yang lebih akurat
+  Map<int, DateTime> completionTimestamps = {};
+
   @override
   void initState() {
     super.initState();
+
+    // Add observer to listen for app lifecycle changes
+    WidgetsBinding.instance
+        .addObserver(this); // Load saved state first for immediate UI response
+    _loadSavedStates();
+    _loadCompletionTimestamps();
 
     // Fetch bookings when screen loads
     context.read<BookingBloc>().add(GetBookingEvent());
     // Fetch reviews for the reviewed tab
     context.read<ReviewBloc>().add(GetAllReviewEvent());
-    // Load reviewed services data
-    _loadReviewedServicesFromServer();
+    // Load reviewed bookings to control button visibility (not to prevent multiple reviews)
+    _loadReviewedBookingsFromServer();
   }
 
-  // Load reviewed services from server based on reviews
-  Future<void> _loadReviewedServicesFromServer() async {
-    try {
-      final reviews = await _reviewRepository.getAllReview();
+  @override
+  void dispose() {
+    // Remove observer when widget is disposed
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
-      // Extract service IDs from reviews (since backend uses serviceId in bookingId field)
-      final reviewedServiceIds = <int>{};
-      for (final review in reviews) {
-        if (review.bookingId > 0) {
-          // bookingId now contains serviceId
-          reviewedServiceIds.add(review.bookingId);
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          this.reviewedServiceIds = reviewedServiceIds;
-          _isLoadingReviewedBookings = false;
-        });
-      }
-
-      // Also save to SharedPreferences for backup
-      final prefs = await SharedPreferences.getInstance();
-      final reviewedList =
-          reviewedServiceIds.map((id) => id.toString()).toList();
-      await prefs.setStringList('reviewed_services', reviewedList);
-    } catch (e) {
-      // Fallback to SharedPreferences if server fails      await _loadSavedStates();
-      if (mounted) {
-        setState(() {
-          _isLoadingReviewedBookings = false;
-        });
-      }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Reload reviewed bookings when app becomes active again
+    if (state == AppLifecycleState.resumed) {
+      print('DEBUG: ========== APP LIFECYCLE RESUMED ==========');
+      print(
+          'DEBUG: Current reviewedBookingIds before reload: $reviewedBookingIds');
+      print('DEBUG: App resumed - reloading reviewed bookings state');
+      _loadReviewedBookingsFromServer();
     }
   }
 
-  // Load saved states from SharedPreferences (fallback only)
-  Future<void> _loadSavedStates() async {
-    final prefs = await SharedPreferences.getInstance();
+  // Manual refresh method that can be called when needed
+  Future<void> refreshReviewedBookings() async {
+    print('DEBUG: Manual refresh triggered');
+    await _loadReviewedBookingsFromServer();
+  }
 
-    // Load reviewed services (updated to use service IDs)
-    final reviewedList = prefs.getStringList('reviewed_services') ?? [];
+  // Load reviewed bookings from server based on user reviews
+  // This is used ONLY for button control, not to prevent multiple reviews
+  Future<void> _loadReviewedBookingsFromServer() async {
+    // Prevent multiple concurrent calls
+    if (_isRefreshing) {
+      print('DEBUG: Already refreshing reviewed bookings, skipping...');
+      return;
+    }
+
+    _isRefreshing = true;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userIdString = prefs.getString('user_id');
+
+      if (userIdString == null) {
+        setState(() {
+          isLoadingReviewedBookings = false;
+        });
+        return;
+      }
+
+      final reviewRepository = ReviewRepository();
+      final reviews = await reviewRepository
+          .getAllReview(); // Extract booking IDs from reviews (for button control only)
+      final reviewedBookingIds = <int>{};
+      print('DEBUG: ========== LOADING REVIEWED BOOKINGS ==========');
+      print('DEBUG: Processing ${reviews.length} reviews from getAllReview()');
+
+      for (int i = 0; i < reviews.length; i++) {
+        final review = reviews[i];
+        print(
+            'DEBUG: Review $i: ID=${review.id}, ServiceId=${review.serviceId}, BookingId=${review.bookingId}');
+
+        if (review.bookingId > 0) {
+          reviewedBookingIds.add(review.bookingId);
+          print(
+              'DEBUG: Added booking ${review.bookingId} to reviewedBookingIds');
+        } else {
+          print('DEBUG: Skipped invalid bookingId: ${review.bookingId}');
+        }
+      }
+      print(
+          'DEBUG: Final reviewedBookingIds set from server: $reviewedBookingIds');
+      print(
+          'DEBUG: Current local reviewedBookingIds: ${this.reviewedBookingIds}');
+
+      // Merge server data with local state to prevent losing recently reviewed bookings
+      final mergedBookingIds = <int>{};
+      mergedBookingIds.addAll(this.reviewedBookingIds); // Keep local state
+      mergedBookingIds.addAll(reviewedBookingIds); // Add server state
+
+      print('DEBUG: Merged reviewedBookingIds set: $mergedBookingIds');
+      print('DEBUG: Bookings in this set will have HIDDEN review buttons');
+      print('DEBUG: =============================================');
+      if (mounted) {
+        setState(() {
+          this.reviewedBookingIds = mergedBookingIds;
+          isLoadingReviewedBookings = false;
+        });
+      }
+
+      // Save merged state to SharedPreferences for backup
+      final reviewedList = mergedBookingIds.map((id) => id.toString()).toList();
+      await prefs.setStringList('reviewed_bookings', reviewedList);
+
+      print(
+          'DEBUG: Saved reviewedBookingIds to SharedPreferences: $reviewedList');
+      print(
+          'DEBUG: Multiple reviews are still possible through other entry points');
+      print('DEBUG: This tracking is ONLY for history screen button control');
+    } catch (e) {
+      print('Error loading reviewed bookings: $e');
+      // Fallback to SharedPreferences
+      await _loadSavedStates();
+    } finally {
+      _isRefreshing = false;
+    }
+  }
+
+  // Load saved states from SharedPreferences as fallback
+  Future<void> _loadSavedStates() async {
+    print('DEBUG: ========== LOADING SAVED STATES ==========');
+    final prefs = await SharedPreferences.getInstance();
+    final reviewedList = prefs.getStringList('reviewed_bookings') ?? [];
+    print(
+        'DEBUG: Found saved reviewed bookings in SharedPreferences: $reviewedList');
 
     final parsedIds = <int>{};
     for (final idStr in reviewedList) {
       try {
         final id = int.parse(idStr);
         if (id > 0) {
-          // Only add valid IDs
           parsedIds.add(id);
-        } else {
-          print('DEBUG: Skipping invalid ID: $idStr');
+          print('DEBUG: Loaded booking ID $id from SharedPreferences');
         }
       } catch (e) {
-        print(
-            'DEBUG: Failed to parse ID from SharedPreferences: $idStr, error: $e');
+        print('Failed to parse ID from SharedPreferences: $idStr');
       }
     }
 
+    print('DEBUG: Parsed booking IDs from SharedPreferences: $parsedIds');
     if (mounted) {
       setState(() {
-        reviewedServiceIds = parsedIds;
+        reviewedBookingIds = parsedIds;
+        isLoadingReviewedBookings = false;
       });
+      print('DEBUG: Updated local state with saved booking IDs');
     }
+    print('DEBUG: ==========================================');
+  } // Load completion timestamps dari SharedPreferences
 
-    print(
-        'DEBUG: Loaded reviewed services from SharedPreferences: $reviewedServiceIds');
+  Future<void> _loadCompletionTimestamps() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final timestampsJson = prefs.getString('completion_timestamps');
+      if (timestampsJson != null) {
+        // Parse JSON manually
+        final List<String> entries = timestampsJson.split(',');
+        for (String entry in entries) {
+          final parts = entry.split(':');
+          if (parts.length == 2) {
+            final bookingId = int.tryParse(parts[0]);
+            final timestamp = int.tryParse(parts[1]);
+            if (bookingId != null && timestamp != null) {
+              completionTimestamps[bookingId] =
+                  DateTime.fromMillisecondsSinceEpoch(timestamp);
+            }
+          }
+        }
+        print('DEBUG: Loaded completion timestamps: $completionTimestamps');
+      }
+    } catch (e) {
+      print('DEBUG: Error loading completion timestamps: $e');
+    }
   }
 
-  // Save reviewed services to SharedPreferences
-  Future<void> _saveReviewedServices() async {
+  // Save completion timestamps ke SharedPreferences
+  Future<void> _saveCompletionTimestamps() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final timestampsString = completionTimestamps.entries
+          .map((entry) => '${entry.key}:${entry.value.millisecondsSinceEpoch}')
+          .join(',');
+      await prefs.setString('completion_timestamps', timestampsString);
+      print('DEBUG: Saved completion timestamps: $timestampsString');
+    } catch (e) {
+      print('DEBUG: Error saving completion timestamps: $e');
+    }
+  }
+
+  // Save reviewed bookings to SharedPreferences
+  Future<void> _saveReviewedBookings() async {
     final prefs = await SharedPreferences.getInstance();
-    final reviewedList = reviewedServiceIds.map((id) => id.toString()).toList();
-    await prefs.setStringList('reviewed_services', reviewedList);
-    print('Saved reviewed services: $reviewedServiceIds');
+    final reviewedList = reviewedBookingIds.map((id) => id.toString()).toList();
+    await prefs.setStringList('reviewed_bookings', reviewedList);
   }
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG: ========== BUILD METHOD CALLED ==========');
+    print('DEBUG: Current reviewedBookingIds in build: $reviewedBookingIds');
+    print('DEBUG: isLoadingReviewedBookings: $isLoadingReviewedBookings');
+    print('DEBUG: ===========================================');
+
     return Scaffold(
       backgroundColor: ColorPallete.backgroundBody,
       appBar: _buildAppBar(context),
@@ -149,6 +280,7 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
               approved: state.approved,
               pending: state.pending,
               declined: state.declined,
+              completed: state.completed,
             );
           } else if (state is BookingFailure) {
             return Center(child: Text(state.failure));
@@ -238,15 +370,80 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
           message = 'No meetings found in this category.';
       }
       return _emptyBooking(title: title, message: message);
-    }
+    } // Sort appointments berdasarkan tanggal, dengan yang terbaru di atas
+    // Khusus untuk tab "Completed", urutkan berdasarkan waktu terbaru
+    List<Booking> sortedAppointments = List.from(appointments);
+    if (tabName == 'Completed') {
+      // Untuk completed appointments, sort berdasarkan completion timestamp terbaru
+      sortedAppointments.sort((a, b) {
+        try {
+          // Prioritas sorting:
+          // 1. Jika ada completion timestamp, gunakan itu (paling akurat)
+          // 2. Jika tidak, gunakan booking ID (yang lebih besar biasanya lebih baru)
+          // 3. Fallback ke tanggal booking
 
+          DateTime? timestampA = completionTimestamps[a.idBooking];
+          DateTime? timestampB = completionTimestamps[b.idBooking];
+
+          if (timestampA != null && timestampB != null) {
+            // Kedua ada timestamp, sort berdasarkan timestamp (terbaru di atas)
+            return timestampB.compareTo(timestampA);
+          } else if (timestampA != null) {
+            // Hanya A yang ada timestamp, A lebih prioritas
+            return -1;
+          } else if (timestampB != null) {
+            // Hanya B yang ada timestamp, B lebih prioritas
+            return 1;
+          } else {
+            // Kedua tidak ada timestamp, gunakan booking ID (yang lebih besar = lebih baru)
+            int comparison = b.idBooking.compareTo(a.idBooking);
+
+            // Jika ID sama (tidak mungkin), gunakan tanggal booking
+            if (comparison == 0) {
+              DateTime dateA = DateTime.parse(a.date);
+              DateTime dateB = DateTime.parse(b.date);
+              comparison = dateB.compareTo(dateA);
+            }
+
+            return comparison;
+          }
+        } catch (e) {
+          print('DEBUG: Error sorting completed appointments: $e');
+          return 0;
+        }
+      });
+
+      print('DEBUG: ========== SORTED COMPLETED APPOINTMENTS ==========');
+      for (int i = 0; i < sortedAppointments.length; i++) {
+        final booking = sortedAppointments[i];
+        final timestamp = completionTimestamps[booking.idBooking];
+        print(
+            'DEBUG: ${i + 1}. Booking ID: ${booking.idBooking} - Service: ${booking.service.title}');
+        print(
+            'DEBUG:    Completion Time: ${timestamp?.toString() ?? 'No timestamp'}');
+        print('DEBUG:    Original Date: ${booking.date}');
+      }
+      print('DEBUG: =================================================');
+    } else {
+      // Untuk tab lainnya, urutkan berdasarkan tanggal booking (ascending)
+      sortedAppointments.sort((a, b) {
+        try {
+          DateTime dateA = DateTime.parse(a.date);
+          DateTime dateB = DateTime.parse(b.date);
+
+          // Sort ascending untuk tab lainnya (meeting mendatang di atas)
+          return dateA.compareTo(dateB);
+        } catch (e) {
+          return 0;
+        }
+      });
+    }
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
-      itemCount: appointments.length,
+      itemCount: sortedAppointments.length,
       itemBuilder: (context, index) {
-        final booking = appointments[index];
-
-        // Debug logging for booking status
+        final booking =
+            sortedAppointments[index]; // Debug logging for booking status
         print(
             'DEBUG: Booking ${booking.idBooking} status: "${booking.status}"');
 
@@ -258,23 +455,29 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
         } catch (e) {
           // Fallback format if localization isn't initialized
           formattedDate = DateFormat('yyyy-MM-dd').format(bookingDate);
-        }
-
-        // Check if the service has already been reviewed (using service ID instead of booking ID)
-        final isReviewed = reviewedServiceIds.contains(booking.service.id);
-
-        // Debug logging
-        print(
-            'DEBUG: Checking booking ${booking.idBooking} with service ID ${booking.service.id}');
-        print('DEBUG: Current reviewedServiceIds set: $reviewedServiceIds');
-        print('DEBUG: Is service ${booking.service.id} reviewed? $isReviewed');
-        print('DEBUG: Booking status: ${booking.status}');
-        print(
-            'DEBUG: Is loading reviewed bookings? $_isLoadingReviewedBookings');
+        } // Check if the booking has already been reviewed (for button control only)
+        final isReviewed = reviewedBookingIds.contains(booking.idBooking);
 
         // Check if booking status is completed (case-insensitive)
         final bool isCompleted = booking.status.toLowerCase() == 'completed';
-        print('DEBUG: Is booking completed? $isCompleted');
+
+        // Debug logging for booking tracking and button logic
+        print('DEBUG: ==========================================');
+        print('DEBUG: Processing booking ${booking.idBooking}');
+        print('DEBUG: - Service ID: ${booking.service.id}');
+        print('DEBUG: - Service Title: ${booking.service.title}');
+        print('DEBUG: - Booking Status: ${booking.status}');
+        print('DEBUG: - Current reviewedBookingIds: $reviewedBookingIds');
+        print(
+            'DEBUG: - Is booking ${booking.idBooking} already reviewed? $isReviewed');
+        print('DEBUG: - Is booking completed? $isCompleted');
+        print(
+            'DEBUG: - Is loading reviewed bookings? $isLoadingReviewedBookings');
+        print(
+            'DEBUG: - Will show review button? ${!isLoadingReviewedBookings && isCompleted && !isReviewed}');
+        print(
+            'DEBUG: - Button logic: loading=false ✓ + completed=true ✓ + booking_not_reviewed=true ✓ = SHOW button');
+        print('DEBUG: ==========================================');
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
@@ -284,8 +487,9 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             dateCard: formattedDate,
             locationCard: booking.service.location,
             durationCard: booking.time,
-            linkCard: () {
-              Navigator.push(
+            linkCard: () async {
+              // Navigate to detail and refresh state when returning
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => DetailMeetingSuccess(
@@ -293,12 +497,15 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
                   ),
                 ),
               );
+              // Refresh reviewed bookings state when returning from detail screen
+              print(
+                  'DEBUG: Returning from detail screen - refreshing reviewed bookings state');
+              await refreshReviewedBookings();
             },
-            noteCard: booking.note ?? '',
-            statusCard: booking.status,
-            // Button "Review Now" - hanya muncul jika status "Completed", belum di-review, dan data sudah loaded
+            noteCard: booking.note ?? '', statusCard: booking.status,
+            // Button "Review Now" - only show for completed bookings that haven't been reviewed
             reviewButton:
-                !_isLoadingReviewedBookings && isCompleted && !isReviewed
+                !isLoadingReviewedBookings && isCompleted && !isReviewed
                     ? () {
                         print(
                             'DEBUG: Opening review sheet for booking ${booking.idBooking}');
@@ -321,9 +528,11 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
     required List<Booking> approved,
     required List<Booking> pending,
     required List<Booking> declined,
+    List<Booking>? completed,
   }) {
     return DefaultTabController(
       length: 4,
+      initialIndex: widget.initialTabIndex ?? 0,
       child: Column(
         children: [
           _buildTabBarHeader(),
@@ -333,7 +542,8 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
                 _buildAppointmentList(approved, 'Approved'),
                 _buildAppointmentList(pending, 'Under Review'),
                 _buildAppointmentList(declined, 'Declined'),
-                _buildReviewedTab(),
+                _buildAppointmentList(completed ?? [], 'Completed'),
+                //_buildReviewedTab(),
               ],
             ),
           ),
@@ -358,11 +568,13 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
         ),
         labelColor: ColorPallete.primaryColor,
         unselectedLabelColor: ColorPallete.darkGreySilver,
-        tabs: const [
+        isScrollable: true,
+        tabs: [
           Tab(text: 'Approved'),
           Tab(text: 'Under Review'),
           Tab(text: 'Declined'),
-          Tab(text: 'Reviewed'),
+          Tab(text: 'Completed'),
+          // Tab(text: 'Reviewed'),
         ],
       ),
     );
@@ -419,19 +631,27 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
         return ReviewBottomSheet(
           booking: booking,
           onReviewSubmitted: (rating) async {
+            print('DEBUG: ========== REVIEW SUBMITTED CALLBACK ==========');
+            print('DEBUG: Review submitted for booking ${booking.idBooking}');
             print(
-                'DEBUG: Review submitted callback triggered for booking ${booking.idBooking} with service ID ${booking.service.id}');
+                'DEBUG: Booking ID being marked as reviewed: ${booking.idBooking}');
+            print('DEBUG: Service ID: ${booking.service.id}');
+            print('DEBUG: Service Title: ${booking.service.title}');
+            print('DEBUG: Rating given: $rating');
+            print(
+                'DEBUG: reviewedBookingIds BEFORE adding: $reviewedBookingIds');
 
-            // Add service to reviewed services set immediately for UI responsiveness
+            // Add booking to reviewed bookings set immediately for UI responsiveness
             setState(() {
-              reviewedServiceIds.add(booking.service.id);
+              reviewedBookingIds.add(booking.idBooking);
             });
 
-            // Save to SharedPreferences
-            await _saveReviewedServices();
-
-            // Refresh reviewed services from server to ensure synchronization
-            await _loadReviewedServicesFromServer();
+            print(
+                'DEBUG: reviewedBookingIds AFTER adding: $reviewedBookingIds');
+            print(
+                'DEBUG: Booking ${booking.idBooking} button will now be HIDDEN'); // Save to SharedPreferences immediately
+            await _saveReviewedBookings();
+            print('DEBUG: Saved reviewedBookingIds to SharedPreferences');
 
             // Refresh reviews in the reviewed tab
             context.read<ReviewBloc>().add(GetAllReviewEvent());
@@ -439,9 +659,21 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
             // Refresh booking list to update UI
             context.read<BookingBloc>().add(GetBookingEvent());
 
+            // Wait a bit for backend to process the review, then refresh from server
+            print('DEBUG: Waiting for backend to process review...');
+            await Future.delayed(Duration(seconds: 2));
+
+            // Refresh reviewed bookings from server to ensure synchronization
+            await _loadReviewedBookingsFromServer();
             print(
-                'DEBUG: Review submitted for booking ${booking.idBooking} with service ID ${booking.service.id} and rating: $rating');
-            print('DEBUG: Updated reviewedServiceIds set: $reviewedServiceIds');
+                'DEBUG: Refreshed reviewedBookingIds from server after delay');
+
+            print(
+                'DEBUG: UI refresh triggered - buttons will update based on new reviewedBookingIds');
+            print('DEBUG: Only this specific booking will hide its button');
+            print(
+                'DEBUG: Other bookings with same service ID will keep their buttons');
+            print('DEBUG: ============================================');
           },
         );
       },
@@ -457,11 +689,21 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
         return BlocListener<ReviewBloc, ReviewState>(
           listener: (context, state) {
             if (state is CompleteMeetingSuccess) {
+              print(
+                  'DEBUG: Meeting ${booking.idBooking} marked as completed at ${DateTime.now()}');
+
+              // Save completion timestamp untuk sorting yang akurat
+              final completionTime = DateTime.now();
+              completionTimestamps[booking.idBooking] = completionTime;
+              _saveCompletionTimestamps();
+
+              print(
+                  'DEBUG: Saved completion timestamp for booking ${booking.idBooking}: $completionTime');
+
               // Refresh booking list untuk menampilkan status terbaru dari server
               context.read<BookingBloc>().add(GetBookingEvent());
 
-              // Load reviewed services to update the UI
-              _loadReviewedServicesFromServer();
+              // Multiple reviews enabled - no need to load reviewed services
 
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -573,199 +815,6 @@ class _HistoryMeetingsState extends State<HistoryMeetings> {
       },
     );
   }
-
-  Widget _buildReviewedTab() {
-    return BlocBuilder<ReviewBloc, ReviewState>(
-      builder: (context, state) {
-        if (state is ReviewLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is GetAllReviewSuccess) {
-          if (state.reviews.isEmpty) {
-            return _emptyBooking(
-              title: 'No Reviews Yet',
-              message:
-                  'You haven\'t submitted any reviews yet. Complete some meetings to start reviewing!',
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<ReviewBloc>().add(GetAllReviewEvent());
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: state.reviews.length,
-              itemBuilder: (context, index) {
-                final review = state.reviews[index];
-                return _buildReviewCard(review);
-              },
-            ),
-          );
-        } else if (state is ReviewFailure) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: ColorPallete.redCinnabar,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Failed to load reviews',
-                  style: GoogleFonts.ubuntu(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: ColorPallete.darkBlack,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  state.error,
-                  style: GoogleFonts.ubuntu(
-                    fontSize: 14,
-                    color: ColorPallete.darkGreySilver,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<ReviewBloc>().add(GetAllReviewEvent());
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorPallete.primaryColor,
-                  ),
-                  child: Text(
-                    'Retry',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-        return _emptyBooking(
-          title: 'No Reviews',
-          message: 'Your reviews will appear here.',
-        );
-      },
-    );
-  }
-
-  Widget _buildReviewCard(dynamic review) {
-    return Card(
-        margin: const EdgeInsets.only(bottom: 12.0),
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header dengan rating dan tanggal
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.star,
-                        color: ColorPallete.secondColor,
-                        size: 20,
-                      ),
-                      SizedBox(width: 4),
-                      Text(
-                        '${review.rating ?? 0}',
-                        style: GoogleFonts.ubuntu(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: ColorPallete.darkBlack,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    review.createdAt?.toString().split(' ')[0] ?? '',
-                    style: GoogleFonts.ubuntu(
-                      fontSize: 12,
-                      color: ColorPallete.darkGreySilver,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12),
-              // Booking info
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: ColorPallete.backgroundBody,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.event,
-                      color: ColorPallete.primaryColor,
-                      size: 20,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Booking #${review.bookingId}',
-                      style: GoogleFonts.ubuntu(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: ColorPallete.darkBlack,
-                      ),
-                    ),
-                    Spacer(),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color:
-                            review.status?.color ?? ColorPallete.primaryColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        review.status?.displayName ?? 'Submitted',
-                        style: GoogleFonts.ubuntu(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Comment jika ada
-              if (review.comment != null && review.comment!.isNotEmpty) ...[
-                SizedBox(height: 12),
-                Text(
-                  'Review:',
-                  style: GoogleFonts.ubuntu(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: ColorPallete.darkBlack,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  review.comment!,
-                  style: GoogleFonts.ubuntu(
-                    fontSize: 14,
-                    color: ColorPallete.darkGreySilver,
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ],
-          ),
-        ));
-  }
 }
 
 class ReviewBottomSheet extends StatefulWidget {
@@ -815,23 +864,23 @@ class _ReviewBottomSheetState extends State<ReviewBottomSheet> {
         );
         return;
       }
-
       print('User ID: ${user.id}');
       print('Triggering SubmitReviewEvent...');
+      print(
+          'Using service ID: ${widget.booking.service.id}, booking ID: ${widget.booking.idBooking}');
 
-      // Important: Use service.id instead of booking.idBooking
-      // The API uses service ID for the review, not booking ID
       context.read<ReviewBloc>().add(
             SubmitReviewEvent(
-              // Use service ID instead of booking ID
-              bookingId: widget.booking.service.id,
+              serviceId: widget.booking.service.id, // For API endpoint
+              bookingId:
+                  widget.booking.idBooking, // For tracking specific booking
               rating: selectedRating,
               comment: reviewController.text,
               userId: user.id,
             ),
           );
       print(
-          'SubmitReviewEvent triggered successfully with service ID=${widget.booking.service.id}');
+          'SubmitReviewEvent triggered successfully with service ID=${widget.booking.service.id}, booking ID=${widget.booking.idBooking}');
     } catch (e) {
       print('Error in _submitReview: $e');
       ScaffoldMessenger.of(context).showSnackBar(

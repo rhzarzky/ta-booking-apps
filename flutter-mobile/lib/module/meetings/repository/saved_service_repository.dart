@@ -13,17 +13,16 @@ class SavedServiceRepository {
 
     /// 2. Retrieves JSON string using the _key
     final jsonString = prefs.getString(_key);
-    if (jsonString == null) return [];
+    if (jsonString == null)
+      return []; //Null safety check untuk menangani kasus ketika tidak ada data saved services yang tersimpan di SharedPreferences.
 
     /// 3. Converts JSON string to list of SavedServiceModel objects
-
     final List<dynamic> jsonList = json.decode(jsonString);
-    return jsonList.map((json) => SavedServiceModel.fromJson(json)).toList();
+    return jsonList.map((json) => SavedServiceModel.fromJson(json)).toList(); //toList() adalah method yang mengkonversi Iterable menjadi List.
   }
 
   Future<void> saveService(SavedServiceModel service) async {
     /// 1. Gets existing saved services
-
     final prefs = await SharedPreferences.getInstance();
 
     final savedServices = await getSavedServices();
@@ -50,21 +49,17 @@ class SavedServiceRepository {
   /// Removes a service from SharedPreferences
   Future<void> removeService(int serviceId) async {
     /// 1. Gets existing saved services
-
     final prefs = await SharedPreferences.getInstance();
     final savedServices = await getSavedServices();
 
     /// 2. Removes service with matching ID
-
     savedServices.removeWhere((s) => s.id == serviceId);
 
     /// 3. Converts updated list to JSON
-
     final jsonString =
         json.encode(savedServices.map((s) => s.toJson()).toList());
 
     /// 4. Saves updated JSON string to SharedPreferences
-
     await prefs.setString(_key, jsonString);
   }
 

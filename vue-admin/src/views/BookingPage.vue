@@ -82,14 +82,18 @@ const closeConfirmationModal = () => {
     actionType.value = null;
 };
 
+// Admin note for additional information
+const adminNote = ref("");
+
 const handleConfirmation = async () => {
     if (!bookingToConfirm.value || !actionType.value) return;
 
-    const validStatuses = ['Approved', 'Declined'];
+    const validStatuses = ['Approved', 'Declined', 'Completed'];
     const status = validStatuses.includes(actionType.value) ? actionType.value : 'Pending';
 
     const formData = new FormData();
     formData.append('status', status);
+    formData.append("note", adminNote.value);
 
     await bookingStore.confirmBooking(bookingToConfirm.value.id_booking, formData);
     await fetchData();
@@ -97,6 +101,9 @@ const handleConfirmation = async () => {
     closeConfirmationModal();
 };
 
+const isActionDisabled = (booking) => {
+    return ['Approved', 'Declined', 'Completed'].includes(booking.service.status);
+};
 </script>
 
 <template>
@@ -126,6 +133,7 @@ const handleConfirmation = async () => {
                                 <option value="Pending">Pending</option>
                                 <option value="Approved">Approved</option>
                                 <option value="Declined">Declined</option>
+                                <option value="Completed">Completed</option>
                             </select>
                         </div>
                     </div>
@@ -152,13 +160,13 @@ const handleConfirmation = async () => {
                         <thead class="bg-wildsand-100 text-codgray-950 capitalize text-sm leading-normal">
                             <tr>
                                 <th class="px-6 py-3 text-left font-semibold">No.</th>
-                                <th class="px-6 py-3 text-left font-semibold">Service Title</th>
+                                <th class="px-6 py-3 text-left font-semibold w-56">Service Title</th>
                                 <th class="px-6 py-3 text-left font-semibold">Option</th>
                                 <th class="px-7 py-3 text-left font-semibold">Date</th>
                                 <th class="px-6 py-3 text-left font-semibold">Time</th>
-                                <th class="px-6 py-3 text-left font-semibold">Note</th>
                                 <th class="px-6 py-3 text-left font-semibold">Booked by</th>
                                 <th class="px-6 py-3 text-left font-semibold">Location</th>
+                                <th class="px-6 py-3 text-left font-semibold">Note</th>
                                 <th class="px-6 py-3 text-left font-semibold">Status</th>
                                 <th class="px-6 py-3 text-left font-semibold">Actions</th>
                             </tr>
@@ -172,42 +180,51 @@ const handleConfirmation = async () => {
                                 <td class="px-6 py-4 font-medium">{{ booking.service.title }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.option }}</td>
                                 <td class="px-7 py-4 font-medium whitespace-nowrap">
-                                    {{ booking.service.date ? booking.service.date.split('-').reverse().join('-') : '' }}
+                                    {{ booking.service.date ? booking.service.date.split('-').reverse().join('-') : ''
+                                    }}
                                 </td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.time }}</td>
-                                <td class="px-6 py-4 font-medium">{{ booking.service.note }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.user.email }}</td>
                                 <td class="px-6 py-4 font-medium">{{ booking.service.location }}</td>
+                                <td class="px-6 py-4 font-medium">{{ booking.service.note }}</td>
                                 <td class="px-6 py-4">
                                     <span :class="{
                                         'bg-yellow-100 text-yellow-800': booking.service.status === 'Pending',
                                         'bg-green-100 text-green-800': booking.service.status === 'Approved',
                                         'bg-red-100 text-red-800': booking.service.status === 'Declined',
+                                        'bg-blue-100 text-blue-800': booking.service.status === 'Completed'
                                     }" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold">
                                         {{ booking.service.status }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center justify-center gap-6 h-full">
+                                        <!-- Approved Button -->
                                         <button title="Approved" class="text-green-600 hover:text-green-800"
+                                            :class="{ 'opacity-50 cursor-not-allowed': isActionDisabled(booking) }"
+                                            :disabled="isActionDisabled(booking)"
                                             @click="handleAction(booking, 'Approved')">
-                                            <!-- Approved Icon -->
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                 viewBox="0 0 24 24">
                                                 <path fill="#109b06"
                                                     d="M18.577 6.183a1 1 0 0 1 .24 1.394l-5.666 8.02c-.36.508-.665.94-.94 1.269c-.287.34-.61.658-1.038.86a2.83 2.83 0 0 1-2.03.153c-.456-.137-.82-.406-1.149-.702c-.315-.285-.672-.668-1.09-1.116l-1.635-1.753a1 1 0 1 1 1.462-1.364l1.606 1.722c.455.487.754.806.998 1.027c.24.216.344.259.385.271c.196.06.405.045.598-.046c.046-.022.149-.085.36-.338c.216-.257.473-.62.863-1.171l5.642-7.986a1 1 0 0 1 1.394-.24" />
                                             </svg>
                                         </button>
-                                        <button title="Declined" class="text-green-600 hover:text-green-800"
+
+                                        <!-- Declined Button -->
+                                        <button title="Declined" class="text-red-600 hover:text-red-800"
+                                            :class="{ 'opacity-50 cursor-not-allowed': isActionDisabled(booking) }"
+                                            :disabled="isActionDisabled(booking)"
                                             @click="handleAction(booking, 'Declined')">
-                                            <!-- Declined Icon -->
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                 viewBox="0 0 24 24">
                                                 <path fill="none" stroke="#d60000" stroke-linecap="round"
-                                                    stroke-linejoin="round" stroke-width="1.5" d="M19 5L5 19M5 5l14 14"
-                                                    color="#d60000" />
+                                                    stroke-linejoin="round" stroke-width="1.5"
+                                                    d="M19 5L5 19M5 5l14 14" />
                                             </svg>
                                         </button>
+
+                                        <!-- Modal for Confirmation -->
                                         <transition name="fade">
                                             <div v-if="showConfirmationModal"
                                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -224,19 +241,30 @@ const handleConfirmation = async () => {
                                                         <span v-else-if="actionType === 'Declined'">decline</span>
                                                         this booking?
                                                     </p>
+
+                                                    <!-- Note Input -->
+                                                    <div v-if="['Declined'].includes(actionType)" class="mt-4">
+                                                        <label for="admin-note" class="text-sm text-gray-600">Note
+                                                            (optional)</label>
+                                                        <textarea id="admin-note" v-model="adminNote"
+                                                            class="w-full mt-1 border rounded p-2 text-sm" rows="3"
+                                                            placeholder="Write a reason or note for this action...">
+                                                        </textarea>
+                                                    </div>
+
                                                     <div class="mt-4 flex justify-end gap-2">
                                                         <button @click="closeConfirmationModal"
                                                             class="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
                                                             Cancel
                                                         </button>
                                                         <button @click="handleConfirmation" :class="[
-                                                                'px-4 py-2 text-sm text-white rounded',
-                                                                actionType === 'Approved'
-                                                                    ? 'bg-green-600 hover:bg-green-700'
-                                                                    : actionType === 'Declined'
-                                                                        ? 'bg-red-600 hover:bg-red-700'
-                                                                        : 'bg-blue-600 hover:bg-blue-700'
-                                                            ]">
+                                                            'px-4 py-2 text-sm text-white rounded',
+                                                            actionType === 'Approved'
+                                                                ? 'bg-green-600 hover:bg-green-700'
+                                                                : actionType === 'Declined'
+                                                                    ? 'bg-red-600 hover:bg-red-700'
+                                                                    : 'bg-blue-600 hover:bg-blue-700'
+                                                        ]">
                                                             Confirm
                                                         </button>
                                                     </div>

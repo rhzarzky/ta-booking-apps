@@ -4,7 +4,7 @@ import RegisterClient from '@/views/RegisterClient.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Dashboard from '@/views/Client/Dashboard.vue'
 import Service from '@/views/Client/Service.vue'
-import Activity from '@/views/Client/Activity.vue'
+//import History from '@/views/Client/History.vue'
 import Profile from '@/views/Client/Profile.vue'
 import EditProfile from '@/views/Client/EditProfile.vue'
 import ChangePassword from '@/views/Client/ChangePassword.vue'
@@ -18,6 +18,8 @@ import ResetPassword from '@/views/ResetPassword.vue'
 import SuccessReset from '@/views/SuccessReset.vue'
 import UnknownPage from '@/views/error/UnknownPage.vue'
 import BookmarkPage from '@/views/Client/BookmarkPage.vue'
+import AktifBooking from '@/views/Client/AktifBooking.vue'
+import RiwayatBooking from '@/views/Client/RiwayatBooking.vue'
 
 const routes = [
   {
@@ -126,13 +128,31 @@ const routes = [
           breadcrumbs: 'Service',
         },
       },
-      {
-        path: 'activity',
-        name: 'client-activity',
-        component: Activity,
+      // {
+      //   path: 'history',
+      //   name: 'client-history',
+      //   component: History,
+      //   meta: {
+      //     title: 'History',
+      //     breadcrumbs: 'History',
+      //   },
+      // },
+      { // Route baru untuk Booking Aktif
+        path: 'booking/aktif',
+        name: 'client-booking-aktif',
+        component: AktifBooking,
         meta: {
-          title: 'Activity',
-          breadcrumbs: 'Activity',
+          title: 'Booking Aktif',
+          breadcrumbs: 'Booking Aktif',
+        },
+      },
+      { // Route baru untuk Riwayat Booking
+        path: 'booking/riwayat',
+        name: 'client-booking-riwayat',
+        component: RiwayatBooking,
+        meta: {
+          title: 'Riwayat Booking',
+          breadcrumbs: 'Riwayat Booking',
         },
       },
       {

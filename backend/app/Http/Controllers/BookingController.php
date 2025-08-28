@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\BookingMailNotif;
+use App\Notifications\ConfirmedBookingMail;
 use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Service;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use App\Events\AppointmentStatusChanged;
 
 class BookingController extends Controller
 {
@@ -185,15 +186,16 @@ class BookingController extends Controller
         $validated = $request->validate([
             'date' => 'required|date|in:' . implode(',', $availableDate),
             'time' => 'required|date_format:H:i|in:' . implode(',', $availableTime),
-            'note' => 'nullable|string|max:255',
             'option' => 'required|string|in:' . implode(',', $availableOption),
         ]);
 
         $alreadyBooked = Booking::where('service_id', $service->id)
-            ->where('user_id', $user->id)
-            ->where('date', $validated['date'])
-            ->where('time', $validated['time'])
-            ->exists();
+        ->where('user_id', $user->id)
+        ->where('date', $validated['date'])
+        ->where('time', $validated['time'])
+        ->whereIn('status', ['Pending', 'Approved']) 
+        ->exists();
+
 
         if ($alreadyBooked) {
             return response()->json([
@@ -203,9 +205,11 @@ class BookingController extends Controller
         }
 
         $otherBooked = Booking::where('service_id', $service->id)
-            ->where('date', $validated['date'])
-            ->where('time', $validated['time'])
-            ->exists();
+        ->where('date', $validated['date'])
+        ->where('time', $validated['time'])
+        ->whereIn('status', ['Pending', 'Approved']) 
+        ->exists();
+
 
         if ($otherBooked) {
             return response()->json([
@@ -226,6 +230,9 @@ class BookingController extends Controller
                 ? 'Waiting for video meeting URL'
                 : $service->location->location,
         ]);
+
+         // Notify the user about the booking confirmation 
+         $booking->service->assigned->notify(new BookingMailNotif($booking));
 
         return response()->json([
             'status' => 'success',
@@ -255,12 +262,23 @@ class BookingController extends Controller
     public function confirm(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:Approved,Declined,Completed',
+            'status' => 'required|in:Approved,Declined',
+            'note' => 'nullable|string|max:255',
         ]);
 
         $booking = Booking::with('service', 'user')->findOrFail($id);
-        $booking->status = $request->status;
 
+        if (in_array($booking->status, ['Approved', 'Declined'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This booking status has already been finalized and cannot be changed.',
+            ], 403);
+        }
+
+        $booking->status = $request->status;
+        $booking->note = $request->note ?? null;
+
+        // generate Jitsi meeting link if the booking is approved and the option is online
         if (
             $request->status === 'Approved' &&
             $booking->option === 'Online'
@@ -273,8 +291,8 @@ class BookingController extends Controller
 
         $booking->save();
 
-        // Status telah diubah, tidak perlu trigger event karena
-        // aplikasi mobile akan menggunakan polling untuk notifikasi
+        // Notify the user about the booking confirmation 
+        $booking->user->notify(new ConfirmedBookingMail($booking));
 
         return response()->json([
             'status' => 'success',
@@ -282,6 +300,7 @@ class BookingController extends Controller
             'booking' => [
                 'id_booking' => $booking->id,
                 'status' => $booking->status,
+                'note' => $booking->note,
                 'location' => $booking->location,
                 'latitude' => $booking->service->location->latitude ?? null,
                 'longitude' => $booking->service->location->longitude ?? null,

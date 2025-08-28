@@ -30,6 +30,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  // Initialize the Flutter Local Notifications Plugin atau setup android notification icon
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/launcher_icon');
 
@@ -37,6 +38,7 @@ void main() async {
     android: initializationSettingsAndroid,
   );
 
+  // LOCAL NOTIFICATIONS INITIALIZATION
   await flutterLocalNotificationsPlugin.initialize(
     initializationSettings,
     onDidReceiveNotificationResponse: (NotificationResponse details) {
@@ -44,6 +46,7 @@ void main() async {
     },
   );
 
+// Create a notification channel
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'appointly_channel',
     'Appointly Notifications',
@@ -63,7 +66,7 @@ void _handleNotification(String? payload) {
   if (payload != null) {
     try {
       final data = jsonDecode(payload);
-
+// mengarahkan user ke halaman detail booking
       if (data['type'] == 'booking' && data['bookingId'] != null) {
         final int bookingId = data['bookingId'] is int
             ? data['bookingId']

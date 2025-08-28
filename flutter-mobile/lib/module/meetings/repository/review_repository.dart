@@ -65,7 +65,8 @@ class ReviewRepository {
   }
 
   Future<ReviewsModel> postReview(
-      int bookingId, int rating, String comment, int userId) async {
+      int serviceId, int rating, String comment, int userId,
+      {int? bookingId}) async {
     try {
       // Always refresh the token to ensure we have the latest authorization
       final prefs = await SharedPreferences.getInstance();
@@ -80,17 +81,24 @@ class ReviewRepository {
 
       // Debug log the headers being sent
       _logger.i('Request headers: ${_dio.options.headers}');
+      _logger.i('Sending review for service ID: $serviceId, rating: $rating');
+      _logger.i(
+          'Multiple reviews enabled - user can submit multiple reviews for same service'); // Prepare payload data
+      final Map<String, dynamic> payload = {
+        'rating': rating,
+        'comment': comment,
+        'user_id': userId,
+      };
 
-      _logger.i('Sending review for service ID: $bookingId, rating: $rating');
+      // Add booking_id if provided (for proper bookingId tracking)
+      if (bookingId != null && bookingId > 0) {
+        payload['booking_id'] = bookingId;
+        _logger.i('Including booking_id in payload: $bookingId');
+      }
 
-      // Updated endpoint format - using correct service review endpoint
-      final response = await _dio.post('/service/$bookingId/review',
-          data: {
-            'rating': rating,
-            'comment': comment,
-            // Add user_id to payload if the API requires it
-            'user_id': userId,
-          },
+      // Updated endpoint format - using service review endpoint for multiple reviews
+      final response = await _dio.post('/service/$serviceId/review',
+          data: payload,
           options: Options(
             validateStatus: (status) =>
                 true, // Accept all status codes to handle errors better
@@ -115,7 +123,30 @@ class ReviewRepository {
               ? responseData['data']
               : responseData;
 
-          return ReviewsModel.fromJson(dataToUse);
+          // If response contains 'review' field, use it
+          if (responseData.containsKey('review')) {
+            return ReviewsModel.fromJson(responseData['review']);
+          } // Create review object from response data
+          final reviewData = {
+            'id': dataToUse['id'] ?? 0,
+            'user_id': userId,
+            'service_id': serviceId,
+            'booking_id': bookingId ??
+                dataToUse['booking_id'] ??
+                serviceId, // Use provided bookingId or fallback
+            'rating': rating,
+            'comment': comment,
+            'status': 'submitted',
+            'created_at':
+                dataToUse['created_at'] ?? DateTime.now().toIso8601String(),
+            'user': {
+              'user_id': userId,
+              'name': dataToUse['user']?['name'] ?? 'Unknown',
+              'email': dataToUse['user']?['email'] ?? 'unknown@email.com',
+            }
+          };
+
+          return ReviewsModel.fromJson(reviewData);
         } else {
           throw Exception('Invalid response format for review submission');
         }
@@ -142,6 +173,8 @@ class ReviewRepository {
   }
 
   /// Check if a specific booking has been reviewed by the user
+  /// Returns true if user has already reviewed this service (for UI button control)
+  /// Multiple reviews are still allowed through other means
   Future<bool> isBookingReviewed(int serviceId, int userId) async {
     try {
       if (!_dio.options.headers.containsKey('Authorization')) {
@@ -155,7 +188,7 @@ class ReviewRepository {
       }
 
       _logger.i(
-          'Checking if service $serviceId has been reviewed by user $userId...');
+          'Checking if service $serviceId has been reviewed by user $userId (for button control)...');
       final response = await _dio.get('/service/$serviceId/reviews');
 
       _logger.i('Check review response status: ${response.statusCode}');
@@ -170,13 +203,14 @@ class ReviewRepository {
             responseData['reviews'] is List) {
           final reviewsList = responseData['reviews'] as List;
 
-          // Check if there's a review from the current user
-          final userReview = reviewsList.any(
+          // Check if there's at least one review from the current user
+          final userHasReviewed = reviewsList.any(
             (review) => review['user']['user_id'] == userId,
           );
 
-          _logger.i('Service $serviceId reviewed by user $userId: $userReview');
-          return userReview;
+          _logger.i(
+              'Service $serviceId reviewed by user $userId: $userHasReviewed (button will be ${userHasReviewed ? 'hidden' : 'shown'})');
+          return userHasReviewed;
         }
       }
 
@@ -187,17 +221,95 @@ class ReviewRepository {
 
       // 404 means no reviews found - service not reviewed
       if (dioError.response?.statusCode == 404) {
-        _logger.i('Service $serviceId has not been reviewed (404)');
+        _logger.i(
+            'Service $serviceId has not been reviewed (404) - button will be shown');
         return false;
       }
 
       // Other errors - assume not reviewed to be safe
-      _logger.w('Error checking review status, assuming not reviewed');
+      _logger.w(
+          'Error checking review status, assuming not reviewed - button will be shown');
       return false;
     } catch (e) {
       _logger.e('Error checking if service $serviceId is reviewed: $e');
       // Assume not reviewed if there's an error
       return false;
+    }
+  }
+
+  /// Get all reviews from a user for a specific service
+  /// This replaces the single review check with multiple review support
+  Future<List<ReviewsModel>> getUserReviewsForService(
+      int serviceId, int userId) async {
+    try {
+      if (!_dio.options.headers.containsKey('Authorization')) {
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('token');
+        if (token != null && token.isNotEmpty) {
+          updateToken(token);
+        } else {
+          _logger.w('No token available for service request');
+        }
+      }
+
+      _logger
+          .i('Fetching all reviews for service $serviceId by user $userId...');
+      final response = await _dio.get('/service/$serviceId/reviews');
+
+      _logger.i('Get user reviews response status: ${response.statusCode}');
+      _logger.i('Get user reviews response data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData != null &&
+            responseData is Map<String, dynamic> &&
+            responseData.containsKey('reviews') &&
+            responseData['reviews'] is List) {
+          final reviewsList = responseData['reviews'] as List;
+
+          // Return ALL reviews from the user, not just check existence
+          final userReviews = reviewsList
+              .where((review) => review['user']['user_id'] == userId)
+              .map((review) {
+            final reviewData = {
+              'id': review['id'],
+              'user_id': review['user']['user_id'],
+              'service_id': review['service_id'],
+              'rating': review['rating'],
+              'comment': review['comment'],
+              'status': 'submitted',
+              'created_at': review['created_at'],
+              'user': {
+                'user_id': review['user']['user_id'],
+                'name': review['user']['name'],
+                'email': review['user']['email'],
+              }
+            };
+            return ReviewsModel.fromJson(reviewData);
+          }).toList();
+
+          _logger.i(
+              'Found ${userReviews.length} reviews from user $userId for service $serviceId');
+          return userReviews;
+        }
+      }
+
+      return [];
+    } on DioException catch (dioError) {
+      _logger.i(
+          'DioException getting user reviews for service $serviceId: ${dioError.message}');
+
+      // 404 means no reviews found
+      if (dioError.response?.statusCode == 404) {
+        _logger.i('No reviews found for service $serviceId from user $userId');
+        return [];
+      }
+
+      _logger.w('Error getting user reviews, returning empty list');
+      return [];
+    } catch (e) {
+      _logger.e('Error getting user reviews for service $serviceId: $e');
+      return [];
     }
   }
 

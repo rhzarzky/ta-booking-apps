@@ -95,13 +95,14 @@ export const useBookingStore = defineStore('booking', {
 
                 if (response.data.status === 'success') {
                     this.showNotification('Booking status confirmed successfully', 'success');
-                    return response.data.booking; 
+                    return response.data.booking;
                 } else {
                     throw new Error(response.data.message || 'Failed to confirm booking');
                 }
             } catch (err) {
-                this.error = err.message || 'An unexpected error occurred';
-                this.showNotification(this.error, 'error');
+                const message = err.response?.data?.message || err.message || 'An unexpected error occurred';
+                this.error = message;
+                this.showNotification(message, 'error');
             } finally {
                 this.isLoading = false;
             }

@@ -66,7 +66,7 @@ class BookingDetail {
       service: Service.fromJson(json),
       option: json['option'] as String? ?? 'Offline',
       date: json['date'] as String? ?? 'Unknown',
-      time: (json['time'] as String? ?? '00:00:00').substring(0, 5),
+      time: (json['time'] as String? ?? '00:00:00').substring(0, 5), //mengubah format waktu dari 'HH:mm:ss' ke 'HH:mm'
       note: json['note'] as String?,
       status: json['status'] as String? ?? 'Pending',
     );

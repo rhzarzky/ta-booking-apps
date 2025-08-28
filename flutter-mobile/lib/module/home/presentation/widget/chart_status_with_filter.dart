@@ -16,9 +16,31 @@ class ChartStatusWithFilter extends StatefulWidget {
   State<ChartStatusWithFilter> createState() => _ChartStatusWithFilterState();
 }
 
+class DailyAppointmentData {
+  final String date;
+  final String dayLabel;
+  int approved;
+  int pending;
+  int declined;
+  int completed;
+
+  DailyAppointmentData({
+    required this.date,
+    required this.dayLabel,
+    this.approved = 0,
+    this.pending = 0,
+    this.declined = 0,
+    this.completed = 0,
+  });
+}
+
 class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
+  // inisialisasi tahun dan bulan berdasarkan waktu sekarang
   int _selectedMonth = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
+  bool _isMonthlyView = false; // false = weekly view, true = monthly view
+  // list tahun yang tersedia untuk dropdown
+  // hanya tahun sekarang, tahun sebelumnya, dan tahun berikutnya
   final List<int> _availableYears = [
     DateTime.now().year - 1,
     DateTime.now().year,
@@ -27,7 +49,6 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
   @override
   void initState() {
     super.initState();
-    // Don't automatically refresh data on init to avoid multiple calls
     // The parent HomeScreen already calls GetBookingEvent
 
     // Initialize with the current date
@@ -58,6 +79,7 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<BookingBloc, BookingState>(
+      // trigger listener when BookingState changes
       listenWhen: (previous, current) {
         // Only trigger listener when BookingLoaded states have different month/year
         if (previous is BookingLoaded && current is BookingLoaded) {
@@ -66,6 +88,7 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
         }
         return previous.runtimeType != current.runtimeType;
       },
+      // synchronously update local state when BookingState changes
       listener: (context, state) {
         if (state is BookingLoaded &&
             state.month != null &&
@@ -91,12 +114,83 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
                   color: ColorPallete.darkBlack,
                 ),
               ),
-              _buildFilterBar(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _buildViewToggle(),
+                  const SizedBox(height: 8),
+                  _buildFilterBar(),
+                ],
+              ),
             ],
           ),
           const SizedBox(height: 8),
           _buildChart(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildViewToggle() {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: ColorPallete.primaryColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: ColorPallete.primaryColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildToggleButton(
+            text: 'Week',
+            isSelected: !_isMonthlyView, // Selected jika BUKAN monthly view
+            onTap: () {
+              if (_isMonthlyView) {
+                // Hanya ubah jika sedang monthly view
+                setState(() {
+                  _isMonthlyView = false; // Switch ke weekly view
+                });
+              }
+            },
+          ),
+          _buildToggleButton(
+            text: 'Month',
+            isSelected: _isMonthlyView,
+            onTap: () {
+              if (!_isMonthlyView) {
+                setState(() {
+                  _isMonthlyView = true;
+                });
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleButton({
+    required String text,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? ColorPallete.primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : ColorPallete.primaryColor,
+          ),
+        ),
       ),
     );
   }
@@ -123,12 +217,14 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
+                //menggunakan int karena Memory efficient: int lebih ringan dari String atau DateTime
                 isExpanded: true,
                 value: _selectedMonth,
                 isDense: true,
                 icon: const Icon(Icons.keyboard_arrow_down,
                     color: ColorPallete.primaryColor, size: 16),
                 items: List.generate(12, (index) {
+                  //generate 12 bulan
                   final month = index + 1;
                   return DropdownMenuItem<int>(
                     value: month,
@@ -146,7 +242,9 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
                     ),
                   );
                 }),
+                // event handler untuk perubahan bulan
                 onChanged: (int? value) {
+                  // Hanya lanjut jika value valid dan berbeda dari bulan saat ini
                   if (value != null && value != _selectedMonth) {
                     setState(() {
                       _selectedMonth = value;
@@ -233,7 +331,8 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
               previous.year != current.year ||
               previous.approved.length != current.approved.length ||
               previous.pending.length != current.pending.length ||
-              previous.declined.length != current.declined.length;
+              previous.declined.length != current.declined.length || 
+              previous.completed.length != current.completed.length;
 
           if (shouldRebuild) {
             print('Data changed, rebuilding chart: '
@@ -269,10 +368,10 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
           final approved = state.approved;
           final pending = state.pending;
           final declined = state.declined;
-
-          // Process data for chart using the month/year from state
-          final chartData =
-              _processDataForLastSevenDays(approved, pending, declined);
+          final completed = state.completed; // Process data for chart using the month/year from state
+          final chartData = _isMonthlyView
+              ? _processDataForMonthlyView(approved, pending, declined, completed)
+              : _processDataForWeeklyView(approved, pending, declined, completed);
 
           // Format the period label using the source of truth (state)
           final String currentPeriod = DateFormat('MMMM yyyy').format(
@@ -301,6 +400,10 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
                       _buildLegendItem(
                         color: ColorPallete.accentColor,
                         text: 'Under Review',
+                      ),
+                      _buildLegendItem(
+                        color: ColorPallete.secondColor,
+                        text: 'Completed',
                       ),
                       _buildLegendItem(
                         color: ColorPallete.greySilverChalice950,
@@ -435,6 +538,11 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
             width: 12,
           ),
           BarChartRodData(
+            toY: data.completed.toDouble(),
+            color: ColorPallete.secondColor,
+            width: 12,
+          ),
+          BarChartRodData(
             toY: data.declined.toDouble(),
             color: ColorPallete.greySilverChalice950,
             width: 12,
@@ -444,10 +552,12 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
     });
   }
 
-  List<DailyAppointmentData> _processDataForLastSevenDays(
+// Process data for weekly view from the approved, pending, and declined bookings
+  List<DailyAppointmentData> _processDataForWeeklyView(
     List<Booking> approved,
     List<Booking> pending,
     List<Booking> declined,
+    List<Booking> completed,
   ) {
     // Get current state - ALWAYS use state data as source of truth
     final currentState = context.read<BookingBloc>().state;
@@ -457,6 +567,7 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
         currentState.month != null &&
         currentState.year != null) {
       // Selalu gunakan month/year dari state karena data yang kita proses berasal dari state
+      // untuk menghindari inkonsistensi data
       monthToUse = currentState.month!;
       yearToUse = currentState.year!;
     } else {
@@ -465,12 +576,13 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
       yearToUse = _selectedYear;
     }
 
-    final Map<String, DailyAppointmentData> dailyData = {};
+    final Map<String, DailyAppointmentData> dailyData = {}; //store daily data
 
     // Calculate the first and last day of the selected month/year
-    final DateTime firstDayOfMonth = DateTime(yearToUse, monthToUse, 1);
-    final DateTime lastDayOfMonth = DateTime(yearToUse, monthToUse + 1,
+    final DateTime firstDayOfMonth = DateTime(yearToUse, monthToUse, 1);  //Tanggal 1 dari bulan yang dipilih
+    final DateTime lastDayOfMonth = DateTime(yearToUse, monthToUse + 1, 
         0); // If it's the current month, only show until today
+
     final DateTime now = DateTime.now();
     DateTime endDate = lastDayOfMonth;
     if (yearToUse == now.year && monthToUse == now.month) {
@@ -479,11 +591,10 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
 
     // Get days to display in the chart (up to 7 days)
     final List<DateTime> daysToShow = [];
-    final int daysInMonth = endDate.difference(firstDayOfMonth).inDays + 1;
-    final int start = daysInMonth > 7 ? daysInMonth - 7 : 0;
-
+    final int daysInMonth = endDate.difference(firstDayOfMonth).inDays + 1; //Hari terakhir yang valid (current date atau last day of month)
+    final int start = daysInMonth > 7 ? daysInMonth - 7 : 0; // Start from the last 7 days or from the beginning if less than 7 days
     for (int i = start; i < daysInMonth; i++) {
-      daysToShow.add(firstDayOfMonth.add(Duration(days: i)));
+      daysToShow.add(firstDayOfMonth.add(Duration(days: i))); // Generate the last 7 days of the month
     }
 
     // Initialize daily data
@@ -544,6 +655,20 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
         print('Error parsing pending booking date: $dateStr');
       }
     }
+    for (var booking in completed) {
+      final dateStr = booking.date;
+      try {
+        final bookingDate = DateTime.parse(dateStr);
+        // Only count bookings from the selected month and year
+        if (bookingDate.month == monthToUse &&
+            bookingDate.year == yearToUse &&
+            dailyData.containsKey(dateStr)) {
+          dailyData[dateStr]!.completed++;
+        }
+      } catch (e) {
+        print('Error parsing pending booking date: $dateStr');
+      }
+    }
 
     for (var booking in declined) {
       final dateStr = booking.date;
@@ -562,21 +687,86 @@ class _ChartStatusWithFilterState extends State<ChartStatusWithFilter> {
 
     return dayKeys.map((date) => dailyData[date]!).toList();
   }
-  // Helper method to filter bookings by the selected month and year
-}
 
-class DailyAppointmentData {
-  final String date;
-  final String dayLabel;
-  int approved;
-  int pending;
-  int declined;
+// menggunakan list karena fl_chart BarChart membutuhkan List dengan index berurutan:
+  List<DailyAppointmentData> _processDataForMonthlyView(
+    List<Booking> approved,
+    List<Booking> pending,
+    List<Booking> declined,
+    List<Booking> completed,
+  ) {
+    // Get current state - ALWAYS use state data as source of truth
+    final currentState = context.read<BookingBloc>().state;
+    int yearToUse;
 
-  DailyAppointmentData({
-    required this.date,
-    required this.dayLabel,
-    this.approved = 0,
-    this.pending = 0,
-    this.declined = 0,
-  });
+    if (currentState is BookingLoaded && currentState.year != null) {
+      yearToUse = currentState.year!;
+    } else {
+      yearToUse = _selectedYear;
+    }
+
+    final Map<int, DailyAppointmentData> monthlyData = {};
+
+    // Initialize data for all 12 months of the selected year
+    for (int month = 1; month <= 12; month++) {
+      final monthName = DateFormat('MMM').format(DateTime(yearToUse, month));
+      monthlyData[month] = DailyAppointmentData(
+        date: '$yearToUse-${month.toString().padLeft(2, '0')}-01',
+        dayLabel: monthName,
+        approved: 0,
+        pending: 0,
+        completed: 0,
+        declined: 0,
+      );
+    }
+
+    // Process approved bookings
+    for (var booking in approved) {
+      try {
+        final bookingDate = DateTime.parse(booking.date);
+        if (bookingDate.year == yearToUse) {
+          monthlyData[bookingDate.month]!.approved++;
+        }
+      } catch (e) {
+        print('Error parsing approved booking date: ${booking.date}');
+      }
+    }
+
+    // Process pending bookings
+    for (var booking in pending) {
+      try {
+        final bookingDate = DateTime.parse(booking.date);
+        if (bookingDate.year == yearToUse) {
+          monthlyData[bookingDate.month]!.pending++;
+        }
+      } catch (e) {
+        print('Error parsing pending booking date: ${booking.date}');
+      }
+    }
+    for (var booking in completed) {
+      try {
+        final bookingDate = DateTime.parse(booking.date);
+        if (bookingDate.year == yearToUse) {
+          monthlyData[bookingDate.month]!.completed++;
+        }
+      } catch (e) {
+        print('Error parsing completed booking date: ${booking.date}');
+      }
+    }
+
+    // Process declined bookings
+    for (var booking in declined) {
+      try {
+        final bookingDate = DateTime.parse(booking.date);
+        if (bookingDate.year == yearToUse) {
+          monthlyData[bookingDate.month]!.declined++;
+        }
+      } catch (e) {
+        print('Error parsing declined booking date: ${booking.date}');
+      }
+    }
+
+    // Return data for all 12 months
+    return List.generate(12, (index) => monthlyData[index + 1]!);
+  }
 }

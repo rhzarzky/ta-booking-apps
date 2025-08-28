@@ -84,14 +84,15 @@ class _DetailBookmarkState extends State<DetailBookmark> {
                     ? _savedServiceRepository.getOnlineServices()
                     : _savedServiceRepository.getOfflineServices(),
                 builder: (context, snapshot) {
+                  // loading state
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-
+                  // error state
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
-
+                  // empty data state
                   final services = snapshot.data ?? [];
                   if (services.isEmpty) {
                     return Center(

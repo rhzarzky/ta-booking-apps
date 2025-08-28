@@ -17,7 +17,6 @@ const currentPage = ref(1);
 const rolesPerPage = 10;
 const authStore = useAuthStore();
 const roleStore = useRoleStore();
-const users = ref([]);
 const roles = ref([]);
 const searchQuery = ref("");
 const isVisible = ref(false);
@@ -26,20 +25,6 @@ const roleIdForPermissions = ref(null);
 const showDeleteModal = ref(false);
 const roleToDelete = ref(null);
 const roleNameForPermissions = ref("");
-
-// Fetch Users
-const fetchUserData = async () => {
-  isLoading.value = true;
-  try {
-    const response = await fetchUsers();
-    users.value = response.users;
-  } catch (err) {
-    error.value = "Failed to fetch users";
-    console.error("Error fetching users:", err);
-  } finally {
-    isLoading.value = false;
-  }
-};
 
 // Fetch Roles
 const fetchRoleData = async () => {
@@ -122,6 +107,10 @@ const hasPermission = (permission) => {
 
 // Checked Box Permission
 const ontoggle = async (roleId, roleName = "") => {
+  if (!hasPermission("show permission")) {
+    roleStore.showNotification("You do not have the required authorization.", "error");
+    return;
+  }
   isVisible.value = !isVisible.value;
   roleIdForPermissions.value = roleId;
   roleNameForPermissions.value = roleName;
@@ -134,6 +123,75 @@ const ontoggle = async (roleId, roleName = "") => {
       console.error("Failed to fetch role permissions:", err);
       rolePermissions.value = [];
     }
+  }
+};
+
+// Group permissions based on the last word
+const groupedPermissions = computed(() => {
+  const groups = {};
+
+  authStore.currentPermission.forEach((permission) => {
+    const parts = permission.trim().split(" ");
+    if (parts.length >= 2) {
+      const group = parts[parts.length - 1]; // take the last word
+      if (!groups[group]) {
+        groups[group] = [];
+      }
+      groups[group].push(permission);
+    }
+  });
+
+  return groups;
+});
+
+// Check if all permissions in the group are checked
+const isAllGroupsChecked = computed(() => {
+  const allPermissions = Object.values(groupedPermissions.value).flat();
+  return allPermissions.every((permission) =>
+    rolePermissions.value.includes(permission)
+  );
+});
+
+const isAllGroupChecked = (groupName) => {
+  const groupPermissions = groupedPermissions.value[groupName];
+  return groupPermissions.every((permission) =>
+    rolePermissions.value.includes(permission)
+  );
+};
+
+// // Toggle all grup (global)
+const toggleAllGroups = () => {
+  const allPermissions = Object.values(groupedPermissions.value).flat();
+  const allSelected = isAllGroupsChecked.value;
+
+  if (allSelected) {
+    rolePermissions.value = rolePermissions.value.filter(
+      (permission) => !allPermissions.includes(permission)
+    );
+  } else {
+    const updatedPermissions = new Set(rolePermissions.value);
+    allPermissions.forEach((permission) => updatedPermissions.add(permission));
+    rolePermissions.value = [...updatedPermissions];
+  }
+};
+
+// Toggle all permissions in the group
+const toggleGroup = (groupName) => {
+  const groupPermissions = groupedPermissions.value[groupName];
+  const allSelected = isAllGroupChecked(groupName);
+
+  if (allSelected) {
+    // Uncheck all
+    rolePermissions.value = rolePermissions.value.filter(
+      (permission) => !groupPermissions.includes(permission)
+    );
+  } else {
+    // Add missing ones
+    groupPermissions.forEach((permission) => {
+      if (!rolePermissions.value.includes(permission)) {
+        rolePermissions.value.push(permission);
+      }
+    });
   }
 };
 
@@ -159,7 +217,6 @@ onMounted(() => {
   if (!authStore.isLoggedIn) {
     router.push("/login");
   } else {
-    fetchUserData();
     fetchRoleData();
   }
 });
@@ -251,7 +308,7 @@ watch(searchQuery, () => {
                     </div>
                   </transition>
 
-                  <RouterLink title="Edit" :to="`/edit-role/${role.id}` ">
+                  <RouterLink title="Edit" :to="`/edit-role/${role.id}`">
                     <!-- Edit Icon -->
                     <svg width=" 24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path
@@ -275,29 +332,54 @@ watch(searchQuery, () => {
 
                   <!-- Permissions Modal -->
                   <div v-if="isVisible"
-                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-20" aria-modal="true"
+                    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" aria-modal="true"
                     role="dialog" aria-labelledby="modal-title">
-                    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+                    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-xl relative">
                       <button @click="ontoggle(null)" class="absolute top-3 right-3 text-gray-600 hover:text-gray-900"
-                        aria-label="Close modal">
-                        &times;
-                      </button>
+                        aria-label="Close modal">&times; </button>
+
                       <h3 id="modal-title" class="text-lg font-bold mb-4 text-cobalt-950">
                         Manage Permissions for Role: {{ roleNameForPermissions }}
                       </h3>
 
                       <form @submit.prevent="savePermissions">
-                        <div class="max-h-60 overflow-y-auto mb-4 grid grid-cols-2 gap-x-6 gap-y-3">
-                          <label v-for="permission in authStore.currentPermission" :key="permission"
-                            class=" inline-flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" :value="permission" v-model="rolePermissions"
-                              :disabled="!hasPermission('assign permission')"
-                              class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700" />
-                            {{ permission }}
+                        <!-- Select All Groups -->
+                        <div class="flex left-end mb-4">
+                          <label class="flex items-center gap-2 text-sm cursor-pointer">
+                            <input type="checkbox" :checked="isAllGroupsChecked" @change="toggleAllGroups"
+                              class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700"
+                              :disabled="!hasPermission('assign permission')" />
+                            Select All Groups
                           </label>
                         </div>
 
-                        <div class="flex justify-end gap-3">
+                        <!-- Loop Per Group -->
+                        <div v-for="(permissions, group) in groupedPermissions" :key="group" class="mb-4 border-b pb-3">
+                          <!-- Select All Checkbox -->
+                          <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-semibold capitalize text-cobalt-800">{{ group }}</h4>
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                              <input type="checkbox" :checked="isAllGroupChecked(group)" @change="toggleGroup(group)"
+                                class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700"
+                                :disabled="!hasPermission('assign permission')" />
+                              Select All
+                            </label>
+                          </div>
+
+                          <!-- Permissions in Group -->
+                          <div class="grid grid-cols-2 gap-2">
+                            <label v-for="permission in permissions" :key="permission"
+                              class="flex items-center gap-2 text-sm cursor-pointer">
+                              <input type="checkbox" :value="permission" v-model="rolePermissions"
+                                class="rounded border-gray-300 text-cobalt-700 focus:ring-cobalt-700"
+                                :disabled="!hasPermission('assign permission')" />
+                              {{ permission }}
+                            </label>
+                          </div>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="flex justify-end gap-3 mt-6">
                           <button type="button" @click="ontoggle(null)"
                             class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
                             Cancel

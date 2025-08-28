@@ -31,6 +31,30 @@ class RoleController extends Controller
         ]);
     }
 
+    public function defaultPermissions()
+    {
+        try {
+            $roles = Role::with('permissions:id,name')->get();
+
+            $data = $roles->mapWithKeys(function ($role) {
+                return [
+                    $role->name => $role->permissions->pluck('name')->sort()->values()
+                ];
+            });
+
+            return response()->json([
+                'status' => 'success',
+                'roles' => $data
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function storeRole(Request $request)
     {
         try {
@@ -39,6 +63,14 @@ class RoleController extends Controller
                 'permissions' => 'nullable|array',
                 'permissions.*' => 'string|exists:permissions,name'
             ]);
+
+            $existing = Role::whereRaw('LOWER(name) = ?', [strtolower($validated['name'])])->first();
+            if ($existing) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Role name already exists (case-insensitive).',
+                ], 422);
+            }
 
             $role = Role::create(['name' => $validated['name']]);
 
@@ -74,11 +106,19 @@ class RoleController extends Controller
     {
         try {
             $validated =  $request->validate([
-                'permissions' => 'required|array',
+                'permissions' => 'nullable|array',
                 'permissions.*' => 'string|exists:permissions,name'
             ]);
 
             $role = Role::findOrFail($id);
+
+            if (in_array($role->name, ['admin', 'user'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cannot edit this role',
+                ], 403);
+            }
+
             if (!$role) {
                 return response()->json(['message' => 'Role not found'], 404);
             }
@@ -98,13 +138,21 @@ class RoleController extends Controller
     public function editRole(Request $request, $id)
     {
         try {
+            $role = Role::findOrFail($id);
+
+            if (in_array($role->name, ['admin', 'user'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Cannot edit this role',
+                ], 403);
+            }
+
+            // Validasi input
             $validated = $request->validate([
                 'name' => 'sometimes|unique:roles,name,' . $id,
                 'permissions' => 'nullable|array',
                 'permissions.*' => 'string|exists:permissions,name'
             ]);
-
-            $role = Role::findOrFail($id);
 
             // Update name if provided
             if (isset($validated['name'])) {

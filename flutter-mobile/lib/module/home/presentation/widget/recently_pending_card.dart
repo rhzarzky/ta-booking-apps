@@ -13,7 +13,7 @@ class RecentlyPendingCard extends StatelessWidget {
   final String? offlineLocCard;
   final String durationCard;
   final VoidCallback linkCard;
-  final String noteCard;
+  final String? noteCard;
   final String statusCard;
 
   const RecentlyPendingCard({
@@ -27,7 +27,7 @@ class RecentlyPendingCard extends StatelessWidget {
     this.offlineLocCard,
     required this.durationCard,
     required this.linkCard,
-    required this.noteCard,
+    this.noteCard,
     required this.statusCard,
   });
 
@@ -251,10 +251,10 @@ class RecentlyPendingCard extends StatelessWidget {
                     children: [
                       _buildScheduleSection(),
                       const SizedBox(height: 16),
-                      if (noteCard.isNotEmpty) ...[
-                        _buildNoteSection(),
-                        const SizedBox(height: 12),
-                      ],
+                      // if (noteCard.isNotEmpty) ...[
+                      //   _buildNoteSection(),
+                      //   const SizedBox(height: 12),
+                      // ],
                     ],
                   ),
                 ),
@@ -350,7 +350,9 @@ class RecentlyPendingCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      SizedBox(width: 8,),
+                      SizedBox(
+                        width: 8,
+                      ),
                       // Duration with improved icon
                       Expanded(
                         flex: 2,
@@ -513,72 +515,72 @@ class RecentlyPendingCard extends StatelessWidget {
   }
 
   // Notes section with frosted glass effect
-  Widget _buildNoteSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'Notes',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.ubuntu(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: ColorPallete.darkBlack,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
+  // Widget _buildNoteSection() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Row(
+  //         children: [
+  //           Text(
+  //             'Notes',
+  //             maxLines: 2,
+  //             overflow: TextOverflow.ellipsis,
+  //             style: GoogleFonts.ubuntu(
+  //               fontSize: 16,
+  //               fontWeight: FontWeight.w600,
+  //               color: ColorPallete.darkBlack,
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //       const SizedBox(height: 8),
 
-        // Notes container with frosted glass effect
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    ColorPallete.concrete50.withOpacity(0.9),
-                    ColorPallete.concrete50.withOpacity(0.7),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.5),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Text(
-                noteCard,
-                style: GoogleFonts.ubuntu(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: ColorPallete.darkGreySilver,
-                  height: 1.4,
-                  letterSpacing: 0.2,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  //       // Notes container with frosted glass effect
+  //       ClipRRect(
+  //         borderRadius: BorderRadius.circular(16),
+  //         child: BackdropFilter(
+  //           filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+  //           child: Container(
+  //             width: double.infinity,
+  //             padding: const EdgeInsets.all(14),
+  //             decoration: BoxDecoration(
+  //               gradient: LinearGradient(
+  //                 begin: Alignment.topLeft,
+  //                 end: Alignment.bottomRight,
+  //                 colors: [
+  //                   ColorPallete.concrete50.withOpacity(0.9),
+  //                   ColorPallete.concrete50.withOpacity(0.7),
+  //                 ],
+  //               ),
+  //               borderRadius: BorderRadius.circular(16),
+  //               border: Border.all(
+  //                 color: Colors.white.withOpacity(0.5),
+  //                 width: 1,
+  //               ),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black.withOpacity(0.03),
+  //                   blurRadius: 8,
+  //                   offset: const Offset(0, 2),
+  //                 ),
+  //               ],
+  //             ),
+  //             child: Text(
+  //               noteCard,
+  //               style: GoogleFonts.ubuntu(
+  //                 fontSize: 13,
+  //                 fontWeight: FontWeight.w400,
+  //                 color: ColorPallete.darkGreySilver,
+  //                 height: 1.4,
+  //                 letterSpacing: 0.2,
+  //               ),
+  //               maxLines: 3,
+  //               overflow: TextOverflow.ellipsis,
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 }

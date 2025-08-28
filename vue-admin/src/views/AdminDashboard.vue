@@ -5,10 +5,13 @@ import { onMounted, computed } from "vue";
 import { useBookingStore } from "@/stores/booking";
 import { useServicesStore } from "@/stores/service";
 import { useAuthStore } from "@/stores/auth";
+import { useRoleStore } from "@/stores/role";
+import { ref } from "vue";
 
 const bookingStore = useBookingStore();
 const servicesStore = useServicesStore();
 const authStore = useAuthStore();
+const roleStore = useRoleStore();
 
 const fetchDataBooking = async () => {
     await bookingStore.fetchAssignedBooking();
@@ -30,16 +33,25 @@ const fetchDataUser = async () => {
     await authStore.fetchUsersApi();
 };
 
+const userRoles = ref([]);
+const fetchDataRole = async () => {
+    const roles = await roleStore.fetchRoleApi();
+    userRoles.value = roles;
+    console.log("Fetched Roles:", roles);
+};
+
 onMounted(() => {
     fetchDataBooking();
     fetchDataService();
     fetchDataUser();
+    fetchDataRole();
 });
 
 // Summary
 const totalBookings = computed(() => bookingStore.bookings.length);
 const totalServices = computed(() => servicesStore.services.length);
 const totalUsers = computed(() => authStore.users?.length || 0);
+const totalRoles = computed(() => userRoles.value.length || 0);
 
 // Latest data (limit 5, sorted by id descending)
 const latestBookings = computed(() =>
@@ -57,19 +69,23 @@ const latestUsers = computed(() =>
         <div class="min-h-screen flex flex-col gap-6 bg-white p-4 md:p-8 rounded-2xl">
             <h1 class="text-2xl font-bold mb-4">Admin Dashboard</h1>
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-cobalt-700 text-white rounded-xl p-6 flex flex-col items-center">
-                    <div class="text-3xl font-bold">{{ totalBookings }}</div>
-                    <div class="mt-2">Total Bookings</div>
-                </div>
-                <div class="bg-cobalt-900 text-white rounded-xl p-6 flex flex-col items-center">
-                    <div class="text-3xl font-bold">{{ totalServices }}</div>
-                    <div class="mt-2">Total Services</div>
-                </div>
-                <div class="bg-cobalt-800 text-white rounded-xl p-6 flex flex-col items-center">
-                    <div class="text-3xl font-bold">{{ totalUsers }}</div>
-                    <div class="mt-2">Total Users</div>
-                </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-cobalt-800 text-white rounded-xl p-6 flex flex-col items-center">
+                <div class="text-3xl font-bold">{{ totalBookings }}</div>
+                <div class="mt-2">Total Bookings</div>
+            </div>
+            <div class="bg-cobalt-800 text-white rounded-xl p-6 flex flex-col items-center">
+                <div class="text-3xl font-bold">{{ totalServices }}</div>
+                <div class="mt-2">Total Services</div>
+            </div>
+            <div class="bg-cobalt-800 text-white rounded-xl p-6 flex flex-col items-center">
+                <div class="text-3xl font-bold">{{ totalUsers }}</div>
+                <div class="mt-2">Total Users</div>
+            </div>
+            <div class="bg-cobalt-800 text-white rounded-xl p-6 flex flex-col items-center">
+                <div class="text-3xl font-bold">{{ totalRoles }}</div>
+                <div class="mt-2">Total Roles</div>
+            </div>
             </div>
 
             <!-- Latest Bookings -->
@@ -82,7 +98,7 @@ const latestUsers = computed(() =>
                     <thead class="bg-wildsand-100">
                         <tr>
                             <th class="px-4 py-2">Service</th>
-                            <th class="px-4 py-2">User</th>
+                            <th class="px-4 py-2">Booked by</th>
                             <th class="px-4 py-2">Status</th>
                             <th class="px-4 py-2">Date</th>
                         </tr>

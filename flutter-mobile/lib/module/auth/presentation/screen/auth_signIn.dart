@@ -113,6 +113,8 @@ class _AuthSigninState extends State<AuthSignin> {
                   ],
                 ),
                 SizedBox(height: 24.0),
+                // menggunakan BlocConsumer untuk menangani state yg berubah pada UI  /perubahan state untuk efek samping (tidak membangun UI)
+                //Efek samping dari state dalam konteks Flutter BLoC berarti aksi yang terjadi sebagai respons terhadap perubahan state, tetapi tidak berkaitan langsung dengan membangun ulang UI.
                 BlocConsumer<AuthBloc, AuthState>(
                   listener: (context, state) {
                     if (state is AuthSuccess) {
@@ -136,6 +138,7 @@ class _AuthSigninState extends State<AuthSignin> {
                       );
                     }
                   },
+                  // Membangun ulang UI saat state berubah
                   builder: (context, state) {
                     return AuthButton(
                       text: state is AuthLoading ? 'Loading...' : 'Sign In',

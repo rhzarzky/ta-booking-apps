@@ -21,6 +21,7 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     on<CalculateRouteEvent>(_onCalculateRoute);
   }
 
+// Method untuk memuat map dengan lokasi yang diberikan
   Future<void> _onLoadMapWithLocation(
     LoadMapWithLocationEvent event,
     Emitter<MapState> emit,
@@ -55,6 +56,8 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     }
   }
 
+// get location coordinates from address string
+  // Method untuk memuat map dengan alamat yang diberikan
   Future<void> _onLoadMap(
     LoadMapEvent event,
     Emitter<MapState> emit,
@@ -157,8 +160,6 @@ class MapBloc extends Bloc<MapEvent, MapState> {
     Emitter<MapState> emit,
   ) async {
     debugPrint('[MapBloc] Mulai menghitung rute');
-
-    // Jangan emit MapLoading di sini, bisa membuat UI berkedip dan menghilangkan marker
 
     try {
       // Pastikan kita memiliki lokasi saat ini

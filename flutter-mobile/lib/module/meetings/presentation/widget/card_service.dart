@@ -282,7 +282,7 @@ class CardService extends StatelessWidget {
                           SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              'Beginning on:  ${timeService.isNotEmpty ? timeService.first : "N/A"} at $locationService  ',
+                              '${timeService.isNotEmpty ? timeService.first : "N/A"} at $locationService  ',
                               style: GoogleFonts.ubuntu(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,

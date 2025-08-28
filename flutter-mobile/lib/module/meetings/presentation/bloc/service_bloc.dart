@@ -86,7 +86,7 @@ class ServiceBloc extends Bloc<ServiceEvent, ServiceState> {
           date: event.date,
           note: event.notes,
           option: event.option,
-          syncToCalendar: true,
+          // syncToCalendar: true,
         );
 
         final result = await serviceRepository.getServiceById(event.serviceId);

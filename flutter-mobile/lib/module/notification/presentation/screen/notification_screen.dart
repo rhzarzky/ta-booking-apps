@@ -39,11 +39,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
-    print('🚀 Initializing NotificationScreen');
-    print('👤 User ID: ${widget.userId}');
-    print('📦 Booking ID: ${widget.bookingId}');
-
-    _initFirebaseMessaging();
+      _initFirebaseMessaging();
     _loadNotifications();
 
     // Set up a periodic refresh (every minute)
@@ -52,7 +48,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
     // Force a delayed refresh to ensure UI is updated
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
-        print('🔄 Delayed force refresh...');
         _forceRefreshUI();
       }
     });
@@ -202,12 +197,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Future<void> _showNotification(
       String title, String body, int bookingId) async {
-    print('🔔 Showing local notification');
-    print('📝 Title: $title');
-    print('📝 Body: $body');
-    print('📝 Booking ID: $bookingId');
-
-    // Persiapkan detail notifikasi
+      // Persiapkan detail notifikasi
     AndroidNotificationDetails androidDetails =
         const AndroidNotificationDetails(
       'appointly_notifications', // channel id

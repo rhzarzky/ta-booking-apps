@@ -10,7 +10,8 @@ import {
     assignRoleUserApi,
     assignPermissionUserApi,
     assignPermissionRoleApi,
-    getRoleById
+    getRoleById,
+    permissionDefaultApi
 } from "@/api/role-api";
 
 export const useRoleStore = defineStore("roleStore", () => {
@@ -35,8 +36,8 @@ export const useRoleStore = defineStore("roleStore", () => {
     
 
     // handle GET Role
-      const userRoles = ref([]);
-      const fetchRoleApi = async () => {
+    const userRoles = ref([]);
+    const fetchRoleApi = async () => {
         try {
           const roles = await roleApi();
           console.log("Fetched Roles:", roles);
@@ -44,6 +45,18 @@ export const useRoleStore = defineStore("roleStore", () => {
         } catch (err) {
           console.error("Failed to fetch roles", err);
           return []; 
+        }
+    };
+
+    // handle GET Default Permissions from role
+    const fetchDefaultPermissions = async () => {
+        try {
+            const data = await permissionDefaultApi();
+            console.log("Fetched data:", data);
+            return data; 
+        } catch (err) {
+            console.error("Failed to fetch data", err);
+            return []; 
         }
     };
 
@@ -196,6 +209,7 @@ export const useRoleStore = defineStore("roleStore", () => {
         rolePermissions,
         currentPermissionRole,
         currentPermission,
+        fetchDefaultPermissions,
         showNotification,
         fetchRoleApi,
         fetchPermissionApi,

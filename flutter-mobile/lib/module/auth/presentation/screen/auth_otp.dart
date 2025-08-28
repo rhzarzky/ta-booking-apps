@@ -24,7 +24,7 @@ class _AuthOtpState extends State<AuthOtp> {
   bool _canResend = false;
 
   @override
-  void initState() {
+  void initState() { // Inisialisasi timer ketika widget pertama kali dibuat 
     super.initState();
     _startTimer();
   }
@@ -35,25 +35,28 @@ class _AuthOtpState extends State<AuthOtp> {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (_countdown > 0) {
         setState(() {
-          _countdown--;
+          _countdown--; // Decrement countdown atau detik akan berkurang per detik
         });
       } else {
         setState(() {
-          _canResend = true;
+          _canResend = true; // Setelah 60 detik, tombol resend akan aktif
         });
-        timer.cancel();
+        timer.cancel(); // Hentikan timer setelah countdown selesai
       }
     });
   }
 
   @override
-  void dispose() {
+  void dispose() { //ketika user sudah keluar dari halaman ini, timer akan berhenti dan widget akan dibersihkan
     _timer?.cancel();
     super.dispose();
   }
 
+// untuk masking email, hanya menampilkan 2 karakter pertama dari username dan mengganti sisanya dengan bintang
   String _maskEmail(String email) {
     final parts = email.split('@');
+    // minimalkan jumlah bagian email menjadi 2 (username dan domain)
+    // jika tidak ada @ atau lebih dari 1 @, kembalikan email asli
     if (parts.length != 2) return email;
 
     final username = parts[0];

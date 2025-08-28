@@ -47,15 +47,19 @@
         aria-label="Go to My Bookmarks"
       >
         <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
         </svg>
-        My Bookmarks
+        My Bookmarks <span v-if="bookmarkCount > 0" class="ml-1">({{ bookmarkCount }})</span>
       </button>
     </div>
 
-    <div v-if="paginatedData.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      <MeetingCard
-        v-for="(item, i) in paginatedData"
+    <div v-if="isLoading" class="flex flex-col items-center justify-center h-64 text-gray-600">
+      <div class="animate-spin rounded-full h-16 w-16 border-4 border-indigo-500 border-t-transparent mb-4"></div>
+      <p class="text-lg">Loading services...</p>
+    </div>
+
+    <div v-else-if="paginatedData.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      <ServiceCard v-for="(item, i) in paginatedData"
         :key="i"
         :id="item.id"
         :title="item.title"
@@ -68,7 +72,7 @@
         :date="item.date"
         :endDate="item.endDate"
         :averageRating="item.averageRating"
-      />
+        :reviewCount="item.reviewCount" />
     </div>
     <div v-else class="text-center py-10 text-gray-600 text-lg">
       No services found matching your criteria.
@@ -84,20 +88,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router'; // Import useRouter
+import { ref, computed, onMounted, watch } from 'vue'; // Tambahkan 'watch' di sini
+import { useRouter } from 'vue-router';
 import { serviceApi } from '@/api/service-api';
-import MeetingCard from '@/components/Client/card/ServiceCard.vue';
+import ServiceCard from '@/components/Client/card/ServiceCard.vue';
 import PaginationPage from '@/components/Client/Pagination/PaginationPage.vue';
 import fallbackImage from '@/assets/images/booking.jpg';
+import { useBookmarkStore } from '@/stores/bookmark';
 
 // --- Vue Router ---
-const router = useRouter(); // Inisialisasi router
+const router = useRouter();
+
+// --- Store Management ---
+const bookmarkStore = useBookmarkStore();
 
 // --- State Management ---
 const services = ref([]);
 const currentPage = ref(1);
 const servicesPerPage = 6;
+const isLoading = ref(true); // New loading state
 
 // --- Filter & Search States ---
 const searchQuery = ref('');
@@ -106,42 +115,56 @@ const selectedDay = ref('');
 
 // --- Data Fetching ---
 const fetchServicesData = async () => {
-  const data = await serviceApi.fetchServices();
-  services.value = await Promise.all(
-    data.map(async (item) => {
-      const firstDate = item.date?.[0]?.date || null;
+  isLoading.value = true; // Set loading to true at the start
+  try {
+    const data = await serviceApi.fetchServices();
+    services.value = await Promise.all(
+      data.map(async (item) => {
+        const firstDate = item.date?.[0]?.date || null;
 
-      let averageRating = 0;
-      try {
-        const reviews = await serviceApi.fetchServiceReviews(item.id);
-        if (reviews.length > 0) {
-          const total = reviews.reduce((sum, r) => sum + r.rating, 0);
-          averageRating = (total / reviews.length).toFixed(1);
+        let averageRating = 0;
+        let reviewCount = 0;
+        try {
+          const reviews = await serviceApi.fetchServiceReviews(item.id);
+          if (reviews.length > 0) {
+            const total = reviews.reduce((sum, r) => sum + r.rating, 0);
+            averageRating = (total / reviews.length).toFixed(1);
+            reviewCount = reviews.length;
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch reviews for service ID ${item.id}`, err);
         }
-      } catch (err) {
-        console.warn(`Gagal fetch review untuk service ID ${item.id}`, err);
-      }
 
-      return {
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        image: item.image,
-        option: item.option?.join(', ') || '-',
-        days: item.days?.join(', ') || '-',
-        time: item.time?.join(', ') || '-',
-        date: formatDisplayDate(firstDate),
-        endDate: formatDisplayDate(item.end_date),
-        averageRating,
-      };
-    })
-  );
+        return {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          image: item.image,
+          // Pastikan item.option dan item.days di-join hanya jika itu array
+          option: Array.isArray(item.option) ? item.option.join(', ') : (item.option || '-'),
+          days: Array.isArray(item.days) ? item.days.join(', ') : (item.days || '-'),
+          time: Array.isArray(item.time) ? item.time.join(', ') : (item.time || '-'),
+          date: formatDisplayDate(firstDate),
+          endDate: formatDisplayDate(item.end_date),
+          averageRating,
+          reviewCount,
+        };
+      })
+    );
+  } catch (error) {
+    console.error("Failed to fetch services:", error);
+    // Optionally, you can add a user-facing error message here
+  } finally {
+    isLoading.value = false; // Set loading to false when done (success or error)
+  }
 };
 
 // --- Helper Functions ---
 const formatDisplayDate = (dateStr) => {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('en-US', {
+  // Menggunakan 'id-ID' sesuai permintaan awal Anda untuk format tanggal
+  // Jika ingin English: 'en-US'
+  return new Date(dateStr).toLocaleDateString('id-ID', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',
@@ -153,6 +176,7 @@ const formatDisplayDate = (dateStr) => {
 const uniqueOptions = computed(() => {
   const options = new Set();
   services.value.forEach(service => {
+    // Memastikan service.option adalah string sebelum split
     if (service.option && service.option !== '-') {
       service.option.split(', ').forEach(opt => options.add(opt.trim()));
     }
@@ -163,24 +187,26 @@ const uniqueOptions = computed(() => {
 const uniqueDays = computed(() => {
   const days = new Set();
   services.value.forEach(service => {
+    // Memastikan service.days adalah string sebelum split
     if (service.days && service.days !== '-') {
       service.days.split(', ').forEach(day => days.add(day.trim()));
     }
   });
-  // Sort days in a specific order (Mon, Tue, Wed...)
   const order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   return Array.from(days).sort((a, b) => {
-    const dayA = a.substring(0, 3); // Get first 3 letters for comparison
+    const dayA = a.substring(0, 3);
     const dayB = b.substring(0, 3);
     return order.indexOf(dayA) - order.indexOf(dayB);
   });
 });
 
+const bookmarkCount = computed(() => bookmarkStore.totalBookmarks);
+
+
 // --- Computed Properties for Filtered, Searched, and Paginated Data ---
 const filteredAndSearchedServices = computed(() => {
   let filteredServices = services.value;
 
-  // Apply Search
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filteredServices = filteredServices.filter(service =>
@@ -189,24 +215,25 @@ const filteredAndSearchedServices = computed(() => {
     );
   }
 
-  // Apply Option Filter
   if (selectedOption.value) {
     filteredServices = filteredServices.filter(service =>
       service.option.includes(selectedOption.value)
     );
   }
 
-  // Apply Day Filter
   if (selectedDay.value) {
     filteredServices = filteredServices.filter(service =>
       service.days.includes(selectedDay.value)
     );
   }
 
-  // Reset currentPage to 1 when filters or search criteria change
-  currentPage.value = 1;
   return filteredServices;
 });
+
+// Watch for changes in filteredAndSearchedServices to reset currentPage
+watch(filteredAndSearchedServices, () => {
+  currentPage.value = 1;
+}); // Tidak perlu deep: true di sini karena filteredAndSearchedServices adalah array baru setiap kali berubah
 
 const paginatedData = computed(() => {
   const start = (currentPage.value - 1) * servicesPerPage;

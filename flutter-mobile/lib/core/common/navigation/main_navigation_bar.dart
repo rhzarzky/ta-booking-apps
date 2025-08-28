@@ -14,6 +14,7 @@ class AppBottomNavigationBar extends StatelessWidget {
   });
 
   @override
+  // ICON NAVIGATION BAR
   Widget build(BuildContext context) {
     final List<_NavItemData> items = [
       _NavItemData('assets/icons/icon-home.svg', 'Home'),

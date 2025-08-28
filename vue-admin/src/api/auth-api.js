@@ -60,6 +60,8 @@ export const logout = async () => {
   try {
     await api.post("/logout");
     authServices.removeToken();
+    authServices.removeUserId();
+    authServices.removeRole();
   } catch (error) {
     console.error("Logout error:", error.response?.data || error.message);
     throw error;

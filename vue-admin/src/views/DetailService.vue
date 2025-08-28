@@ -1,13 +1,15 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, toRefs, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useServicesStore } from '@/stores/service'
+import { useMapStore } from '@/stores/map'
 import DefaultLayout from '@/layout/DefaultLayout.vue'
 import VueCal from 'vue-cal'
 import 'vue-cal/dist/vuecal.css'
 
 const route = useRoute()
 const router = useRouter()
+const mapStore = useMapStore();
 const servicesStore = useServicesStore()
 const showDeleteModal = ref(false)
 
@@ -40,6 +42,32 @@ const events = computed(() => {
 onMounted(() => {
     fetchService()
 })
+
+const {
+    mapContainer,
+    initMap,
+    location,
+    lng,
+    lat
+} = toRefs(mapStore);
+
+// Sync map data
+watch([location, lng, lat], () => {
+    service.location = location.value;
+    service.longitude = lng.value;
+    service.latitude = lat.value;
+});
+
+// Initialize map when service data is available
+watch(service, async (val) => {
+    if (val && val.longitude && val.latitude) {
+        lng.value = parseFloat(val.longitude);
+        lat.value = parseFloat(val.latitude);
+
+        await nextTick();
+        initMap.value();
+    }
+});
 
 const confirmDelete = () => {
     showDeleteModal.value = true
@@ -88,9 +116,17 @@ const handleDeleteConfirmed = async () => {
                     <div class="p-4 border rounded-lg">
                         <p class="text-sm text-gray-500">Location</p>
                         <p class="text-cobalt-900 font-medium">{{ service.location }}</p>
+                        <!-- Mapbox container -->
+                        <div ref="mapContainer" class="h-96 w-full rounded-xl"></div>
                     </div>
                     <div class="p-4 border rounded-lg">
-                        <p class="text-sm text-gray-500">Options</p>
+                        <p class="text-sm text-gray-500">Times</p>
+                        <p class="text-cobalt-900 font-medium">
+                            {{ Array.isArray(service.time) ? service.time.join(', ') : service.time }}
+                        </p>
+                    </div>
+                    <div class="p-4 border rounded-lg">
+                        <p class="text-sm text-gray-500">Option</p>
                         <p class="text-cobalt-900 font-medium">
                             {{ Array.isArray(service.option) ? service.option.join(', ') : service.option }}
                         </p>
@@ -99,12 +135,6 @@ const handleDeleteConfirmed = async () => {
                         <p class="text-sm text-gray-500">Days</p>
                         <p class="text-cobalt-900 font-medium">
                             {{ Array.isArray(service.days) ? service.days.join(', ') : service.days }}
-                        </p>
-                    </div>
-                    <div class="p-4 border rounded-lg">
-                        <p class="text-sm text-gray-500">Time</p>
-                        <p class="text-cobalt-900 font-medium">
-                            {{ Array.isArray(service.time) ? service.time.join(', ') : service.time }}
                         </p>
                     </div>
                     <div class="p-4 border rounded-lg col-span-full">

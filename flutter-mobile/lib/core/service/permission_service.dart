@@ -1,3 +1,7 @@
+// PermissionService adalah service layer yang mengelola device permissions,
+//khususnya permission untuk mengakses calendar di perangkat mobile (Android/iOS).
+//Class ini menggunakan permission_handler package untuk handle permission requests.
+
 import 'package:permission_handler/permission_handler.dart';
 import 'package:logger/logger.dart';
 
@@ -7,7 +11,7 @@ class PermissionService {
   // check and request calendar permission
   static Future<bool> requestCalendarPermission() async {
     try {
-      // Request both read and write calendar permissions
+      // Request both read and write calendar permissions dan disimpan ke dalam map
       final Map<Permission, PermissionStatus> statuses = await [
         Permission.calendar,
         Permission.calendarWriteOnly,
@@ -36,7 +40,7 @@ class PermissionService {
     try {
       final calendarStatus = await Permission.calendar.status;
       final writeStatus = await Permission.calendarWriteOnly.status;
-
+// check if either permission is granted
       final hasPermission = calendarStatus == PermissionStatus.granted ||
           writeStatus == PermissionStatus.granted;
 

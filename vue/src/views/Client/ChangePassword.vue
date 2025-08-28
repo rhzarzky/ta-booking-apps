@@ -52,8 +52,9 @@
               id="password"
               :type="showNew ? 'text' : 'password'"
               v-model="form.password"
+              @input="validatePasswordCriteria"
               class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 transition duration-150 ease-in-out pr-12"
-              :class="errors.password ? 'border-red-500 focus:ring-red-300' : 'border-gray-300 focus:ring-indigo-300'"
+              :class="localErrors.password ? 'border-red-500 focus:ring-red-300' : 'border-gray-300 focus:ring-indigo-300'"
             />
             <button type="button" @click="showNew = !showNew" class="absolute right-10 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-300">
               <svg v-if="showNew" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 1005 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.602-5.462a4.99 4.99 0 018.665 6.002m-4.223 2.477c.334.303.58.652.753 1.037.669 1.547-.488 3.195-2.036 3.864-.813.353-1.637.56-2.527.56C8.895 19 6.84 17.514 6 15.344" /></svg>
@@ -63,9 +64,34 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2v5l-2 2h-4L9 14V9a2 2 0 012-2h4zm-5 7h4m-4-7V7m2 0V5a2 2 0 00-2-2H7a2 2 0 00-2 2v2m8 0V5a2 2 0 012-2h4a2 2 0 012 2v2m-3 7h-2m-2 0h-2m-2 0h-2m-2 0h-2m-2 0h-2M15 12H9m6 0h4m-4 0h-4m-4 0h-4m-4 0h-4"/></svg>
             </button>
           </div>
-          <p v-if="errors.password" class="text-sm text-red-500 mt-1">
-            {{ errors.password }}
-          </p>
+
+          <ul v-if="formSubmitted && !allPasswordCriteriaMet" class="text-sm text-gray-600 mt-2 space-y-1">
+            <li :class="{ 'text-green-600': passwordLengthValid, 'text-red-500': !passwordLengthValid }">
+              <span v-if="passwordLengthValid">&#10003;</span>
+              <span v-else>&#10007;</span>
+              Minimum 8 characters
+            </li>
+            <li :class="{ 'text-green-600': passwordHasUppercase, 'text-red-500': !passwordHasUppercase }">
+              <span v-if="passwordHasUppercase">&#10003;</span>
+              <span v-else>&#10007;</span>
+              At least one uppercase letter (A-Z)
+            </li>
+            <li :class="{ 'text-green-600': passwordHasLowercase, 'text-red-500': !passwordHasLowercase }">
+              <span v-if="passwordHasLowercase">&#10003;</span>
+              <span v-else>&#10007;</span>
+              At least one lowercase letter (a-z)
+            </li>
+            <li :class="{ 'text-green-600': passwordHasNumber, 'text-red-500': !passwordHasNumber }">
+              <span v-if="passwordHasNumber">&#10003;</span>
+              <span v-else>&#10007;</span>
+              At least one number (0-9)
+            </li>
+            <li :class="{ 'text-green-600': passwordHasSpecialChar, 'text-red-500': !passwordHasSpecialChar }">
+              <span v-if="passwordHasSpecialChar">&#10003;</span>
+              <span v-else>&#10007;</span>
+              At least one special character (@$!%*#?&^)
+            </li>
+          </ul>
         </div>
 
         <div>
@@ -114,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -148,12 +174,54 @@ const showCurrent = ref(false)
 const showNew = ref(false)
 const showConfirm = ref(false)
 const isSubmitting = ref(false)
+const formSubmitted = ref(false) // New ref to track form submission for criteria display
 
 const errors = ref({
   current_password: '',
   password: '',
   password_confirmation: ''
 })
+
+// New ref for local password validation errors (to avoid conflicting with API errors)
+const localErrors = ref({
+  password: ''
+})
+
+// Password criteria checks (new refs)
+const passwordLengthValid = ref(false)
+const passwordHasUppercase = ref(false)
+const passwordHasLowercase = ref(false)
+const passwordHasNumber = ref(false)
+const passwordHasSpecialChar = ref(false)
+
+// Computed property to check if all password criteria are met
+const allPasswordCriteriaMet = computed(() => {
+  return (
+    passwordLengthValid.value &&
+    passwordHasUppercase.value &&
+    passwordHasLowercase.value &&
+    passwordHasNumber.value &&
+    passwordHasSpecialChar.value
+  )
+})
+
+// Function to validate password criteria
+const validatePasswordCriteria = () => {
+  const password = form.value.password;
+  passwordLengthValid.value = password.length >= 8;
+  passwordHasUppercase.value = /[A-Z]/.test(password);
+  passwordHasLowercase.value = /[a-z]/.test(password);
+  passwordHasNumber.value = /[0-9]/.test(password);
+  // Common special characters. Adjust if needed.
+  passwordHasSpecialChar.value = /[!@#$%^&*()_+~`|}{[\]:;?><,./-]/.test(password);
+
+  // Clear local error message if criteria are met, otherwise set it
+  if (allPasswordCriteriaMet.value) {
+    localErrors.value.password = '';
+  } else {
+    localErrors.value.password = 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.';
+  }
+};
 
 // Function to generate a strong password
 const generatePassword = () => {
@@ -167,6 +235,8 @@ const generatePassword = () => {
   form.value.password_confirmation = newPassword; // Auto-fill confirmation
   errors.value.password = ''; // Clear any previous errors
   errors.value.password_confirmation = '';
+  localErrors.value.password = ''; // Clear local error as well
+  validatePasswordCriteria(); // Validate the generated password
   showNotification('success', 'New password generated!');
 };
 
@@ -177,7 +247,9 @@ const handleSubmit = async () => {
     password: '',
     password_confirmation: ''
   }
+  localErrors.value.password = ''; // Clear local password error at the start of submission
   isSubmitting.value = true;
+  formSubmitted.value = true; // Set form as submitted to display criteria list
 
   let hasError = false;
 
@@ -186,9 +258,11 @@ const handleSubmit = async () => {
     hasError = true;
   }
 
-  if (form.value.password.length < 8) {
-    errors.value.password = 'New password must be at least 8 characters long.';
+  // Validate password criteria before submission
+  validatePasswordCriteria();
+  if (!allPasswordCriteriaMet.value) {
     hasError = true;
+    // localErrors.value.password already set by validatePasswordCriteria()
   }
 
   if (form.value.password !== form.value.password_confirmation) {
@@ -214,6 +288,14 @@ const handleSubmit = async () => {
     form.value.current_password = '';
     form.value.password = '';
     form.value.password_confirmation = '';
+    // Reset validation criteria display
+    formSubmitted.value = false;
+    passwordLengthValid.value = false;
+    passwordHasUppercase.value = false;
+    passwordHasLowercase.value = false;
+    passwordHasNumber.value = false;
+    passwordHasSpecialChar.value = false;
+
     setTimeout(() => {
       router.push('/client/profile');
     }, 1500);
@@ -227,7 +309,9 @@ const handleSubmit = async () => {
         errors.value.current_password = apiErrors.current_password[0];
       }
       if (apiErrors.password) {
-        errors.value.password = apiErrors.password[0];
+        // If API returns a specific password error, use it instead of local one
+        errors.value.password = apiErrors.password[0]; // This will override localErrors.password if it exists
+        localErrors.value.password = apiErrors.password[0]; // Ensure localErrors also gets the API message
       }
       showNotification('error', 'Validation failed. Please check your inputs.');
     } else if (generalMessage.includes('current password')) {
